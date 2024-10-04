@@ -1,0 +1,38 @@
+{
+  "name": "nextjs-admin",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@casl/ability": "^6.5.0",
+    "@casl/react": "^3.1.0",
+    "@emotion/css": "^11.11.2",
+    "@reduxjs/toolkit": "^1.9.5",
+    "@types/node": "20.3.2",
+    "@types/react": "18.2.14",
+    "@types/react-dom": "18.2.6",
+    "antd": "^5.6.3",
+    "axios": "^1.4.0",
+    "eslint": "8.43.0",
+    "eslint-config-next": "13.4.7",
+    "moment": "^2.29.4",
+    "next": "13.4.7",
+    "next-redux-wrapper": "^8.1.0",
+    "react": "18.2.0",
+    "react-cookie": "^4.1.1",
+    "react-dom": "18.2.0",
+    "react-redux": "^8.1.1",
+    "react-use": "^17.4.0",
+    "redux-persist": "^6.0.0",
+    "redux-thunk": "^2.4.2",
+    "typescript": "5.1.5"
+  },
+  "devDependencies": {
+    "sass": "^1.63.6"
+  }
+}

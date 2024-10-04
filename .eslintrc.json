@@ -1,0 +1,4 @@
+{
+  "extends": "next/core-web-vitals",
+  "no-unused-vars": ["error", { "argsIgnorePattern": "^(_|action)" }]
+}
