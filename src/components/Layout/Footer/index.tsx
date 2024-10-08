@@ -1,14 +1,5 @@
-/**
- * Author: Barkah Hadi
- * Description: The footer component.
- * Last Modified: 02-06-2023
- *
- * email: barkah.hadi@gmail.com
- */
-
 import { Col, Layout, Row } from "antd";
 import DateTime from "./datetime";
-import themeSettings from "@styles/theme.module.scss";
 
 const Header: React.FC = () => {
   return (
@@ -17,7 +8,6 @@ const Header: React.FC = () => {
         textAlign: "center",
         bottom: 0,
         padding: "7px 18px",
-        background: themeSettings.bgFooterColor,
       }}
     >
       <Row justify="space-between" gutter={2}>

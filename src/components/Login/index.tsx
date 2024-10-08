@@ -1,11 +1,3 @@
-/*
- * Author: Barkah Hadi
- * Email: barkah.hadi@gmail.com
- * Last Modified: Wed Jul 05 2023 3:26:05 PM
- * File: index.tsx
- * Description: Login Component
- */
-
 import {
   Layout,
   Card,
@@ -16,71 +8,19 @@ import {
   Image,
   Divider,
   Typography,
-  message,
 } from "antd";
 import classes from "./index.module.scss";
-import { useAppSelector, useAppDispatch } from "@/store";
-import { login } from "@/store/thunk/auth";
-import { useEffect, useState } from "react";
-import AuthCookie from "@utils/cookies/auth";
 import { useRouter } from "next/router";
-import { AuthState } from "@/store/slice/auth";
-import { authActions } from "@/store/slice/auth";
 
 const { Text } = Typography;
 const { Content } = Layout;
 
 const Login: React.FC | any = () => {
   const router = useRouter();
-  const dispatch = useAppDispatch();
-  const { isAuthenticated, isLoading, error }: AuthState = useAppSelector(
-    (state) => state.auth
-  );
-  const [messageApi, contextHolder] = message.useMessage();
-  const [isDisableButton, setIsDisableButton] = useState<boolean>(false);
-
-  const onFinish = (values: any) => {
-    setIsDisableButton(true);
-    dispatch(login(values));
-  };
-
-  const onFinishFailed = (errorInfo: any) => {};
-
-  useEffect(() => {
-    if (AuthCookie.isAuthenticated) {
-      router.push("/");
-    }
-  }, []);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      messageApi.open({
-        type: "success",
-        content: "Login success",
-      });
-
-      setTimeout(() => {
-        setIsDisableButton(false);
-      }, 500);
-    }
-  }, [isAuthenticated]);
-
-  useEffect(() => {
-    if (error) {
-      messageApi.open({
-        type: "error",
-        content: error,
-        onClose: () => {
-          dispatch(authActions.setError(null));
-        },
-      });
-    }
-  }, [error]);
 
   return (
     <>
       <Content className={classes.loginContainer}>
-        {contextHolder}
         <Card className={classes.cardLogin}>
           <div className={classes.logo}>
             <Image
@@ -98,11 +38,11 @@ const Login: React.FC | any = () => {
             name="basic"
             layout="vertical"
             initialValues={{ remember: false }}
-            onFinish={onFinish}
-            onFinishFailed={onFinishFailed}
-            onChange={() => {
-              setIsDisableButton(false);
-            }}
+            // onFinish={onFinish}
+            // onFinishFailed={onFinishFailed}
+            // onChange={() => {
+            //   setIsDisableButton(false);
+            // }}
             autoComplete="off"
           >
             <Form.Item
@@ -132,8 +72,8 @@ const Login: React.FC | any = () => {
                 htmlType="submit"
                 size="middle"
                 block
-                loading={isLoading}
-                disabled={isDisableButton}
+                // loading={isLoading}
+                // disabled={isDisableButton}
               >
                 Login
               </Button>
