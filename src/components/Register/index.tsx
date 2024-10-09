@@ -94,9 +94,9 @@ const Register: React.FC | any = () => {
                 Submit
               </Button>
               <div style={{textAlign: "center"}}>
-              <p style={{ marginTop: 20  }}>
+              <p className={classes.loginText} style={{ marginTop: 20}}>
                 <Text style={{ color: '#000000' }}>Sudah Memiliki Akun? </Text>
-                <Button type="link" onClick={onLogin} style={{ color: '#1F9245', cursor: 'pointer', margin: 0, padding: 0,}}>Login</Button>
+                <strong onClick={onLogin}> Login</strong>
               </p>
               </div>
               
