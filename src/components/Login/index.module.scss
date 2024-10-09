@@ -20,16 +20,16 @@
   border-radius: 20px;
 }
 .logo {
-  display: flex;               // Aktifkan Flexbox
-  justify-content: center;     // Pusatkan secara horizontal
-  align-items: center;         // Pusatkan secara vertikal (jika diperlukan)
+  display: flex;               
+  justify-content: center;     
+  align-items: center;         
 }
 .logo img {
-  margin-bottom: 20px; // Hanya jika terlalu dekat ke atas
+  margin-bottom: 20px; 
 }
 .textLabel {
   color: black;
-  font-weight: bold;
+  font-weight: normal;
 }
 .greenButton {
   background-color: green !important;
@@ -37,7 +37,7 @@
   color: white !important;
 
   &:hover {
-    background-color: darkgreen; // Warna saat hover
+    background-color: darkgreen; 
   }
 }
 

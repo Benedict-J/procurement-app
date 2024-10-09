@@ -8,7 +8,7 @@ import {
     Divider,
     Typography,
 } from "antd";
-import classes from "./index.module.scss"; // Pastikan file ini ada
+import classes from "./index.module.scss";
 import { useRouter } from "next/router";
 
 const { Text } = Typography;

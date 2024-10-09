@@ -76,7 +76,7 @@ const Login: React.FC | any = () => {
             </Form.Item>
             <Text
               style={{ display: 'block', textAlign: 'right', marginBottom: 20, fontSize: '14px', color: 'green', cursor: 'pointer' }}
-              onClick={onForgotPassword} // Fungsi navigasi
+              onClick={onForgotPassword}
             >
               Lupa Password?
             </Text>
