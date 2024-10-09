@@ -1,0 +1,29 @@
+.loginContainer {
+    height: 100vh;
+}
+
+.cardLogin {
+    min-width: 360px;
+    max-width: 20vw;
+    margin: 25vh auto;
+    padding: 20px;
+    box-shadow: 0 5px 15px rgba(137, 140, 141, 0.1);
+    border-radius: 20px;
+}
+
+.logo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100px;
+}
+
+.greenButton {
+    background-color: green !important;
+    border-color: green !important;
+    color: white !important;
+
+    &:hover {
+        background-color: darkgreen;
+    }
+}

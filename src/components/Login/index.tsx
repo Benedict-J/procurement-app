@@ -2,7 +2,6 @@ import {
   Layout,
   Card,
   Button,
-  Checkbox,
   Form,
   Input,
   Image,
@@ -18,23 +17,35 @@ const { Content } = Layout;
 const Login: React.FC | any = () => {
   const router = useRouter();
 
+  const onForgotPassword = () => {
+    router.push('/auth/forgot-password');
+  };
+
+  const onRegister = () => {
+    router.push('/auth/register'); 
+  };
+
+  const onLogin = () => {
+    router.push('/');
+  }
+
   return (
     <>
       <Content className={classes.loginContainer}>
         <Card className={classes.cardLogin}>
-          <div className={classes.logo}>
+          <div className={classes.logo} style={{ margin: '0', padding: '10px 0' }}>
             <Image
-              src="/images/app-logo/logo-text-light.png"
+              src="/images/app-logo/logo-adakami-login.png"
               width={160}
               preview={false}
               alt="logo"
             />
           </div>
-          <Divider></Divider>
-          <p style={{ marginBottom: 20 }}>
-            <Text type="secondary">Welcome, please enter your credential.</Text>
+          <p style={{ textAlign: 'center', color: 'black', fontWeight: 'bold', fontSize: '18px' }}>
+            Masukan Akun Anda
           </p>
-          <Form
+          <Divider></Divider>
+          <Form onFinish={onLogin}
             name="basic"
             layout="vertical"
             initialValues={{ remember: false }}
@@ -45,16 +56,16 @@ const Login: React.FC | any = () => {
             // }}
             autoComplete="off"
           >
-            <Form.Item
-              label="Username or Email"
-              name="username"
+            <Form.Item className={classes.textLabel}
+              label="NIK"
+              name="nik"
               rules={[
-                { required: true, message: "Please input your username!" },
+                { required: true, message: "Please input your nik!" },
               ]}
             >
               <Input />
             </Form.Item>
-            <Form.Item
+            <Form.Item className={classes.textLabel}
               label="Password"
               name="password"
               rules={[
@@ -63,21 +74,28 @@ const Login: React.FC | any = () => {
             >
               <Input.Password />
             </Form.Item>
-            <Form.Item name="remember" valuePropName="checked">
-              <Checkbox>Remember me</Checkbox>
-            </Form.Item>
+            <Text
+              style={{ display: 'block', textAlign: 'right', marginBottom: 20, fontSize: '14px', color: 'green', cursor: 'pointer' }}
+              onClick={onForgotPassword} // Fungsi navigasi
+            >
+              Lupa Password?
+            </Text>
             <Form.Item>
-              <Button
+              <Button className={classes.greenButton}
                 type="primary"
                 htmlType="submit"
                 size="middle"
                 block
-                // loading={isLoading}
-                // disabled={isDisableButton}
+              // loading={isLoading}
+              // disabled={isDisableButton}
               >
                 Login
               </Button>
             </Form.Item>
+            <p className={classes.registerText}>
+              Belum memiliki Akun?
+              <strong onClick={onRegister}> Register</strong>
+            </p>
           </Form>
         </Card>
       </Content>

@@ -1,6 +1,6 @@
 .loginContainer::before {
   content: " ";
-  background: url(/images/login-bg.jpg) no-repeat;
+  // background: url(/images/login-bg.jpg) no-repeat;
   background-size: cover;
   position: absolute;
   left: 0;
@@ -17,4 +17,43 @@
   max-width: 20vw;
   margin: 25vh auto 0 auto;
   box-shadow: 0 5px 15px rgba(137, 140, 141, 0.1);
+  border-radius: 20px;
+}
+.logo {
+  display: flex;               // Aktifkan Flexbox
+  justify-content: center;     // Pusatkan secara horizontal
+  align-items: center;         // Pusatkan secara vertikal (jika diperlukan)
+}
+.logo img {
+  margin-bottom: 20px; // Hanya jika terlalu dekat ke atas
+}
+.textLabel {
+  color: black;
+  font-weight: bold;
+}
+.greenButton {
+  background-color: green !important;
+  border-color: green !important;
+  color: white !important;
+
+  &:hover {
+    background-color: darkgreen; // Warna saat hover
+  }
+}
+
+.registerText {
+  text-align: center;
+  color: black;
+  font-weight: normal;
+
+  strong {
+    font-weight: bold;
+    color: black;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      color: green;
+    }
+  }
 }

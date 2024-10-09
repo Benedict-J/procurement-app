@@ -1,0 +1,37 @@
+.loginContainer {
+    height: 100vh; // Mengatur tinggi kontainer
+}
+
+.cardLogin {
+    min-width: 360px; // Lebar minimal
+    max-width: 20vw; // Lebar maksimal
+    margin: 25vh auto; // Pusatkan di tengah dengan margin vertikal
+    padding: 20px; // Padding di dalam card
+    box-shadow: 0 5px 15px rgba(137, 140, 141, 0.1); // Bayangan card
+    border-radius: 20px; // Sudut lengkung card
+}
+
+.logo {
+    display: flex; // Aktifkan Flexbox
+    justify-content: center; // Pusatkan logo secara horizontal
+    align-items: center; // Pusatkan logo secara vertikal
+}
+
+.logo img {
+    margin-bottom: 20px; // Hanya jika terlalu dekat ke atas
+}
+
+.textLabel {
+    color: black; // Warna teks label
+    font-weight: bold; // Teks tebal
+}
+
+.greenButton {
+    background-color: green !important; // Warna latar belakang tombol
+    border-color: green !important; // Warna border tombol
+    color: white !important; // Warna teks tombol
+
+    &:hover {
+        background-color: darkgreen; // Warna saat hover
+    }
+}
