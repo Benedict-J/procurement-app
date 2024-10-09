@@ -1,11 +1,18 @@
+import { NextPage } from "next";
 import BlankLayout from "@/components/Layout/BlankLayout";
 import { Layout } from "antd";
 import { ReactElement } from "react";
+import Register from "@/components/Register";
 
-const Register = () => {
-  return <Layout>{/* Create register contents here */}</Layout>;
+const RegisterPage: NextPage | any = () => {
+  return (
+    <>
+      <Layout>
+        <Register />
+      </Layout>
+    </>
+  );
 };
-
 Register.getLayout = (page: ReactElement) => {
   return <BlankLayout>{page}</BlankLayout>;
 };
