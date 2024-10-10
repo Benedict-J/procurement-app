@@ -7,9 +7,11 @@ import {
   Image,
   Divider,
   Typography,
+  message
 } from "antd";
 import classes from "./index.module.scss";
 import { useRouter } from "next/router";
+import { SignIn } from "src/firebase/auth"; // Impor SignIn
 
 const { Text } = Typography;
 const { Content } = Layout;
@@ -25,8 +27,15 @@ const Login: React.FC | any = () => {
     router.push('/auth/register'); 
   };
 
-  const onLogin = () => {
-    router.push('/');
+  const onLogin = async (values: { nik: string; password: string }) => {
+    const { nik, password } = values;
+    try {
+      await SignIn(nik, password); // Panggil fungsi SignIn dengan nik dan password
+      message.success("Login berhasil!"); // Tampilkan pesan sukses
+      router.push('/'); // Arahkan ke halaman utama setelah login berhasil
+    } catch (error) {
+      message.error("Login gagal! Periksa kembali NIK dan password Anda."); // Tampilkan pesan error
+    }
   }
 
   return (
