@@ -13,7 +13,7 @@ import {
 import classes from "./index.module.scss";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
-import { registerUserWithNik } from "@/utils/auth/register";
+import { registerUserWithNik } from "@utils/auth/register";
 
 const { Text } = Typography;
 const { Content } = Layout;
