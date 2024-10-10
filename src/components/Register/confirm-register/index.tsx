@@ -7,9 +7,12 @@ import {
     Image,
     Divider,
     Typography,
+    message,
   } from "antd";
   import classes from "./index.module.scss";
   import { useRouter } from "next/router";
+import { useEffect } from "react";
+import { registerUser } from "@/utils/auth/register";
   
   const { Text } = Typography;
   const { Content } = Layout;
@@ -17,15 +20,39 @@ import {
   const ConfirmRegisterPage: React.FC | any = () => {
     const router = useRouter();
 
-    const userData = {
-        namaLengkap: "John Doe",
-        divisi: "IT",
-        role: "Staff",
-      };
+    const { nik, namaLengkap, divisi, role } = router.query;
+
+    useEffect(() => {
+      if (!nik) {
+        router.push("/register");
+      }
+    });
+
+    const onFinish = async (values: any) => {
+      const { email, password, confirmPassword } = values;
+
+      if (password !== confirmPassword) {
+        message.error("Password dan konfirmasi password tidak cocok");
+        return;
+      }
+    
+      try {
+        const result = await registerUser(nik, namaLengkap, divisi, role, email, password);
+    
+        if (result.success) {
+          message.success("Registrasi berhasil");
+          router.push(" ");
+        } else {
+          message.error(result.message);
+        }
+      } catch (error) {
+        message.error("Terjadi kesalahan, coba lagi.");
+      }
+    }
   
     return (
       <>
-        <Content className={classes.loginContainer}>
+        <Content className={classes.confirmRegisterContainer}>
           <Card className={classes.cardRegister} style={{ maxWidth: '400px', marginTop: "70px" }}>
             <div className={classes.logo}>
               <div style={{ textAlign: "center" }}>
@@ -46,18 +73,18 @@ import {
               </Text>
             </p>
   
-            {/* Menampilkan informasi yang sudah ada (misalnya dari database) */}
+            
             <Form layout="vertical">
             <Form.Item label="Nama Lengkap">
-            <Input value={userData.namaLengkap} readOnly style={{color:"grey"}}/>
+            <Input value={namaLengkap} readOnly style={{color:"grey"}}/>
             </Form.Item>
 
             <Form.Item label="Divisi">
-            <Input value={userData.divisi} readOnly style={{color:"grey"}}/>
+            <Input value={divisi} readOnly style={{color:"grey"}}/>
             </Form.Item>
 
             <Form.Item label="Role">
-            <Input value={userData.role} readOnly style={{color:"grey"}}/>
+            <Input value={role} readOnly style={{color:"grey"}}/>
             </Form.Item>
             </Form>
   
@@ -65,6 +92,7 @@ import {
               name="confirm-register"
               layout="vertical"
               initialValues={{ remember: false }}
+              onFinish={onFinish}
               autoComplete="off"
             >
               <Form.Item
@@ -83,7 +111,14 @@ import {
                 name="password"
                 rules={[
                   { required: true, message: "Tolong masukkan password Anda!" },
-                  { min: 6, message: "Password minimal 6 karakter!" }
+                  {
+                    min: 8,
+                    message: "Password minimal 8 karakter!",
+                  },
+                  {
+                    pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/,
+                    message: "Password harus mengandung minimal 1 huruf besar, 1 huruf kecil, 1 angka, dan 1 karakter khusus.",
+                  }
                 ]}
               >
                 <Input.Password />

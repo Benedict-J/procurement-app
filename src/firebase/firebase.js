@@ -15,12 +15,16 @@ const firebaseConfig = {
 
 // Inisialisasi
 let app;
-if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
+if (typeof window !== 'undefined') {
+  if (!getApps().length) {
+    app = initializeApp(firebaseConfig);
+  } else {
+    app = getApps();
+  }
 }
 
-// Inisialisasi Auth dan Firestore
-const FirebaseAuth = getAuth(app);
-const db = getFirestore(app);
+// Ekspor instance Firebase jika sudah diinisialisasi
+const auth = app ? getAuth(app) : null;
+const db = app ? getFirestore(app) : null;
 
-export { FirebaseAuth, db };
+export { auth, db };

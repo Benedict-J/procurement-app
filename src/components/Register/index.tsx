@@ -8,9 +8,12 @@ import {
   Image,
   Divider,
   Typography,
+  message,
 } from "antd";
 import classes from "./index.module.scss";
 import { useRouter } from "next/router";
+import { useEffect } from "react";
+import { registerUserWithNik } from "@/utils/auth/register";
 
 const { Text } = Typography;
 const { Content } = Layout;
@@ -18,13 +21,42 @@ const { Content } = Layout;
 const Register: React.FC | any = () => {
   const router = useRouter();
 
-  const onFinish = (values: any) => {
-    router.push("/auth/register/confirm-register");
-  };
+  useEffect(() => {
+    // shut down scrolling
+    document.body.style.overflow = 'hidden';
 
-  const onForgotPassword = (values: any) => {
-    router.push("auth/forgot-password");
-  }
+    // return scrolling
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, []);
+
+
+  const onFinish = async (values: any) => {
+
+    const { nik } = values;
+    if (!nik) {
+      message.error("NIK tidak boleh kosong");
+      return;
+    }
+
+    const result = await registerUserWithNik(nik);
+
+    if (result.success && result.userData) {
+      message.success("NIK Terdaftar!");
+      router.push({
+        pathname: "register/confirm-register",
+        query: {
+          nik: nik,
+          namaLengkap: result.userData.namaLengkap,
+          divisi: result.userData.divisi,
+          role: result.userData.role,
+        }
+      })
+    } else {
+      message.error("NIK Tidak Terdaftar!, Silahkan Hubungi Super Admin");  
+    }
+  };
 
   const onLogin = (values: any) => {
     router.push("login");
@@ -32,7 +64,7 @@ const Register: React.FC | any = () => {
 
   return (
     <>
-      <Content className={classes.loginContainer}>
+      <Content className={classes.registerContainer}>
         <Card className={classes.cardRegister}>
           <div className={classes.logo}>
             <div style={{ textAlign: "center" }}>
@@ -62,7 +94,7 @@ const Register: React.FC | any = () => {
           >
             <Form.Item
               label="NIK"
-              name="NIK"
+              name="nik"
               rules={[
                 { required: true, message: "Tolong Masukan NIK Anda!" },
               ]}

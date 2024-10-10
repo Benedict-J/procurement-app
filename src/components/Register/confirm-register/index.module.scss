@@ -1,6 +1,6 @@
-.loginContainer::before {
+.confirmRegisterContainer::before {
     content: " ";
-    // background: url(/images/login-bg.jpg) no-repeat;
+    background: url(/images/login-background.png) no-repeat;
     background-size: cover;
     position: absolute;
     left: 0;
@@ -9,7 +9,7 @@
     height: 100%;
     opacity: 0.4;
   }
-  .loginContainer {
+  .confirmRegisterContainer {
     height: 100vh;
   }
   .cardRegister {
