@@ -52,9 +52,11 @@ const Register: React.FC | any = () => {
           divisi: result.userData.divisi,
           role: result.userData.role,
         }
-      })
+      });
+    } else if (!result.success) {
+        message.error(result.message);
     } else {
-      message.error("NIK Tidak Terdaftar!, Silahkan Hubungi Super Admin");  
+      message.error("Terjadi Masalah");  
     }
   };
 

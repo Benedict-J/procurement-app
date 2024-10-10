@@ -1,10 +1,18 @@
 import { auth } from '@/firebase/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { db } from '@/firebase/firebase';
-import { doc, getDoc, addDoc, collection } from 'firebase/firestore';
+import { doc, query, where, getDocs, getDoc, addDoc, collection } from 'firebase/firestore';
 
 const registerUserWithNik = async (nik) => {
   try {
+    const q = query(collection(db, 'registeredUsers'), where('nik', '==', nik));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+      // Jika ada dokumen yang ditemukan, berarti NIK sudah terdaftar
+      throw new Error('NIK sudah terdaftar!');
+    }
+
     // Ambil data dari Firestore berdasarkan NIK
     const preRegisteredDocRef = doc(db, 'preRegisteredUsers', nik);
     const preRegisteredDoc = await getDoc(preRegisteredDocRef);

@@ -22,11 +22,11 @@ import { registerUser } from "@/utils/auth/register";
 
     const { nik, namaLengkap, divisi, role } = router.query;
 
-    useEffect(() => {
-      if (!nik) {
-        router.push("/register");
-      }
-    });
+    // useEffect(() => {
+    //   if (!nik) {
+    //     router.push("/register");
+    //   }
+    // });
 
     const onFinish = async (values: any) => {
       const { email, password, confirmPassword } = values;
