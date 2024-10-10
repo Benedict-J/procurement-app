@@ -18,7 +18,7 @@ const registerUserWithNik = async (nik) => {
     const preRegisteredDoc = await getDoc(preRegisteredDocRef);
 
     if (!preRegisteredDoc.exists()) {
-      throw new Error('NIK tidak ditemukan di preRegisteredUsers');
+      throw new Error('NIK tidak terdaftar! Silahkan Hubungi Super Admin');
     }
 
     const userData = preRegisteredDoc.data(); // Dapatkan data user
