@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import {
   Layout,
   Card,
@@ -11,12 +12,13 @@ import {
 } from "antd";
 import classes from "./index.module.scss";
 import { useRouter } from "next/router";
-import { SignIn } from "src/firebase/auth"; // Impor SignIn
+import { SignIn } from "src/firebase/auth";
 
 const { Text } = Typography;
 const { Content } = Layout;
 
-const Login: React.FC | any = () => {
+const Login: React.FC = () => {
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const onForgotPassword = () => {
@@ -29,14 +31,27 @@ const Login: React.FC | any = () => {
 
   const onLogin = async (values: { nik: string; password: string }) => {
     const { nik, password } = values;
+    setIsLoading(true);
     try {
-      await SignIn(nik, password); // Panggil fungsi SignIn dengan nik dan password
-      message.success("Login berhasil!"); // Tampilkan pesan sukses
-      router.push('/'); // Arahkan ke halaman utama setelah login berhasil
+      await SignIn(nik, password);
+      message.success("Login berhasil!");
+      router.push('/');
     } catch (error) {
-      message.error("Login gagal! Periksa kembali NIK dan password Anda."); // Tampilkan pesan error
+      if (error instanceof Error) {
+        if (error.message.includes("NIK tidak ditemukan")) {
+          message.error("NIK tidak ditemukan. Periksa kembali NIK Anda.");
+        } else if (error.message.includes("password")) {
+          message.error("Password salah. Periksa kembali password Anda.");
+        } else {
+          message.error("Login gagal! Periksa kembali NIK dan password Anda.");
+        }
+      } else {
+        message.error("Terjadi kesalahan yang tidak diketahui.");
+      }
+    } finally {
+      setIsLoading(false); 
     }
-  }
+  };
 
   return (
     <>
@@ -58,11 +73,6 @@ const Login: React.FC | any = () => {
             name="basic"
             layout="vertical"
             initialValues={{ remember: false }}
-            // onFinish={onFinish}
-            // onFinishFailed={onFinishFailed}
-            // onChange={() => {
-            //   setIsDisableButton(false);
-            // }}
             autoComplete="off"
           >
             <Form.Item className={classes.textLabel}
@@ -95,8 +105,6 @@ const Login: React.FC | any = () => {
                 htmlType="submit"
                 size="middle"
                 block
-              // loading={isLoading}
-              // disabled={isDisableButton}
               >
                 Login
               </Button>

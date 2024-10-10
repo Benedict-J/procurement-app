@@ -1,34 +1,52 @@
-import { FirebaseAuth } from './firebase'; // Pastikan path ini sesuai dengan struktur folder Anda
+import { auth, db } from './firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
-// Fungsi untuk melakukan sign in
-export const SignIn = async (email, password) => {
+// Fungsi sign in
+export const SignIn = async (nik, password) => {
     try {
-        const userCredential = await signInWithEmailAndPassword(FirebaseAuth, email, password);
-        return userCredential; // Mengembalikan informasi user
+        const usersRef = collection(db, 'registeredUsers');
+        const q = query(usersRef, where("nik", "==", nik));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            throw new Error("NIK tidak ditemukan.");
+        }
+
+        let email = null;
+        querySnapshot.forEach((doc) => {
+            email = doc.data().email;
+        });
+
+        if (!email) {
+            throw new Error("Email tidak ditemukan untuk NIK tersebut.");
+        }
+
+        return await signInWithEmailAndPassword(auth, email, password);
     } catch (error) {
         console.error("Error signing in:", error);
-        throw error; // Melempar error untuk ditangani di tempat lain
+        throw error;
     }
 };
 
-// Fungsi untuk melakukan sign up
+
+// Fungsi sign up
 export const SignUp = async (email, password) => {
     try {
         const userCredential = await createUserWithEmailAndPassword(FirebaseAuth, email, password);
-        return userCredential; // Mengembalikan informasi user
+        return userCredential;
     } catch (error) {
         console.error("Error signing up:", error);
-        throw error; // Melempar error untuk ditangani di tempat lain
+        throw error;
     }
 };
 
-// Fungsi untuk melakukan sign out
+// Fungsi sign out
 export const SignOut = async () => {
     try {
         await signOut(FirebaseAuth);
     } catch (error) {
         console.error("Error signing out:", error);
-        throw error; // Melempar error untuk ditangani di tempat lain
+        throw error; 
     }
 };
