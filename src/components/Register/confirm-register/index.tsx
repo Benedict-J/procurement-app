@@ -12,7 +12,7 @@ import {
   import classes from "./index.module.scss";
   import { useRouter } from "next/router";
 import { useEffect } from "react";
-import { registerUser } from "@/utils/auth/register";
+import { registerUser } from "@/firebase/register";
   
   const { Text } = Typography;
   const { Content } = Layout;
@@ -40,8 +40,8 @@ import { registerUser } from "@/utils/auth/register";
         const result = await registerUser(nik, namaLengkap, divisi, role, email, password);
     
         if (result.success) {
-          message.success("Registrasi berhasil");
-          router.push(" ");
+          message.success(result.success);
+          router.push("auth/login");
         } else {
           message.error(result.message);
         }

@@ -1,7 +1,8 @@
 import { auth } from '@/firebase/firebase';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { db } from '@/firebase/firebase';
 import { doc, query, where, getDocs, getDoc, addDoc, collection } from 'firebase/firestore';
+import { message } from 'antd';
 
 const registerUserWithNik = async (nik) => {
   try {
@@ -52,7 +53,7 @@ const registerUser = async (nik, namaLengkap, divisi, role, email, password) => 
     });
 
     await sendEmailVerification(user);
-    return { success: true };
+    return { success: true, message: "Registrasi berhasil, email verifikasi terkirim" };
   } catch (error) {
     return { success: false, message: error.message };
   }
