@@ -48,7 +48,10 @@ const registerUser = async (nik, namaLengkap, divisi, role, email, password) => 
       divisi,
       role,
       email,
+      isEmailVerified: false,
     });
+
+    await sendEmailVerification(user);
     return { success: true };
   } catch (error) {
     return { success: false, message: error.message };
