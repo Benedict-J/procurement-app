@@ -36,14 +36,14 @@ const Register: React.FC | any = () => {
 
     const { nik } = values;
     if (!nik) {
-      message.error("NIK tidak boleh kosong");
+      message.error("NIK field cannot be empty");
       return;
     }
 
     const result = await registerUserWithNik(nik);
 
     if (result.success && result.userData) {
-      message.success("NIK Terdaftar!");
+      message.success("NIK Registered!");
       router.push({
         pathname: "register/confirm-register",
         query: {
@@ -98,7 +98,7 @@ const Register: React.FC | any = () => {
               label="NIK"
               name="nik"
               rules={[
-                { required: true, message: "Tolong Masukan NIK Anda!" },
+                { required: true, message: "Please input your NIK!" },
               ]}
             >
               <Input />
@@ -129,7 +129,7 @@ const Register: React.FC | any = () => {
               </Button>
               <div style={{textAlign: "center"}}>
               <p className={classes.loginText} style={{ marginTop: 20}}>
-                <Text style={{ color: '#000000' }}>Sudah Memiliki Akun? </Text>
+                <Text style={{ color: '#000000' }}>Already have an account? </Text>
                 <strong onClick={onLogin}> Login</strong>
               </p>
               </div>

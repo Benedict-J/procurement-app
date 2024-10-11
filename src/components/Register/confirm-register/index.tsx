@@ -32,7 +32,7 @@ import { registerUser } from "@/firebase/register";
       const { email, password, confirmPassword } = values;
 
       if (password !== confirmPassword) {
-        message.error("Password dan konfirmasi password tidak cocok");
+        message.error("Password not match!");
         return;
       }
     
@@ -40,13 +40,13 @@ import { registerUser } from "@/firebase/register";
         const result = await registerUser(nik, namaLengkap, divisi, role, email, password);
     
         if (result.success) {
-          message.success("Register berhasil! Email telah dikirim");
-          router.push("/auth/login");
+          message.success("Register success! Verification email has been sent");
+          router.push("/auth/email-verification");
         } else {
           message.error(result.message);
         }
       } catch (error) {
-        message.error("Terjadi kesalahan, coba lagi.");
+        message.error("An unknown error occured, try again.");
       }
     }
   
@@ -75,11 +75,11 @@ import { registerUser } from "@/firebase/register";
   
             
             <Form layout="vertical">
-            <Form.Item label="Nama Lengkap">
+            <Form.Item label="Full Name">
             <Input value={namaLengkap} readOnly style={{color:"grey"}}/>
             </Form.Item>
 
-            <Form.Item label="Divisi">
+            <Form.Item label="Division">
             <Input value={divisi} readOnly style={{color:"grey"}}/>
             </Form.Item>
 
@@ -99,8 +99,8 @@ import { registerUser } from "@/firebase/register";
                 label="Email"
                 name="email"
                 rules={[
-                  { required: true, message: "Tolong masukkan email Anda!" },
-                  { type: 'email', message: "Email tidak valid!" }
+                  { required: true, message: "Please input your email!" },
+                  { type: 'email', message: "Email not valid!" }
                 ]}
               >
                 <Input />
@@ -110,14 +110,14 @@ import { registerUser } from "@/firebase/register";
                 label="Password"
                 name="password"
                 rules={[
-                  { required: true, message: "Tolong masukkan password Anda!" },
+                  { required: true, message: "Please input your password!" },
                   {
                     min: 8,
-                    message: "Password minimal 8 karakter!",
+                    message: "Password must be at least 8 characters!",
                   },
                   {
                     pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/,
-                    message: "Password harus mengandung minimal 1 huruf besar, 1 huruf kecil, 1 angka, dan 1 karakter khusus.",
+                    message: "The password must contain at least 1 uppercase letter, 1 lowercase letter, 1 number and 1 special character (@$!%*?&)",
                   }
                 ]}
               >
@@ -125,17 +125,17 @@ import { registerUser } from "@/firebase/register";
               </Form.Item>
   
               <Form.Item
-                label="Konfirmasi Password"
+                label="Confirm Password"
                 name="confirmPassword"
                 dependencies={['password']}
                 rules={[
-                  { required: true, message: "Tolong konfirmasi password Anda!" },
+                  { required: true, message: "Please confirm your password" },
                   ({ getFieldValue }) => ({
                     validator(_, value) {
                       if (!value || getFieldValue('password') === value) {
                         return Promise.resolve();
                       }
-                      return Promise.reject(new Error('Password tidak cocok!'));
+                      return Promise.reject(new Error('Password do not match!'));
                     },
                   }),
                 ]}
