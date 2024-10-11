@@ -40,7 +40,7 @@ import { registerUser } from "@/firebase/register";
         const result = await registerUser(nik, namaLengkap, divisi, role, email, password);
     
         if (result.success) {
-          message.success(result.success);
+          message.success("Register berhasil! Email telah dikirim");
           router.push("/auth/login");
         } else {
           message.error(result.message);
