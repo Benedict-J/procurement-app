@@ -41,7 +41,7 @@ import { registerUser } from "@/firebase/register";
     
         if (result.success) {
           message.success(result.success);
-          router.push("auth/login");
+          router.push("/auth/login");
         } else {
           message.error(result.message);
         }
