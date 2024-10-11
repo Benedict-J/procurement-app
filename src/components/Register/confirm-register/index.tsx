@@ -11,8 +11,10 @@ import {
   } from "antd";
   import classes from "./index.module.scss";
   import { useRouter } from "next/router";
-import { useEffect } from "react";
-import { registerUser } from "@/firebase/register";
+  import { Select, Space } from 'antd';
+  import type { SelectProps } from 'antd';
+  import { useEffect } from "react";
+  import { registerUser } from "@/firebase/register";
   
   const { Text } = Typography;
   const { Content } = Layout;
@@ -22,11 +24,17 @@ import { registerUser } from "@/firebase/register";
 
     const { nik, namaLengkap, divisi, role } = router.query;
 
-    // useEffect(() => {
-    //   if (!nik) {
-    //     router.push("/register");
-    //   }
-    // });
+    const options: SelectProps['options'] = [
+      { label: 'Company A', value: 'company a' },
+      { label: 'Company B', value: 'company b' },
+      { label: 'Company C', value: 'company c' },
+      { label: 'Company D', value: 'company d' },
+      { label: 'Company E', value: 'company e' }
+    ];
+
+    const handleChange = (value: string[]) => {
+      console.log(`selected ${value}`);
+    };
 
     const onFinish = async (values: any) => {
       const { email, password, confirmPassword } = values;
@@ -72,7 +80,6 @@ import { registerUser } from "@/firebase/register";
                 Konfirmasi Pendaftaran
               </Text>
             </p>
-  
             
             <Form layout="vertical">
             <Form.Item label="Full Name">
@@ -87,6 +94,19 @@ import { registerUser } from "@/firebase/register";
             <Input value={role} readOnly style={{color:"grey"}}/>
             </Form.Item>
             </Form>
+
+            <Space style={{ width: '100%' }} direction="vertical">
+              <Form.Item label="Company">
+                <Select
+                mode="multiple"
+                allowClear
+                style={{ width: '100%' }}
+                placeholder="Please select"
+                onChange={handleChange}
+                options={options}
+                />
+              </Form.Item>
+            </Space>
   
             <Form
               name="confirm-register"
@@ -142,6 +162,8 @@ import { registerUser } from "@/firebase/register";
               >
                 <Input.Password />
               </Form.Item>
+
+              
   
               <Form.Item>
                 <Button
