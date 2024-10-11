@@ -38,6 +38,12 @@ const registerUserWithNik = async (nik) => {
 };
 
 const registerUser = async (nik, namaLengkap, divisi, role, email, password) => {
+
+  const actionCodeSettings = {
+    url: 'http://localhost:3000/auth/login',
+    handleCodeInApp: false,
+  };
+
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
@@ -49,10 +55,9 @@ const registerUser = async (nik, namaLengkap, divisi, role, email, password) => 
       divisi,
       role,
       email,
-      isEmailVerified: false,
     });
 
-    await sendEmailVerification(user);
+    await sendEmailVerification(user, actionCodeSettings);
     return { success: true, message: "Registrasi berhasil, email verifikasi terkirim" };
   } catch (error) {
     return { success: false, message: error.message };
