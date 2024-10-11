@@ -1,5 +1,11 @@
 import { auth, db } from './firebase';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import {
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    signOut,
+    sendPasswordResetEmail,
+    confirmPasswordReset
+} from 'firebase/auth';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 
 // Fungsi sign in
@@ -29,11 +35,10 @@ export const SignIn = async (nik, password) => {
     }
 };
 
-
 // Fungsi sign up
 export const SignUp = async (email, password) => {
     try {
-        const userCredential = await createUserWithEmailAndPassword(FirebaseAuth, email, password);
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         return userCredential;
     } catch (error) {
         console.error("Error signing up:", error);
@@ -44,9 +49,35 @@ export const SignUp = async (email, password) => {
 // Fungsi sign out
 export const SignOut = async () => {
     try {
-        await signOut(FirebaseAuth);
+        await signOut(auth);
     } catch (error) {
         console.error("Error signing out:", error);
-        throw error; 
+        throw error;
+    }
+};
+
+// Fungsi reset password
+export const resetPassword = async (email) => {
+    try {
+        await sendPasswordResetEmail(auth, email);
+        console.log("Reset password email sent.");
+    } catch (error) {
+        console.error("Error sending reset password email:", error);
+        throw error;
+    }
+};
+
+// Fungsi konfirmasi reset password
+export const resetPasswordConfirm = async (oobCode, newPassword) => {
+    if (!auth) {
+        throw new Error("Firebase auth not initialized");
+    }
+
+    try {
+        await confirmPasswordReset(auth, oobCode, newPassword);
+        console.log("Password has been reset successfully.");
+    } catch (error) {
+        console.error("Error resetting password:", error);
+        throw error;
     }
 };

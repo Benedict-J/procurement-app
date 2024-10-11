@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import {
     Layout,
     Card,
@@ -7,19 +8,31 @@ import {
     Image,
     Divider,
     Typography,
+    message
 } from "antd";
 import classes from "./index.module.scss";
 import { useRouter } from "next/router";
+import { resetPassword } from "@/firebase/auth";
 
 const { Text } = Typography;
 const { Content } = Layout;
 
 const ForgotPassword: React.FC | any = () => {
+    const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
 
-    const onResetPassword = () => {
-        router.push('/auth/forgot-password/reset-password')
-    }
+    const onResetPassword = async (values: { email: string }) => {
+        setIsLoading(true);
+        try {
+            await resetPassword(values.email); 
+            message.success("Reset password link sent to your email.");
+            router.push('/auth/forgot-password/reset-password')
+        } catch (error) {
+            message.error("Failed to send reset password email.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     return (
         <Content className={classes.loginContainer}>
@@ -33,7 +46,7 @@ const ForgotPassword: React.FC | any = () => {
                     />
                 </div>
                 <p style={{ textAlign: 'center', color: 'black', fontWeight: 'bold', fontSize: '18px' }}>
-                    Lupa Password?
+                    Forgot Password?
                 </p>
                 <Divider />
                 <Form onFinish={onResetPassword}
@@ -63,7 +76,7 @@ const ForgotPassword: React.FC | any = () => {
                         </Button>
                     </Form.Item>
                     <p style={{ textAlign: 'center', color: 'black', fontWeight: 'normal' }}>
-                        Link reset password dikirim ke email anda
+                        Reset password link sent to your email
                     </p>
                 </Form>
             </Card>

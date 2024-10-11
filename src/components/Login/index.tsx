@@ -26,7 +26,7 @@ const Login: React.FC = () => {
   };
 
   const onRegister = () => {
-    router.push('/auth/register'); 
+    router.push('/auth/register');
   };
 
   const onLogin = async (values: { nik: string; password: string }) => {
@@ -34,22 +34,22 @@ const Login: React.FC = () => {
     setIsLoading(true);
     try {
       await SignIn(nik, password);
-      message.success("Login berhasil!");
+      message.success("Login successful!");
       router.push('/');
     } catch (error) {
       if (error instanceof Error) {
-        if (error.message.includes("NIK tidak ditemukan")) {
-          message.error("NIK tidak ditemukan. Periksa kembali NIK Anda.");
+        if (error.message.includes("NIK not found")) {
+          message.error("NIK not found. Please check your NIK again.");
         } else if (error.message.includes("password")) {
-          message.error("Password salah. Periksa kembali password Anda.");
+          message.error("Wrong password. Please check your password again.");
         } else {
-          message.error("Login gagal! Periksa kembali NIK dan password Anda.");
+          message.error("Login failed! Please check your NIK and password again.");
         }
       } else {
-        message.error("Terjadi kesalahan yang tidak diketahui.");
+        message.error("An unknown error occurred.");
       }
     } finally {
-      setIsLoading(false); 
+      setIsLoading(false);
     }
   };
 
@@ -66,7 +66,7 @@ const Login: React.FC = () => {
             />
           </div>
           <p style={{ textAlign: 'center', color: 'black', fontWeight: 'bold', fontSize: '18px' }}>
-            Masukan Akun Anda
+            Enter Your Account
           </p>
           <Divider></Divider>
           <Form onFinish={onLogin}
@@ -97,7 +97,7 @@ const Login: React.FC = () => {
               style={{ display: 'block', textAlign: 'right', marginBottom: 20, fontSize: '14px', color: 'green', cursor: 'pointer' }}
               onClick={onForgotPassword}
             >
-              Lupa Password?
+              Forgot Password?
             </Text>
             <Form.Item>
               <Button className={classes.greenButton}
@@ -110,7 +110,7 @@ const Login: React.FC = () => {
               </Button>
             </Form.Item>
             <p className={classes.registerText}>
-              Belum memiliki Akun?
+              Don't have an account yet?
               <strong onClick={onRegister}> Register</strong>
             </p>
           </Form>
