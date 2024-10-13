@@ -45,13 +45,12 @@ const Login: React.FC = () => {
         } else {
           message.error("Login failed! Please check your NIK and password again.");
         }
-      } else {
-        message.error("An unknown error occurred.");
       }
     } finally {
       setIsLoading(false);
     }
   };
+
 
   return (
     <>

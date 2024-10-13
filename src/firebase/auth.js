@@ -11,29 +11,38 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 // Fungsi sign in
 export const SignIn = async (nik, password) => {
     try {
+        console.log("Checking NIK:", nik);
+
         const usersRef = collection(db, 'registeredUsers');
-        const q = query(usersRef, where("nik", "==", nik));
+        const q = query(usersRef, where("nik", "==", nik.trim()));
         const querySnapshot = await getDocs(q);
 
+        console.log("Number of documents found:", querySnapshot.size);
+
         if (querySnapshot.empty) {
-            throw new Error("NIK tidak ditemukan.");
+            throw new Error("NIK not found.");
         }
 
         let email = null;
         querySnapshot.forEach((doc) => {
             email = doc.data().email;
+            console.log("Email associated with NIK:", email);
         });
 
-        if (!email) {
-            throw new Error("Email tidak ditemukan untuk NIK tersebut.");
-        }
-
-        return await signInWithEmailAndPassword(auth, email, password);
+        await signInWithEmailAndPassword(auth, email, password);
     } catch (error) {
         console.error("Error signing in:", error);
-        throw error;
+
+        if (error.code === 'auth/wrong-password') {
+            throw new Error("Incorrect password.");
+        } else if (error.message.includes("NIK not found")) {
+            throw new Error("NIK not found.");
+        } else {
+            throw new Error("Login failed. Please check your email and password.");
+        }
     }
 };
+
 
 // Fungsi sign up
 export const SignUp = async (email, password) => {
