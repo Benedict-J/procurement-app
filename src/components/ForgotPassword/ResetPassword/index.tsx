@@ -20,13 +20,13 @@ const { Content } = Layout;
 const ConfirmPassword: React.FC | any = () => {
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
-    const { oobCode } = router.query;
+    const { oobCode } = router.query; 
 
     const onSubmit = async (values: { password: string; confirmPassword: string }) => {
         const { password, confirmPassword } = values;
 
         if (password !== confirmPassword) {
-            message.error("Passwords do not match!");
+            message.error("Passwords do not match!"); 
             return;
         }
 
@@ -37,7 +37,7 @@ const ConfirmPassword: React.FC | any = () => {
 
         setIsLoading(true);
         try {
-            await resetPasswordConfirm( oobCode as string, password);
+            await resetPasswordConfirm(oobCode as string, password); 
             message.success("Password has been reset successfully.");
             router.push('/auth/login');
         } catch (error) {

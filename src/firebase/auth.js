@@ -67,11 +67,15 @@ export const SignOut = async () => {
 
 // Fungsi reset password
 export const resetPassword = async (email) => {
+    const actionCodeSettings = {
+        url: 'http://localhost:3000/auth/forgot-password/reset-password', 
+        handleCodeInApp: true, 
+    };
+
     try {
-        await sendPasswordResetEmail(auth, email);
-        console.log("Reset password email sent.");
+        await sendPasswordResetEmail(auth, email, actionCodeSettings); 
     } catch (error) {
-        console.error("Error sending reset password email:", error);
+        console.error("Error sending reset email:", error);
         throw error;
     }
 };
