@@ -54,6 +54,7 @@ const registerUser = async (nik, namaLengkap, divisi, role, email, password) => 
       namaLengkap,
       divisi,
       role,
+      company,
       email,
     });
 
