@@ -96,7 +96,11 @@ import {
             </Form>
 
             <Space style={{ width: '100%' }} direction="vertical">
-              <Form.Item label="Company">
+              <Form.Item
+                label="Company"
+                name="company"
+                rules={[{ required: true, message: 'Please select at least one company!' }]}
+              >
                 <Select
                 mode="multiple"
                 allowClear
