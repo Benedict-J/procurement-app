@@ -4,6 +4,7 @@ import {
     createUserWithEmailAndPassword,
     signOut,
     sendPasswordResetEmail,
+    sendEmailVerification,
     confirmPasswordReset
 } from 'firebase/auth';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -78,17 +79,26 @@ export const SignOut = async () => {
 // Fungsi reset password
 export const resetPassword = async (email) => {
     const actionCodeSettings = {
-        url: 'http://localhost:3000/auth/forgot-password/reset-password', 
-        handleCodeInApp: true, 
+        url: 'http://localhost:3000/auth/forgot-password/reset-password',
+        handleCodeInApp: true,
     };
 
     try {
-        await sendPasswordResetEmail(auth, email, actionCodeSettings); 
+        const usersRef = collection(db, 'registeredUsers');
+        const q = query(usersRef, where("email", "==", email));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            throw new Error("Email not registered"); 
+        }
+
+        await sendPasswordResetEmail(auth, email, actionCodeSettings);
     } catch (error) {
         console.error("Error sending reset email:", error);
         throw error;
     }
 };
+
 
 // Fungsi konfirmasi reset password
 export const resetPasswordConfirm = async (oobCode, newPassword) => {
