@@ -16,14 +16,14 @@ const registerUserWithNik = async (nik) => {
     const preRegisteredDoc = await getDoc(preRegisteredDocRef);
 
     if (!preRegisteredDoc.exists()) {
-      throw new Error('NIK tidak terdaftar! Silahkan Hubungi Super Admin');
+      throw new Error('NIK not registered! Please Contact Super Admin');
     }
 
     const userData = preRegisteredDoc.data(); 
     const { namaLengkap, divisi, role } = userData;
 
     if (role !== 'Staff' && role !== 'Head') {
-      throw new Error('Hanya Staff dan Head yang dapat melakukan register');
+      throw new Error('Only Staff and Heads can register');
     }
 
     return { success: true, userData: { namaLengkap, divisi, role } };
