@@ -1,7 +1,8 @@
-import { Html, Head, Main, NextScript, DocumentContext } from "next/document";
+import { Html, Head, Main, NextScript, DocumentContext, DocumentInitialProps } from "next/document";
 
 import METADATA from "@constants/metadata";
 import { createCache, extractStyle, StyleProvider } from "@ant-design/cssinjs";
+import NextDocument from "next/document";
 
 export default function Document() {
   return (
@@ -27,20 +28,45 @@ export default function Document() {
 
 }
 
-Document.getServerSideProps = async (ctx: DocumentContext): Promise<any> => {
+// Document.getServerSideProps = async (ctx: DocumentContext): Promise<any> => {
+//   const cache = createCache();
+//   const originalRenderPage = ctx.renderPage;
+//   ctx.renderPage = () =>
+//     originalRenderPage({
+//       enhanceApp: (App) => (props) =>
+//         (
+//           <StyleProvider cache={cache}>
+//             <App {...props} />
+//           </StyleProvider>
+//         ),
+//     });
+
+//   const initialProps = await Document.getServerSideProps(ctx);
+//   const style = extractStyle(cache, true);
+//   return {
+//     ...initialProps,
+//     styles: (
+//       <>
+//         {initialProps.styles}
+//         <style dangerouslySetInnerHTML={{ __html: style }} />
+//       </>
+//     ),
+//   };
+// };
+
+Document.getInitialProps = async (ctx: DocumentContext): Promise<DocumentInitialProps> => {
   const cache = createCache();
   const originalRenderPage = ctx.renderPage;
   ctx.renderPage = () =>
     originalRenderPage({
-      enhanceApp: (App) => (props) =>
-        (
-          <StyleProvider cache={cache}>
-            <App {...props} />
-          </StyleProvider>
-        ),
+      enhanceApp: (App) => (props) => (
+        <StyleProvider cache={cache}>
+          <App {...props} />
+        </StyleProvider>
+      ),
     });
 
-  const initialProps = await Document.getServerSideProps(ctx);
+  const initialProps = await NextDocument.getInitialProps(ctx);
   const style = extractStyle(cache, true);
   return {
     ...initialProps,
