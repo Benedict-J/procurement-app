@@ -29,7 +29,17 @@ export const SignIn = async (nik, password) => {
             console.log("Email associated with NIK:", email);
         });
 
-        await signInWithEmailAndPassword(auth, email, password);
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        await user.reload();
+
+        if (!user.emailVerified) {
+            await sendEmailVerification(user);
+            throw new Error("Email not verified. Check your email inbox");
+        }
+
+        // await signInWithEmailAndPassword(auth, email, password);
     } catch (error) {
         console.error("Error signing in:", error);
 

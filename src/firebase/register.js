@@ -1,8 +1,7 @@
 import { auth } from '@/firebase/firebase';
-import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendEmailVerification, applyActionCode } from 'firebase/auth';
 import { db } from '@/firebase/firebase';
-import { doc, query, where, getDocs, getDoc, addDoc, collection } from 'firebase/firestore';
-import { message } from 'antd';
+import { doc, query, where, getDocs, getDoc, setDoc, addDoc, deleteDoc, collection } from 'firebase/firestore';
 
 const registerUserWithNik = async (nik) => {
   try {
@@ -10,11 +9,9 @@ const registerUserWithNik = async (nik) => {
     const querySnapshot = await getDocs(q);
 
     if (!querySnapshot.empty) {
-      // Jika ada dokumen yang ditemukan, berarti NIK sudah terdaftar
       throw new Error('NIK sudah terdaftar!');
     }
 
-    // Ambil data dari Firestore berdasarkan NIK
     const preRegisteredDocRef = doc(db, 'preRegisteredUsers', nik);
     const preRegisteredDoc = await getDoc(preRegisteredDocRef);
 
@@ -22,14 +19,13 @@ const registerUserWithNik = async (nik) => {
       throw new Error('NIK tidak terdaftar! Silahkan Hubungi Super Admin');
     }
 
-    const userData = preRegisteredDoc.data(); // Dapatkan data user
+    const userData = preRegisteredDoc.data(); 
     const { namaLengkap, divisi, role } = userData;
 
     if (role !== 'Staff' && role !== 'Head') {
       throw new Error('Hanya Staff dan Head yang dapat melakukan register');
     }
 
-    // Kembalikan data pengguna di dalam `userData` jika sukses
     return { success: true, userData: { namaLengkap, divisi, role } };
   } catch (error) {
     // Kembalikan error jika terjadi masalah
@@ -56,6 +52,7 @@ const registerUser = async (nik, namaLengkap, divisi, role, email, password, com
       role,
       company,
       email,
+      isEmailVerified: false,
     });
 
     await sendEmailVerification(user, actionCodeSettings);
@@ -65,4 +62,5 @@ const registerUser = async (nik, namaLengkap, divisi, role, email, password, com
   }
 }
 
-export { registerUserWithNik, registerUser };
+
+export { registerUserWithNik, registerUser};
