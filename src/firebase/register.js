@@ -37,7 +37,7 @@ const registerUserWithNik = async (nik) => {
   }
 };
 
-const registerUser = async (nik, namaLengkap, divisi, role, email, password) => {
+const registerUser = async (nik, namaLengkap, divisi, role, email, password, company) => {
 
   const actionCodeSettings = {
     url: 'http://localhost:3000/auth/login',

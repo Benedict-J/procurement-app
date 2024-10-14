@@ -25,19 +25,23 @@ import {
     const { nik, namaLengkap, divisi, role } = router.query;
 
     const options: SelectProps['options'] = [
-      { label: 'Company A', value: 'company a' },
-      { label: 'Company B', value: 'company b' },
-      { label: 'Company C', value: 'company c' },
-      { label: 'Company D', value: 'company d' },
-      { label: 'Company E', value: 'company e' }
+      { label: 'Company A', value: 'Company A' },
+      { label: 'Company B', value: 'Company B' },
+      { label: 'Company C', value: 'Company C' },
+      { label: 'Company D', value: 'Company D' },
+      { label: 'Company E', value: 'Company E' }
     ];
 
-    const handleChange = (value: string[]) => {
-      console.log(`selected ${value}`);
-    };
+    const [form] = Form.useForm();
 
     const onFinish = async (values: any) => {
-      const { email, password, confirmPassword } = values;
+      console.log("Form values: ", values);
+      const { email, password, confirmPassword, company} = values;
+
+      if (!company || company.length === 0) {
+        message.error("Please select at least one company");
+        return;
+      }
 
       if (password !== confirmPassword) {
         message.error("Password not match!");
@@ -45,7 +49,7 @@ import {
       }
     
       try {
-        const result = await registerUser(nik, namaLengkap, divisi, role, email, password);
+        const result = await registerUser(nik, namaLengkap, divisi, role, email, password, company);
     
         if (result.success) {
           message.success("Register success! Verification email has been sent");
@@ -77,7 +81,7 @@ import {
   
             <p style={{ marginBottom: 20, textAlign: 'center'}}>
               <Text style={{color : '#000000', fontWeight: 'bold', fontSize: "20px"}}>
-                Konfirmasi Pendaftaran
+                Confirm Registration
               </Text>
             </p>
             
@@ -95,6 +99,15 @@ import {
             </Form.Item>
             </Form>
 
+  
+            <Form
+              form={form}
+              name="confirm-register"
+              layout="vertical"
+              initialValues={{ remember: false }}
+              onFinish={onFinish}
+              autoComplete="off"
+            >
             <Space style={{ width: '100%' }} direction="vertical">
               <Form.Item
                 label="Company"
@@ -106,19 +119,10 @@ import {
                 allowClear
                 style={{ width: '100%' }}
                 placeholder="Please select"
-                onChange={handleChange}
                 options={options}
                 />
               </Form.Item>
             </Space>
-  
-            <Form
-              name="confirm-register"
-              layout="vertical"
-              initialValues={{ remember: false }}
-              onFinish={onFinish}
-              autoComplete="off"
-            >
               <Form.Item
                 label="Email"
                 name="email"
@@ -166,9 +170,6 @@ import {
               >
                 <Input.Password />
               </Form.Item>
-
-              
-  
               <Form.Item>
                 <Button
                   htmlType="submit"
@@ -178,13 +179,6 @@ import {
                 >
                   Submit
                 </Button>
-  
-                <div style={{ textAlign: "center" }}>
-                  <p style={{ marginTop: 20 }}>
-                    <Text style={{ color: '#000000' }}>Sudah Memiliki Akun? </Text>
-                    <Button type="link" className={classes.loginButton}>Login</Button>
-                  </p>
-                </div>
               </Form.Item>
             </Form>
           </Card>
