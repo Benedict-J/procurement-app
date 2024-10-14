@@ -20,13 +20,13 @@ const { Content } = Layout;
 const ConfirmPassword: React.FC | any = () => {
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
-    const { oobCode } = router.query; 
+    const { oobCode } = router.query;
 
     const onSubmit = async (values: { password: string; confirmPassword: string }) => {
         const { password, confirmPassword } = values;
 
         if (password !== confirmPassword) {
-            message.error("Passwords do not match!"); 
+            message.error("Passwords do not match!");
             return;
         }
 
@@ -37,7 +37,7 @@ const ConfirmPassword: React.FC | any = () => {
 
         setIsLoading(true);
         try {
-            await resetPasswordConfirm(oobCode as string, password); 
+            await resetPasswordConfirm(oobCode as string, password);
             message.success("Password has been reset successfully.");
             router.push('/auth/login');
         } catch (error) {
@@ -70,14 +70,32 @@ const ConfirmPassword: React.FC | any = () => {
                     <Form.Item
                         label="Password"
                         name="password"
-                        rules={[{ required: true, message: "Please input your password!" }]}
+                        rules={[
+                            { required: true, message: "Please input your password!" },
+                            { min: 8, message: "Password must be at least 8 characters!" },
+                            {
+                                pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/,
+                                message: "The password must contain at least 1 uppercase letter, 1 lowercase letter, 1 number and 1 special character (@$!%*?&)",
+                            }
+                        ]}
                     >
                         <Input.Password />
                     </Form.Item>
                     <Form.Item
                         label="Confirm Password"
                         name="confirmPassword"
-                        rules={[{ required: true, message: "Please confirm your password!" }]}
+                        dependencies={['password']}
+                        rules={[
+                            { required: true, message: "Please confirm your password!" },
+                            ({ getFieldValue }) => ({
+                                validator(_, value) {
+                                    if (!value || getFieldValue('password') === value) {
+                                        return Promise.resolve();
+                                    }
+                                    return Promise.reject(new Error('Passwords do not match!'));
+                                },
+                            }),
+                        ]}
                     >
                         <Input.Password />
                     </Form.Item>
