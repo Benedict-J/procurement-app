@@ -25,10 +25,20 @@
   }
 
   .loginButton {
-    color: black; 
-    font-weight: 600;
-    margin: 0; 
-    padding: 0; 
+    text-align: center;
+    color: black;
+    font-weight: normal;
+
+  strong {
+    font-weight: bold;
+    color: black;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      color: green;
+    }
   }
+}
 
   
