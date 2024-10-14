@@ -27,7 +27,15 @@ const ForgotPassword: React.FC | any = () => {
             await resetPassword(values.email); 
             message.success("Reset password link sent to your email.");
         } catch (error) {
-            message.error("Failed to send reset password email.");
+            if (error instanceof Error) {
+                if (error.message === "Email not registered") {
+                    message.error("Email not registered");
+                } else {
+                    message.error("Failed to send reset password email.");
+                }
+            } else {
+                message.error("An unexpected error occurred.");
+            }
         } finally {
             setIsLoading(false);
         }
