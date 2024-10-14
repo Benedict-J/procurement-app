@@ -1,6 +1,6 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { verifyPasswordResetCode, checkActionCode } from "firebase/auth"; // Untuk verifikasi oobCode
+import { verifyPasswordResetCode, checkActionCode, getAuth, applyActionCode } from "firebase/auth"; // Untuk verifikasi oobCode
 import { message } from "antd";
 import { auth } from "@/firebase/firebase"; // Import Firebase auth instance
 
@@ -23,8 +23,22 @@ const ActionHandler = () => {
                     router.push(`/auth/forgot-password/reset-password?oobCode=${oobCode}`);
                 } else if (mode === 'verifyEmail') {
                     // Verifikasi oobCode untuk verifikasi email
-                    await checkActionCode(auth, oobCode); // Verifikasi oobCode untuk email verification
-                    router.push(`/auth/login?oobCode=${oobCode}`);
+                    await applyActionCode(auth, oobCode); // Pastikan verifikasi email diterapkan
+
+                    // Pastikan pengguna melakukan reload untuk memperbarui status emailVerified
+                    const user = auth.currentUser;
+                    if (user) {
+                        await user.reload(); // Reload user untuk memastikan status terupdate
+                        if (user.emailVerified) {
+                            message.success("Email telah diverifikasi. Silakan login.");
+                            router.push(`/auth/login`);
+                        } else {
+                            message.error("Email belum diverifikasi. Silakan coba lagi.");
+                        }
+                    } else {
+                        // Redirect ke login jika user tidak ditemukan
+                        router.push(`/auth/login`);
+                    }
                 } 
             } catch (error) {
                 message.error("Invalid or expired action code. Please try again.");

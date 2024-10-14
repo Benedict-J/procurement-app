@@ -4,6 +4,7 @@ import {
     createUserWithEmailAndPassword,
     signOut,
     sendPasswordResetEmail,
+    sendEmailVerification,
     confirmPasswordReset
 } from 'firebase/auth';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -32,24 +33,18 @@ export const SignIn = async (nik, password) => {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
+        // Reload status pengguna untuk memastikan status verifikasi terbaru
         await user.reload();
 
+        await user.getIdToken(true);
+
+        // Cek apakah email pengguna sudah diverifikasi
         if (!user.emailVerified) {
-            await sendEmailVerification(user);
-            throw new Error("Email not verified. Check your email inbox");
+            throw new Error("Email not verified.");
         }
 
-        // await signInWithEmailAndPassword(auth, email, password);
     } catch (error) {
-        console.error("Error signing in:", error);
-
-        if (error.code === 'auth/wrong-password') {
-            throw new Error("Incorrect password.");
-        } else if (error.message.includes("NIK not found")) {
-            throw new Error("NIK not found.");
-        } else {
-            throw new Error("Login failed. Please check your email and password.");
-        }
+        throw error;
     }
 };
 

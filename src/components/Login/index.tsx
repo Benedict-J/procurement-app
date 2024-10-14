@@ -53,7 +53,10 @@ const Login: React.FC = () => {
           message.error("NIK not found. Please check your NIK again.");
         } else if (error.message.includes("password")) {
           message.error("Wrong password. Please check your password again.");
-        } else {
+        } else if (error.message.includes("Email not verified.")) {
+          message.error("Email not verified, check your inbox again!");
+        }
+        else {
           message.error("Login failed! Please check your NIK and password again.");
         }
       }

@@ -52,7 +52,6 @@ const registerUser = async (nik, namaLengkap, divisi, role, email, password, com
       role,
       company,
       email,
-      isEmailVerified: false,
     });
 
     await sendEmailVerification(user, actionCodeSettings);
