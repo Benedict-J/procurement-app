@@ -13,12 +13,14 @@ import {
 import classes from "./index.module.scss";
 import { useRouter } from "next/router";
 import { SignIn } from "src/firebase/auth";
+import ReCAPTCHA from "react-google-recaptcha";
 
 const { Text } = Typography;
 const { Content } = Layout;
 
 const Login: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [captchaValue, setCaptchaValue] = useState<string | null>(null); // State untuk reCAPTCHA
   const router = useRouter();
 
   const onForgotPassword = () => {
@@ -29,7 +31,16 @@ const Login: React.FC = () => {
     router.push('/auth/register');
   };
 
+  const onCaptchaChange = (value: string | null) => {
+    setCaptchaValue(value); // Update state saat reCAPTCHA berhasil
+  };
+
   const onLogin = async (values: { nik: string; password: string }) => {
+    if (!captchaValue) { // Cek jika reCAPTCHA tidak selesai
+      message.error("Please complete the reCAPTCHA verification.");
+      return;
+    }
+
     const { nik, password } = values;
     setIsLoading(true);
     try {
@@ -50,7 +61,6 @@ const Login: React.FC = () => {
       setIsLoading(false);
     }
   };
-
 
   return (
     <>
@@ -78,7 +88,7 @@ const Login: React.FC = () => {
               label="NIK"
               name="nik"
               rules={[
-                { required: true, message: "Please input your nik!" },
+                { required: true, message: "Please input your NIK!" },
               ]}
             >
               <Input />
@@ -92,6 +102,12 @@ const Login: React.FC = () => {
             >
               <Input.Password />
             </Form.Item>
+            <Form.Item className={classes.captchaContainer}>
+              <ReCAPTCHA
+                sitekey="6LfwwWAqAAAAAE8GebnbABOR8kNrV_RC3_0iepff" // Ganti dengan site key reCAPTCHA yang benar
+                onChange={onCaptchaChange}
+              />
+            </Form.Item>
             <Text
               style={{ display: 'block', textAlign: 'right', marginBottom: 20, fontSize: '14px', color: 'green', cursor: 'pointer' }}
               onClick={onForgotPassword}
@@ -104,6 +120,7 @@ const Login: React.FC = () => {
                 htmlType="submit"
                 size="middle"
                 block
+                loading={isLoading} // Tampilkan loading saat proses
               >
                 Login
               </Button>
