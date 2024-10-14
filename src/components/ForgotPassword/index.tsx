@@ -26,7 +26,6 @@ const ForgotPassword: React.FC | any = () => {
         try {
             await resetPassword(values.email); 
             message.success("Reset password link sent to your email.");
-            router.push('/auth/forgot-password/reset-password')
         } catch (error) {
             message.error("Failed to send reset password email.");
         } finally {
