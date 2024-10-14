@@ -9,39 +9,53 @@
   height: 100%;
   opacity: 0.4;
 }
+
 .loginContainer {
   height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
 }
+
 .cardLogin {
   min-width: 360px;
   max-width: 20vw;
   margin: 0vh auto 0 auto;
   box-shadow: 0 5px 15px rgba(137, 140, 141, 0.1);
   border-radius: 20px;
+  position: relative; /* Untuk memastikan ::before bekerja di .loginContainer */
 }
+
 .logo {
-  display: flex;               
-  justify-content: center;     
-  align-items: center;         
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
+
 .logo img {
-  margin-bottom: 20px; 
+  margin-bottom: 20px;
 }
+
 .textLabel {
   color: black;
   font-weight: normal;
 }
+
 .greenButton {
   background-color: green !important;
   border-color: green !important;
   color: white !important;
 
   &:hover {
-    background-color: darkgreen; 
+    background-color: darkgreen;
   }
+}
+
+.captchaContainer {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
 .registerText {
