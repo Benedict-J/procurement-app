@@ -13,15 +13,13 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 export const SignIn = async (nik, password) => {
     try {
         console.log("Checking NIK:", nik);
-
         const usersRef = collection(db, 'registeredUsers');
         const q = query(usersRef, where("nik", "==", nik.trim()));
         const querySnapshot = await getDocs(q);
 
         console.log("Number of documents found:", querySnapshot.size);
-
         if (querySnapshot.empty) {
-            throw new Error("NIK not found.");
+            throw new Error("Login failed! Please check your NIK or password again.");
         }
 
         let email = null;
@@ -33,20 +31,24 @@ export const SignIn = async (nik, password) => {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // Reload status pengguna untuk memastikan status verifikasi terbaru
         await user.reload();
 
-        await user.getIdToken(true);
-
-        // Cek apakah email pengguna sudah diverifikasi
         if (!user.emailVerified) {
-            throw new Error("Email not verified.");
+            await sendEmailVerification(user);
+            throw new Error("Email not verified. A verification email has been sent to your inbox.");
         }
 
     } catch (error) {
-        throw error;
+        console.error("Error signing in:", error);
+
+        if (error.message.includes("Email not verified")) {
+            throw error;
+        } else {
+            throw new Error("Login failed! Please check your NIK or password again.");
+        }
     }
 };
+
 
 
 // Fungsi sign up
@@ -83,7 +85,7 @@ export const resetPassword = async (email) => {
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) {
-            throw new Error("Email not registered"); 
+            throw new Error("Email not registered");
         }
 
         await sendPasswordResetEmail(auth, email, actionCodeSettings);

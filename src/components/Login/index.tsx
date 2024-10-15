@@ -36,7 +36,7 @@ const Login: React.FC = () => {
   };
 
   const onLogin = async (values: { nik: string; password: string }) => {
-    if (!captchaValue) { // Cek jika reCAPTCHA tidak selesai
+    if (!captchaValue) {
       message.error("Please complete the reCAPTCHA verification.");
       return;
     }
@@ -49,15 +49,10 @@ const Login: React.FC = () => {
       router.push('/');
     } catch (error) {
       if (error instanceof Error) {
-        if (error.message.includes("NIK not found")) {
-          message.error("NIK not found. Please check your NIK again.");
-        } else if (error.message.includes("password")) {
-          message.error("Wrong password. Please check your password again.");
-        } else if (error.message.includes("Email not verified.")) {
-          message.error("Email not verified, check your inbox again!");
-        }
-        else {
-          message.error("Login failed! Please check your NIK and password again.");
+        if (error.message.includes("Email not verified")) {
+          message.error("Email not verified. A verification email has been sent to your inbox.");
+        } else {
+          message.error("Login failed! Please check your NIK or password again.");
         }
       }
     } finally {

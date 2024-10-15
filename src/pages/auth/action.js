@@ -13,7 +13,7 @@ const ActionHandler = () => {
     useEffect(() => {
         const handleAction = async () => {
             if (!oobCode || !mode) {
-                 // Jika tidak ada oobCode atau mode, redirect ke error page
+                // Jika tidak ada oobCode atau mode, redirect ke error page
                 return;
             }
 
@@ -40,7 +40,7 @@ const ActionHandler = () => {
                         // Redirect ke login jika user tidak ditemukan
                         router.push(`/auth/login`);
                     }
-                } 
+                }
             } catch (error) {
                 message.error("Invalid or expired action code. Please try again.");
                 router.push("/error");
@@ -55,20 +55,20 @@ const ActionHandler = () => {
     }, [mode, oobCode, router.isReady]);
 
     return (
-      <BlankLayout>
-        {/* Tampilkan Spin jika sedang loading, jika tidak tampilkan konten */}
-        <Spin spinning={loading} tip="Loading...">
-          {/* Konten Anda yang ingin ditampilkan ketika tidak sedang loading */}
-          <div style={{ minHeight: "100vh" }}>
-            {loading ? "Memproses permintaan..." : "Proses selesai!"}
-          </div>
-        </Spin>
-      </BlankLayout>
+        <BlankLayout>
+            {/* Tampilkan Spin jika sedang loading, jika tidak tampilkan konten */}
+            <Spin spinning={loading} tip="Loading...">
+                {/* Konten Anda yang ingin ditampilkan ketika tidak sedang loading */}
+                <div style={{ minHeight: "100vh" }}>
+                    {loading ? "Memproses permintaan..." : "Proses selesai!"}
+                </div>
+            </Spin>
+        </BlankLayout>
     );// Tampilkan loading spinner jika diperlukan
 };
 
 ActionHandler.getLayout = (page) => {
-  return <BlankLayout>{page}</BlankLayout>;
+    return <BlankLayout>{page}</BlankLayout>;
 };
 
 export default ActionHandler;
