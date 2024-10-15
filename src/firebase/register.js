@@ -55,7 +55,7 @@ const registerUser = async (nik, namaLengkap, divisi, role, email, password, com
     });
 
     await sendEmailVerification(user, actionCodeSettings);
-    return { success: true, message: "Registrasi berhasil, email verifikasi terkirim" };
+    return { success: true, message: "Registration success, Email verification has been sent" };
   } catch (error) {
     return { success: false, message: error.message };
   }

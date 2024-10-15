@@ -81,7 +81,7 @@ const Register: React.FC | any = () => {
           </div>
           <Divider></Divider>
           <p style={{ marginBottom: 20, textAlign: 'center'}}>
-            <Text style={{color : '#000000', fontWeight: 'bold', fontSize: "20px"}}>Masukan NIK Anda</Text>
+            <Text style={{color : '#000000', fontWeight: 'bold', fontSize: "20px"}}>Enter your NIK</Text>
           </p>
           <Form
             name="basic"
