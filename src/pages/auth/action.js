@@ -1,7 +1,8 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { verifyPasswordResetCode, checkActionCode, getAuth, applyActionCode } from "firebase/auth"; // Untuk verifikasi oobCode
-import { message } from "antd";
+import { message, Spin } from "antd";
+import BlankLayout from "@/components/Layout/BlankLayout";
 import { auth } from "@/firebase/firebase"; // Import Firebase auth instance
 
 const ActionHandler = () => {
@@ -53,7 +54,21 @@ const ActionHandler = () => {
         }
     }, [mode, oobCode, router.isReady]);
 
-    return loading ? <div>Loading...</div> : null; // Tampilkan loading spinner jika diperlukan
+    return (
+      <BlankLayout>
+        {/* Tampilkan Spin jika sedang loading, jika tidak tampilkan konten */}
+        <Spin spinning={loading} tip="Loading...">
+          {/* Konten Anda yang ingin ditampilkan ketika tidak sedang loading */}
+          <div style={{ minHeight: "100vh" }}>
+            {loading ? "Memproses permintaan..." : "Proses selesai!"}
+          </div>
+        </Spin>
+      </BlankLayout>
+    );// Tampilkan loading spinner jika diperlukan
+};
+
+ActionHandler.getLayout = (page) => {
+  return <BlankLayout>{page}</BlankLayout>;
 };
 
 export default ActionHandler;
