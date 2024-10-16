@@ -1,5 +1,6 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import { updateEmailVerificationStatus } from "@/firebase/updateEmailVerificationStatus"; 
 import { verifyPasswordResetCode, checkActionCode, getAuth, applyActionCode } from "firebase/auth"; // Untuk verifikasi oobCode
 import { message, Spin } from "antd";
 import BlankLayout from "@/components/Layout/BlankLayout";
@@ -31,10 +32,11 @@ const ActionHandler = () => {
                     if (user) {
                         await user.reload(); // Reload user untuk memastikan status terupdate
                         if (user.emailVerified) {
-                            message.success("Email telah diverifikasi. Silakan login.");
+                            await updateEmailVerificationStatus(user.uid);
+                            message.success("Email has been verified. Login now.");
                             router.push(`/auth/login`);
                         } else {
-                            message.error("Email belum diverifikasi. Silakan coba lagi.");
+                            message.error("Email not verified. Try again.");
                         }
                     } else {
                         // Redirect ke login jika user tidak ditemukan

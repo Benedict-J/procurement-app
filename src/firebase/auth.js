@@ -23,9 +23,13 @@ export const SignIn = async (nik, password) => {
         }
 
         let email = null;
+        let isEmailVerifiedInDB = false;
+
         querySnapshot.forEach((doc) => {
             email = doc.data().email;
+            isEmailVerifiedInDB = doc.data().isEmailVerified;
             console.log("Email associated with NIK:", email);
+            console.log("isEmailVerified in DB:", isEmailVerifiedInDB);
         });
 
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -33,7 +37,7 @@ export const SignIn = async (nik, password) => {
 
         await user.reload();
 
-        if (!user.emailVerified) {
+        if (!user.emailVerified || !isEmailVerifiedInDB) {
             await sendEmailVerification(user);
             throw new Error("Email not verified. A verification email has been sent to your inbox.");
         }

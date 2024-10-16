@@ -9,7 +9,7 @@ const registerUserWithNik = async (nik) => {
     const querySnapshot = await getDocs(q);
 
     if (!querySnapshot.empty) {
-      throw new Error('NIK sudah terdaftar!');
+      throw new Error('NIK already registered!');
     }
 
     const preRegisteredDocRef = doc(db, 'preRegisteredUsers', nik);
@@ -52,6 +52,7 @@ const registerUser = async (nik, namaLengkap, divisi, role, email, password, com
       role,
       company,
       email,
+      isEmailVerified: false
     });
 
     await sendEmailVerification(user, actionCodeSettings);
