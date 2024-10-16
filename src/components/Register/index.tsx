@@ -56,7 +56,7 @@ const Register: React.FC | any = () => {
     } else if (!result.success) {
         message.error(result.message);
     } else {
-      message.error("Terjadi Masalah");  
+      message.error("There's a problem");  
     }
   };
 

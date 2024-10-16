@@ -13,7 +13,6 @@ import {
   import { useRouter } from "next/router";
   import { Select, Space } from 'antd';
   import type { SelectProps } from 'antd';
-  import { useEffect } from "react";
   import { registerUser } from "@/firebase/register";
   
   const { Text } = Typography;

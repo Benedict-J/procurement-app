@@ -1,7 +1,7 @@
 import { auth } from '@/firebase/firebase';
 import { createUserWithEmailAndPassword, sendEmailVerification, applyActionCode } from 'firebase/auth';
 import { db } from '@/firebase/firebase';
-import { doc, query, where, getDocs, getDoc, setDoc, addDoc, deleteDoc, collection } from 'firebase/firestore';
+import { doc, query, where, getDocs, getDoc, addDoc, deleteDoc, collection } from 'firebase/firestore';
 
 const registerUserWithNik = async (nik) => {
   try {
