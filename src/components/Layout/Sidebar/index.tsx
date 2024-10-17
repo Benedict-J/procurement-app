@@ -6,6 +6,7 @@ const Sidebar: React.FC = (props) => {
 
   return (
     <Layout.Sider
+      className=""
       collapsible
       breakpoint="lg"
       width={260}
