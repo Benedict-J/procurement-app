@@ -22,7 +22,7 @@ const registerUserWithNik = async (nik) => {
     const userData = preRegisteredDoc.data(); 
     const { namaLengkap, divisi, role } = userData;
 
-    if (role !== 'Staff' && role !== 'Head' && role !== "Lead Finance") {
+    if (role !== 'Staff' && role !== 'Head' && role !== "Finance Lead") {
       throw new Error('Only Staff and Heads can register');
     }
 
