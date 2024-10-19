@@ -32,7 +32,7 @@ const Login: React.FC = () => {
   };
 
   const onCaptchaChange = (value: string | null) => {
-    setCaptchaValue(value); // Update state saat reCAPTCHA berhasil
+    setCaptchaValue(value);
   };
 
   const onLogin = async (values: { nik: string; password: string }) => {
@@ -100,25 +100,25 @@ const Login: React.FC = () => {
             >
               <Input.Password />
             </Form.Item>
-            <Form.Item className={classes.captchaContainer}>
-              <ReCAPTCHA
-                sitekey="6LfwwWAqAAAAAE8GebnbABOR8kNrV_RC3_0iepff" // Ganti dengan site key reCAPTCHA yang benar
-                onChange={onCaptchaChange}
-              />
-            </Form.Item>
             <Text
               style={{ display: 'block', textAlign: 'right', marginBottom: 20, fontSize: '14px', color: 'green', cursor: 'pointer' }}
               onClick={onForgotPassword}
             >
               Forgot Password?
             </Text>
+            <Form.Item className={classes.captchaContainer}>
+              <ReCAPTCHA
+                sitekey="6LfwwWAqAAAAAE8GebnbABOR8kNrV_RC3_0iepff"
+                onChange={onCaptchaChange}
+              />
+            </Form.Item>
             <Form.Item>
               <Button className={classes.greenButton}
                 type="primary"
                 htmlType="submit"
                 size="middle"
                 block
-                loading={isLoading} // Tampilkan loading saat proses
+                loading={isLoading}
               >
                 Login
               </Button>
