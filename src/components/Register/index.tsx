@@ -50,7 +50,6 @@ const Register: React.FC | any = () => {
           nik: nik,
           namaLengkap: result.userData.namaLengkap,
           divisi: result.userData.divisi,
-          role: result.userData.role,
         }
       });
     } else if (!result.success) {

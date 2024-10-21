@@ -1,5 +1,5 @@
 .confirmRegisterContainer::before {
-    content: " ";
+    content: "";
     background: url(/images/login-background.png) no-repeat;
     background-size: cover;
     background-position: center;
@@ -10,18 +10,25 @@
     width: 100%;
     height: 100%;
     opacity: 0.4;
+    background-attachment: fixed;
+    z-index: -1;
   }
   .confirmRegisterContainer {
-    height: 100vh;
+    min-height: 100vh;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
+    position: relative;
+    overflow-y: auto;
+    padding: 20px;
   }
   .cardRegister {
-    min-width: 360px;
+    min-width: 480px;
     max-width: 20vw;
-    margin: 25vh auto 0 auto;
+    margin: 10vh auto;
+    overflow: visible;    
     box-shadow: 0 5px 15px rgba(137, 140, 141, 0.1);
+    position: relative;
   }
 
   .loginButton {

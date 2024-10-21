@@ -26,7 +26,8 @@ export const SignIn = async (nik, password) => {
         let isEmailVerifiedInDB = false;
 
         querySnapshot.forEach((doc) => {
-            email = doc.data().email;
+            const profile = doc.data().profile;
+            email = profile[0].email;
             isEmailVerifiedInDB = doc.data().isEmailVerified;
             console.log("Email associated with NIK:", email);
             console.log("isEmailVerified in DB:", isEmailVerifiedInDB);

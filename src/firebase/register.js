@@ -20,20 +20,20 @@ const registerUserWithNik = async (nik) => {
     }
 
     const userData = preRegisteredDoc.data(); 
-    const { namaLengkap, divisi, role } = userData;
+    const { namaLengkap, divisi} = userData;
 
-    if (role !== 'Staff' && role !== 'Head' && role !== "Finance Lead") {
-      throw new Error('Only Staff and Heads can register');
-    }
+    // if (role !== 'Staff' && role !== 'Head' && role !== "Finance Lead") {
+    //   throw new Error('Only Staff and Heads can register');
+    // }
 
-    return { success: true, userData: { namaLengkap, divisi, role } };
+    return { success: true, userData: { namaLengkap, divisi} };
   } catch (error) {
     // Kembalikan error jika terjadi masalah
     return { success: false, message: error.message };
   }
 };
 
-const registerUser = async (nik, namaLengkap, divisi, role, email, password, company) => {
+const registerUser = async (nik, namaLengkap, divisi, profiles, password) => {
 
   const actionCodeSettings = {
     url: 'http://localhost:3000/auth/login',
@@ -41,23 +41,22 @@ const registerUser = async (nik, namaLengkap, divisi, role, email, password, com
   };
 
   try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const userCredential = await createUserWithEmailAndPassword(auth, profiles[0].email, password);
     const user = userCredential.user;
 
     await addDoc(collection(db, 'registeredUsers'), {
       uid: user.uid,
-      nik,
-      namaLengkap,
-      divisi,
-      role,
-      company,
-      email,
+      nik: nik,
+      namaLengkap: namaLengkap,
+      divisi: divisi,
+      profile: profiles,
       isEmailVerified: false
     });
 
     await sendEmailVerification(user, actionCodeSettings);
     return { success: true, message: "Registration success, Email verification has been sent" };
   } catch (error) {
+    console.error("Firebase error: ", error);
     return { success: false, message: error.message };
   }
 }
