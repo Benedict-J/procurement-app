@@ -1,13 +1,17 @@
 import { Button, Layout, Menu, MenuProps, Image } from "antd";
 import { useRouter } from "next/router";
 import menus from "@settings/layout/menus";
+import { useUserContext } from "@/contexts/UserContext";
 
 const Sidebar: React.FC = (props) => {
   const router = useRouter();
+  const { userProfile, loading } = useUserContext();
 
   const handleClick = (path: string) => {
     router.push(path);
   };
+
+  if (loading) return <p>Loading...</p>;
 
   return (
     <Layout.Sider
