@@ -5,6 +5,16 @@ import { doc, query, where, getDocs, getDoc, setDoc, addDoc, deleteDoc, collecti
 
 const registerUserWithNik = async (nik) => {
   try {
+
+    const registeredUsersRef = collection(db, 'registeredUsers');
+    const qRegisteredUsers = query(registeredUsersRef, where('nik', '==', nik));
+    const registeredUsersSnapshot = await getDocs(qRegisteredUsers);
+
+    // Jika ditemukan dokumen dengan NIK tersebut, return error
+    if (!registeredUsersSnapshot.empty) {
+      throw new Error('NIK already registered');
+    }
+
     const q = query(collection(db, 'preRegisteredUsers'), nik);
     const querySnapshot = await getDocs(q);
 
