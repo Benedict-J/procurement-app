@@ -1,27 +1,54 @@
-import { Layout, Row, Col, Space, Dropdown, Avatar } from "antd";
-import { LogoutOutlined, UserOutlined } from "@ant-design/icons";
+import { Layout, Row, Col, Space, Dropdown, Avatar, Badge } from "antd";
+import { LogoutOutlined, UserOutlined, BellOutlined } from "@ant-design/icons";
 import { useRouter } from "next/router";
 import { useState } from "react";
+import styles from "./index.module.scss"; // Import SCSS Module
 
 const Header: React.FC = () => {
   const router = useRouter();
 
-  const [role, setRole] = useState("Requester"); 
+  const [role, setRole] = useState("Requester");
+  const [company, setCompany] = useState("AdaKami");
+
+  const [notifications, setNotifications] = useState([
+    { key: 1, message: "Pesan 1" },
+    { key: 2, message: "Pesan 2" },
+    { key: 3, message: "Pesan 3" },
+  ]); // Dummy data 
 
   const handleLogout = () => {
     router.push("/auth/login");
   };
 
+  const notificationMenu = {
+    items: notifications.map((notification) => ({
+      key: notification.key,
+      label: notification.message,
+    })),
+  };
+
   return (
-    <Layout.Header>
+    <Layout.Header className={styles.header}>
       <Row justify="space-between">
         <Col>
-        <span style={{ color: '#fff', fontSize: '18px', fontWeight: 'bold'}}>
-            {role}
+          <span className={styles.headerText}>
+            {role} - {company}
           </span>
         </Col>
         <Col>
-          <Space>
+          <Space size="middle">
+            <Dropdown
+              placement="bottomRight"
+              menu={notificationMenu}
+              trigger={["hover"]}
+            >
+              <Badge count={notifications.length} offset={[-2, 0]}>
+                <Avatar
+                  className={`${styles.avatar} ${styles.notification}`}
+                  icon={<BellOutlined />}
+                />
+              </Badge>
+            </Dropdown>
             <Dropdown
               placement="bottomRight"
               menu={{
@@ -36,17 +63,12 @@ const Header: React.FC = () => {
                   },
                 ],
               }}
+              trigger={["hover"]}
             >
-              <Space>
-                <Avatar
-                  style={{
-                    backgroundColor: "#87d068",
-                    cursor: "pointer",
-                    margin: "0px 8px",
-                  }}
-                  icon={<UserOutlined />}
-                />
-              </Space>
+              <Avatar
+                className={`${styles.avatar} ${styles.user}`}
+                icon={<UserOutlined />}
+              />
             </Dropdown>
           </Space>
         </Col>
