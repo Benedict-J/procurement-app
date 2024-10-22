@@ -1,7 +1,7 @@
 import { auth } from '@/firebase/firebase';
 import { createUserWithEmailAndPassword, sendEmailVerification, applyActionCode } from 'firebase/auth';
 import { db } from '@/firebase/firebase';
-import { doc, query, where, getDocs, getDoc, addDoc, deleteDoc, collection } from 'firebase/firestore';
+import { doc, query, where, getDocs, getDoc, setDoc, addDoc, deleteDoc, collection } from 'firebase/firestore';
 
 const registerUserWithNik = async (nik) => {
   try {
@@ -44,7 +44,7 @@ const registerUser = async (nik, namaLengkap, divisi, profiles, password) => {
     const userCredential = await createUserWithEmailAndPassword(auth, profiles[0].email, password);
     const user = userCredential.user;
 
-    await addDoc(collection(db, 'registeredUsers'), {
+    await setDoc(doc(db, 'registeredUsers', user.uid), {
       uid: user.uid,
       nik: nik,
       namaLengkap: namaLengkap,

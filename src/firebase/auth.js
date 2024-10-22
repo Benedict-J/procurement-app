@@ -36,12 +36,20 @@ export const SignIn = async (nik, password) => {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
+        if (user) {
+            console.log("Login successful, user:", user.email); // Log user email
+          } else {
+            console.log("Login failed, user not available.");
+          }
+
         await user.reload();
 
         if (!user.emailVerified || !isEmailVerifiedInDB) {
             await sendEmailVerification(user);
             throw new Error("Email not verified. A verification email has been sent to your inbox.");
         }
+
+        return user;
 
     } catch (error) {
         console.error("Error signing in:", error);

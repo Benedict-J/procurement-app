@@ -29,7 +29,7 @@ const menus: MenuItem[] = [
         path: "/history",
         name: "History",
         icon: <HistoryOutlined />,
-        key: "requester:form-request",
+        key: "requester:history",
       },  
     ],
   },

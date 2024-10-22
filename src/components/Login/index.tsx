@@ -46,7 +46,9 @@ const Login: React.FC = () => {
     try {
       await SignIn(nik, password);
       message.success("Login successful!");
-      router.push('/');
+      setTimeout(() => {
+        router.push('/');
+      }, 1000);
     } catch (error) {
       if (error instanceof Error) {
         if (error.message.includes("Email not verified")) {

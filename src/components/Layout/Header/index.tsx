@@ -2,8 +2,9 @@ import { Layout, Row, Col, Space, Dropdown, Avatar, Badge } from "antd";
 import { LogoutOutlined, UserOutlined, BellOutlined } from "@ant-design/icons";
 import { useRouter } from "next/router";
 import { useUserContext } from "@/contexts/UserContext";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { auth } from "@/firebase/firebase";
+import styles from "@/components/Layout/Header/index.module.scss"
 
 const Header: React.FC = () => {
   const router = useRouter();
@@ -16,8 +17,7 @@ const Header: React.FC = () => {
   const handleLogout = () => {
     router.push("/auth/login");
   };
-
-
+  
   useEffect(() => {
     const checkAuthStatus = () => {
       const user = auth.currentUser;
@@ -30,6 +30,19 @@ const Header: React.FC = () => {
 
     checkAuthStatus();
   }, []);
+
+  const [notifications, setNotifications] = useState([
+    { key: 1, message: "Pesan 1" },
+    { key: 2, message: "Pesan 2" },
+    { key: 3, message: "Pesan 3" },
+  ]); // Dummy data 
+
+  const notificationMenu = {
+    items: notifications.map((notification) => ({
+      key: notification.key,
+      label: notification.message,
+    })),
+  };
 
   return (
     <Layout.Header className={styles.header}>
