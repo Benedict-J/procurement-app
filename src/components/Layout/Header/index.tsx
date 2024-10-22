@@ -4,20 +4,26 @@ import { useRouter } from "next/router";
 import { useUserContext } from "@/contexts/UserContext";
 import { useEffect, useState } from "react";
 import { auth } from "@/firebase/firebase";
+import { SignOut } from "@/firebase/auth";
 import styles from "@/components/Layout/Header/index.module.scss"
 
 const Header: React.FC = () => {
   const router = useRouter();
-  const { userProfile, loading } = useUserContext();
+  const { userProfile, loading, selectedProfileIndex } = useUserContext();
 
   if (loading) return <p>Loading...</p>;
 
   if (!userProfile) return <p>User profile not available</p>;
 
-  const handleLogout = () => {
-    router.push("/auth/login");
+  const handleLogout = async () => {
+    try {
+      await SignOut();
+      router.push("/auth/login");
+    } catch (error) {
+      console.error("Error during logout:", error);
+    }
   };
-  
+
   useEffect(() => {
     const checkAuthStatus = () => {
       const user = auth.currentUser;

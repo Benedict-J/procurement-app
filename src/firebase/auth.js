@@ -24,10 +24,14 @@ export const SignIn = async (nik, password) => {
 
         let email = null;
         let isEmailVerifiedInDB = false;
+        let selectedProfileIndex = [];
+        let profile = [];
 
         querySnapshot.forEach((doc) => {
-            const profile = doc.data().profile;
-            email = profile[0].email;
+            profile = doc.data().profile;
+            console.log("Profile Data:", profile); 
+            selectedProfileIndex = doc.data().selectedProfileIndex || 0;
+            email = selectedProfileIndex.email;
             isEmailVerifiedInDB = doc.data().isEmailVerified;
             console.log("Email associated with NIK:", email);
             console.log("isEmailVerified in DB:", isEmailVerifiedInDB);
@@ -49,7 +53,7 @@ export const SignIn = async (nik, password) => {
             throw new Error("Email not verified. A verification email has been sent to your inbox.");
         }
 
-        return user;
+        return { user, profile, selectedProfileIndex };
 
     } catch (error) {
         console.error("Error signing in:", error);
@@ -94,19 +98,38 @@ export const resetPassword = async (email) => {
 
     try {
         const usersRef = collection(db, 'registeredUsers');
-        const q = query(usersRef, where("email", "==", email));
-        const querySnapshot = await getDocs(q);
+        const querySnapshot = await getDocs(usersRef);  // Ambil semua dokumen
 
-        if (querySnapshot.empty) {
+        let userFound = false;
+        let userEmail = null;
+
+        // Iterasi setiap dokumen
+        querySnapshot.forEach((doc) => {
+            const userData = doc.data();
+            const profiles = userData.profile;  // Ambil array profile
+
+            // Cek apakah salah satu profile memiliki email yang sesuai
+            const matchedProfile = profiles.find(profile => profile.email === email);
+
+            if (matchedProfile) {
+                userFound = true;
+                userEmail = matchedProfile.email;  // Ambil email yang sesuai
+                console.log("User found with email:", userEmail);
+            }
+        });
+
+        if (!userFound || !userEmail) {
             throw new Error("Email not registered");
         }
 
-        await sendPasswordResetEmail(auth, email, actionCodeSettings);
+        // Kirim email reset password
+        await sendPasswordResetEmail(auth, userEmail, actionCodeSettings);
     } catch (error) {
         console.error("Error sending reset email:", error);
         throw error;
     }
 };
+
 
 
 // Fungsi konfirmasi reset password
