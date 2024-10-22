@@ -1,5 +1,5 @@
-import { Layout, Row, Col, Space, Dropdown, Avatar } from "antd";
-import { LogoutOutlined, UserOutlined } from "@ant-design/icons";
+import { Layout, Row, Col, Space, Dropdown, Avatar, Badge } from "antd";
+import { LogoutOutlined, UserOutlined, BellOutlined } from "@ant-design/icons";
 import { useRouter } from "next/router";
 import { useUserContext } from "@/contexts/UserContext";
 import { useEffect } from "react";
@@ -32,7 +32,7 @@ const Header: React.FC = () => {
   }, []);
 
   return (
-    <Layout.Header>
+    <Layout.Header className={styles.header}>
       <Row justify="space-between">
         <Col>
         <span style={{ color: '#fff', fontSize: '18px', fontWeight: 'bold'}}>
@@ -40,7 +40,19 @@ const Header: React.FC = () => {
           </span>
         </Col>
         <Col>
-          <Space>
+          <Space size="middle">
+            <Dropdown
+              placement="bottomRight"
+              menu={notificationMenu}
+              trigger={["hover"]}
+            >
+              <Badge count={notifications.length} offset={[-2, 0]}>
+                <Avatar
+                  className={`${styles.avatar} ${styles.notification}`}
+                  icon={<BellOutlined />}
+                />
+              </Badge>
+            </Dropdown>
             <Dropdown
               placement="bottomRight"
               menu={{
@@ -55,17 +67,12 @@ const Header: React.FC = () => {
                   },
                 ],
               }}
+              trigger={["hover"]}
             >
-              <Space>
-                <Avatar
-                  style={{
-                    backgroundColor: "#87d068",
-                    cursor: "pointer",
-                    margin: "0px 8px",
-                  }}
-                  icon={<UserOutlined />}
-                />
-              </Space>
+              <Avatar
+                className={`${styles.avatar} ${styles.user}`}
+                icon={<UserOutlined />}
+              />
             </Dropdown>
           </Space>
         </Col>

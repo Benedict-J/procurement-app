@@ -1,4 +1,4 @@
-import { Button, Layout, Menu, MenuProps, Image } from "antd";
+import { Layout, Menu, Image } from "antd";
 import { useRouter } from "next/router";
 import menus from "@settings/layout/menus";
 import { useUserContext } from "@/contexts/UserContext";
