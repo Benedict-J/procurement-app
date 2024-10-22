@@ -1,8 +1,9 @@
-import { Button, Layout, Menu, MenuProps, Image } from "antd";
+import { Layout, Menu, Image } from "antd";
 import { useRouter } from "next/router";
 import menus from "@settings/layout/menus";
+import styles from './index.module.scss';
 
-const Sidebar: React.FC = (props) => {
+const Sidebar: React.FC = () => {
   const router = useRouter();
 
   const handleClick = (path: string) => {
@@ -13,23 +14,23 @@ const Sidebar: React.FC = (props) => {
     <Layout.Sider
       collapsible
       breakpoint="lg"
-      width={260}
+      width={180}
       zeroWidthTriggerStyle={{
         top: 0,
       }}
     >
-      <div style={{ padding: 16 }}>
+      <div style={{ padding: 16, textAlign: 'center' }}>
         <Image
-          src="/images/logo.png"
+          src="/images/app-logo/logo-adakami-sidebar.png"
           alt="Logo"
           preview={false}
-          width={120}
-          style={{ marginBottom: 16 }}
+          className={styles.logo}  
         />
       </div>
+
       <Menu theme="dark" mode="inline">
         {menus
-          .filter(menu => menu.key === "requester")
+          .filter((menu) => menu.key === "requester")
           .map((menu) =>
             menu.children?.map((item) => (
               <Menu.Item
