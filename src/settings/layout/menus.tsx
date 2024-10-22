@@ -1,7 +1,7 @@
 import {
+  FileAddOutlined,
+  HistoryOutlined,
   UserOutlined,
-  KeyOutlined,
-  AppstoreAddOutlined,
 } from "@ant-design/icons";
 
 export interface MenuItem {
@@ -15,28 +15,22 @@ export interface MenuItem {
 
 const menus: MenuItem[] = [
   {
-    key: "user-management",
-    name: "User Management",
+    key: "requester",
+    name: "Requester Menu",
     icon: <UserOutlined />,
     children: [
       {
-        path: "/user-management/users",
-        name: "Users",
-        icon: <UserOutlined />,
-        key: "user-management:users",
+        path: "/request-form",
+        name: "Form Request",
+        icon: <FileAddOutlined />,
+        key: "requester:form-request",
       },
       {
-        path: "/user-management/roles",
-        name: "Roles",
-        icon: <KeyOutlined />,
-        key: "user-management:roles",
-      },
-      {
-        path: "/user-management/offices",
-        name: "Offices",
-        icon: <AppstoreAddOutlined />,
-        key: "user-management:offices",
-      },
+        path: "/history",
+        name: "History",
+        icon: <HistoryOutlined />,
+        key: "requester:form-request",
+      },  
     ],
   },
 ];

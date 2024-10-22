@@ -1,9 +1,13 @@
 import { Layout, Row, Col, Space, Dropdown, Avatar } from "antd";
 import { LogoutOutlined, UserOutlined } from "@ant-design/icons";
 import { useRouter } from "next/router";
+import { useState } from "react";
 
 const Header: React.FC = () => {
   const router = useRouter();
+
+  const [role, setRole] = useState("Requester"); 
+
   const handleLogout = () => {
     router.push("/auth/login");
   };
@@ -11,7 +15,11 @@ const Header: React.FC = () => {
   return (
     <Layout.Header>
       <Row justify="space-between">
-        <Col></Col>
+        <Col>
+        <span style={{ color: '#fff', fontSize: '18px', fontWeight: 'bold'}}>
+            {role}
+          </span>
+        </Col>
         <Col>
           <Space>
             <Dropdown
