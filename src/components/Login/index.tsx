@@ -14,6 +14,8 @@ import classes from "./index.module.scss";
 import { useRouter } from "next/router";
 import { SignIn } from "src/firebase/auth";
 import ReCAPTCHA from "react-google-recaptcha";
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/firebase/firebase';
 
 const { Text } = Typography;
 const { Content } = Layout;
@@ -42,13 +44,59 @@ const Login: React.FC = () => {
     }
 
     const { nik, password } = values;
-    setIsLoading(true);
+
+    interface Profile {
+      email: string;
+      role: string;
+      entity: string;
+    }
+
     try {
-      await SignIn(nik, password);
-      message.success("Login successful!");
+      const result = await SignIn(nik, password);
+      const token = await result.user.getIdToken(); 
+
+      const userDocRef = doc(db, 'registeredUsers', result.user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      const userData = userDocSnap.data();
+      const selectedProfileIndex = userData.selectedProfileIndex; 
+      console.log("Selected profile index:", selectedProfileIndex);
+
+      // Ambil profil sesuai dengan `selectedProfileIndex`
+      const selectedProfile = userData.profile.find(
+        (profile: Profile) => profile.email === selectedProfileIndex.email // Cocokkan dengan email atau properti lain
+      );
+      console.log("Selected profile:", selectedProfile); 
+
+      const userRole = selectedProfile?.role || '';
+      console.log("User role based on selected profile:", userRole);
+
+      document.cookie = `userRole=${userRole}; path=/`; // Simpan role di cookie
+      document.cookie = `token=${token}; path=/`;
+
+      if (userRole === 'Requester') {
+        setTimeout(() => {
+            router.push('/requester/request-form');
+        }, 1000);
+      } else if (userRole === 'Approval') {
+        setTimeout(() => {
+            router.push('/approval/incoming-request');
+        }, 1000);
+      } else if (userRole === 'Checker') {
       setTimeout(() => {
-        router.push('/');
+          router.push('/checker/incoming-request');
       }, 1000);
+      } else if (userRole === 'Releaser') {
+        setTimeout(() => {
+          router.push('/releaser/incoming-request');
+      }, 1000);
+      } else {
+          setTimeout(() => {
+            router.push('/');
+          }, 1000);
+    }
+
+      message.success("Login successful!");
     } catch (error) {
       if (error instanceof Error) {
         if (error.message.includes("Email not verified")) {
