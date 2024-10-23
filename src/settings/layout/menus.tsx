@@ -20,7 +20,7 @@ const menus: MenuItem[] = [
     icon: <UserOutlined />,
     children: [
       {
-        path: "requester/request-form",
+        path: "/requester/request-form",
         name: "Form Request",
         icon: <FileAddOutlined />,
         key: "requester:form-request",
