@@ -11,7 +11,9 @@ interface UserProfile {
 
 interface UserContextType {
   userProfile: UserProfile | null;
+  selectedProfileIndex: number | null;
   loading: boolean;
+  setSelectedProfile: (index: number) => void;
 }
 
 // Buat Context untuk user
@@ -21,6 +23,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [user, setUser] = useState<any>(null); 
+  const [selectedProfileIndex, setSelectedProfileIndex] = useState<number | null>(null); 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -37,7 +40,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (docSnap.exists()) {
               const userData = docSnap.data();
               console.log("User data from Firestore:", userData); // Debug data dari Firestore
-              const profile = userData.profile[0];
+              const profileIndex = userData.selectedProfileIndex || {}; // Ambil index profil yang disimpan
+              const profile = userData.profile.find((p: UserProfile) => p.email === profileIndex.email) || userData.profile[0]; // Pilih profil berdasarkan index
+              setSelectedProfileIndex(profileIndex); // Simpan index profil yang dipilih
               setUserProfile({
                 email: profile.email,
                 entity: profile.entity,
@@ -60,8 +65,26 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return () => unsubscribe();
   }, []);
 
+  const setSelectedProfile = (index: number) => {
+    if (user) {
+      const docRef = doc(db, "registeredUsers", user.uid);
+      getDoc(docRef).then((docSnap) => {
+        if (docSnap.exists()) {
+          const userData = docSnap.data();
+          const profile = userData.profile[index]; // Dapatkan profil berdasarkan index
+          setSelectedProfileIndex(index); // Simpan index yang dipilih
+          setUserProfile({
+            email: profile.email,
+            entity: profile.entity,
+            role: profile.role,
+          });
+        }
+      });
+    }
+  };
+
   return (
-    <UserContext.Provider value={{ userProfile, loading }}>
+    <UserContext.Provider value={{ userProfile, selectedProfileIndex, loading, setSelectedProfile }}>
       {children}
     </UserContext.Provider>
   );

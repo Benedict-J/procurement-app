@@ -42,7 +42,7 @@ const Register: React.FC | any = () => {
 
     const result = await registerUserWithNik(nik);
 
-    if (result.success && result.userData) {
+    if (result.success && result.userData.profile.length > 0) {
       message.success("NIK Registered!");
       router.push({
         pathname: "register/confirm-register",
@@ -50,6 +50,7 @@ const Register: React.FC | any = () => {
           nik: nik,
           namaLengkap: result.userData.namaLengkap,
           divisi: result.userData.divisi,
+          profile: JSON.stringify(result.userData.profile),
         }
       });
     } else if (!result.success) {

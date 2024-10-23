@@ -5,35 +5,41 @@ import { doc, query, where, getDocs, getDoc, setDoc, addDoc, deleteDoc, collecti
 
 const registerUserWithNik = async (nik) => {
   try {
-    const q = query(collection(db, 'registeredUsers'), where('nik', '==', nik));
-    const querySnapshot = await getDocs(q);
 
-    if (!querySnapshot.empty) {
-      throw new Error('NIK already registered!');
+    const registeredUsersRef = collection(db, 'registeredUsers');
+    const qRegisteredUsers = query(registeredUsersRef, where('nik', '==', nik));
+    const registeredUsersSnapshot = await getDocs(qRegisteredUsers);
+
+    // Jika ditemukan dokumen dengan NIK tersebut, return error
+    if (!registeredUsersSnapshot.empty) {
+      throw new Error('NIK already registered');
     }
 
+    const q = query(collection(db, 'preRegisteredUsers'), nik);
+    const querySnapshot = await getDocs(q);
+
+    console.log("NIK yang dikirim:", nik);
+
+    if (querySnapshot.empty) {
+      throw new Error('NIK not registered! Please Contact Super Admin');
+    }
+    
     const preRegisteredDocRef = doc(db, 'preRegisteredUsers', nik);
     const preRegisteredDoc = await getDoc(preRegisteredDocRef);
 
-    if (!preRegisteredDoc.exists()) {
-      throw new Error('NIK not registered! Please Contact Super Admin');
-    }
-
+    // Ambil profil dari data yang ada di Firestore
     const userData = preRegisteredDoc.data(); 
-    const { namaLengkap, divisi} = userData;
+    console.log("Data user ditemukan di Firestore:", userData);
+    const profile = userData.profile || [];
+    console.log("Data user ditemukan:", userData);
 
-    // if (role !== 'Staff' && role !== 'Head' && role !== "Finance Lead") {
-    //   throw new Error('Only Staff and Heads can register');
-    // }
-
-    return { success: true, userData: { namaLengkap, divisi} };
+    return { success: true, userData: { namaLengkap: userData.namaLengkap, divisi: userData.divisi, profile} };
   } catch (error) {
-    // Kembalikan error jika terjadi masalah
     return { success: false, message: error.message };
   }
 };
 
-const registerUser = async (nik, namaLengkap, divisi, profiles, password) => {
+const registerUser = async (nik, namaLengkap, divisi, profile, selectedProfile, password) => {
 
   const actionCodeSettings = {
     url: 'http://localhost:3000/auth/login',
@@ -41,7 +47,7 @@ const registerUser = async (nik, namaLengkap, divisi, profiles, password) => {
   };
 
   try {
-    const userCredential = await createUserWithEmailAndPassword(auth, profiles[0].email, password);
+    const userCredential = await createUserWithEmailAndPassword(auth, selectedProfile.email, password);
     const user = userCredential.user;
 
     await setDoc(doc(db, 'registeredUsers', user.uid), {
@@ -49,7 +55,8 @@ const registerUser = async (nik, namaLengkap, divisi, profiles, password) => {
       nik: nik,
       namaLengkap: namaLengkap,
       divisi: divisi,
-      profile: profiles,
+      profile: profile,
+      selectedProfileIndex: selectedProfile,
       isEmailVerified: false
     });
 
