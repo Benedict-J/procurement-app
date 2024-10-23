@@ -1,23 +1,18 @@
-import { Layout, Row, Col, Space, Dropdown, Avatar, Badge } from "antd";
+import { Layout, Row, Col, Space, Dropdown, Avatar, Badge, Menu } from "antd";
 import { LogoutOutlined, UserOutlined, BellOutlined } from "@ant-design/icons";
 import { useRouter } from "next/router";
 import { useUserContext } from "@/contexts/UserContext";
 import { useEffect, useState } from "react";
 import { auth } from "@/firebase/firebase";
-import styles from "@/components/Layout/Header/index.module.scss"
+import styles from "@/components/Layout/Header/index.module.scss";
 
 const Header: React.FC = () => {
   const router = useRouter();
   const { userProfile, loading } = useUserContext();
 
   if (loading) return <p>Loading...</p>;
-
   if (!userProfile) return <p>User profile not available</p>;
 
-  const handleLogout = () => {
-    router.push("/auth/login");
-  };
-  
   useEffect(() => {
     const checkAuthStatus = () => {
       const user = auth.currentUser;
@@ -37,6 +32,27 @@ const Header: React.FC = () => {
     { key: 3, message: "Pesan 3" },
   ]); // Dummy data 
 
+  const [userEmails, setUserEmails] = useState([
+    { email: "example1@yourdomain.com", active: false },
+    { email: "example2@yourdomain.com", active: true },
+  ]); // Dummy user emails
+
+  const handleSwitchUser = (email: string) => {
+    // Function to switch user or change state based on selected email
+    setUserEmails((prevEmails) =>
+      prevEmails.map((user) =>
+        user.email === email
+          ? { ...user, active: true }
+          : { ...user, active: false }
+      )
+    );
+    console.log("Switched to:", email);
+  };
+
+  const handleLogout = () => {
+    router.push("/auth/login");
+  };
+
   const notificationMenu = {
     items: notifications.map((notification) => ({
       key: notification.key,
@@ -44,11 +60,31 @@ const Header: React.FC = () => {
     })),
   };
 
+  const userMenu = (
+    <Menu>
+      {userEmails.map((user, index) => (
+        <Menu.Item key={index} onClick={() => handleSwitchUser(user.email)}>
+          <Space>
+            <UserOutlined style={{ color: user.active ? "#87d068" : "#bfbfbf" }} />
+            <span style={{ color: user.active ? "#87d068" : "#bfbfbf" }}>{user.email}</span>
+          </Space>
+        </Menu.Item>
+      ))}
+      <Menu.Divider />
+      <Menu.Item key="logout" onClick={handleLogout}>
+        <Space>
+          <LogoutOutlined />
+          Logout
+        </Space>
+      </Menu.Item>
+    </Menu>
+  );
+
   return (
     <Layout.Header className={styles.header}>
       <Row justify="space-between">
         <Col>
-        <span style={{ color: '#fff', fontSize: '18px', fontWeight: 'bold'}}>
+          <span style={{ color: '#fff', fontSize: '18px', fontWeight: 'bold' }}>
             {userProfile?.role} - {userProfile?.entity}
           </span>
         </Col>
@@ -68,18 +104,7 @@ const Header: React.FC = () => {
             </Dropdown>
             <Dropdown
               placement="bottomRight"
-              menu={{
-                items: [
-                  {
-                    key: "logout",
-                    icon: <LogoutOutlined />,
-                    label: "Logout",
-                    onClick: () => {
-                      handleLogout();
-                    },
-                  },
-                ],
-              }}
+              overlay={userMenu} 
               trigger={["hover"]}
             >
               <Avatar
