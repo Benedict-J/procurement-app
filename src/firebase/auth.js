@@ -10,6 +10,8 @@ import {
 import { collection, query, where, getDocs } from 'firebase/firestore';
 
 // Fungsi sign in
+// Fungsi sign in
+// SignIn.js
 export const SignIn = async (nik, password) => {
     try {
         console.log("Checking NIK:", nik);
@@ -24,47 +26,44 @@ export const SignIn = async (nik, password) => {
 
         let email = null;
         let isEmailVerifiedInDB = false;
-        let selectedProfileIndex = [];
-        let profile = [];
+        let selectedProfileIndex = 0;
 
+        // Loop through the results to find the first match (assuming NIK is unique)
         querySnapshot.forEach((doc) => {
-            profile = doc.data().profile;
-            console.log("Profile Data:", profile); 
-            selectedProfileIndex = doc.data().selectedProfileIndex || 0;
-            email = selectedProfileIndex.email;
-            isEmailVerifiedInDB = doc.data().isEmailVerified;
+            const userData = doc.data();
+            email = userData.profile[0]?.email; // Ambil email dari profile pertama
+            isEmailVerifiedInDB = userData.isEmailVerified || false;
+            selectedProfileIndex = userData.selectedProfileIndex || 0;
             console.log("Email associated with NIK:", email);
             console.log("isEmailVerified in DB:", isEmailVerifiedInDB);
         });
 
+        if (!email) {
+            throw new Error("No email associated with the provided NIK.");
+        }
+
+        // Lanjutkan autentikasi dengan email yang ditemukan
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        if (user) {
-            console.log("Login successful, user:", user.email); // Log user email
-          } else {
-            console.log("Login failed, user not available.");
-          }
+        if (!user) {
+            throw new Error("Login failed! Unable to retrieve user data.");
+        }
 
+        // Validasi apakah email sudah diverifikasi
         await user.reload();
-
         if (!user.emailVerified || !isEmailVerifiedInDB) {
             await sendEmailVerification(user);
             throw new Error("Email not verified. A verification email has been sent to your inbox.");
         }
 
-        return { user, profile, selectedProfileIndex };
-
+        return { user, email, selectedProfileIndex };
     } catch (error) {
         console.error("Error signing in:", error);
-
-        if (error.message.includes("Email not verified")) {
-            throw error;
-        } else {
-            throw new Error("Login failed! Please check your NIK or password again.");
-        }
+        throw new Error("Login failed! Please check your NIK or password again.");
     }
 };
+
 
 
 
