@@ -10,21 +10,16 @@ const Sidebar: React.FC = () => {
 
   if (loading || !userProfile) return <p>Loading...</p>;
 
-  console.log("User Profile:", userProfile); // Debug profil pengguna
+  const menuItems = getMenuByRole(userProfile.role);
 
-  const menuItems = getMenuByRole(userProfile.role).flatMap((menu) =>
-    menu.children?.map((item) => ({
-      key: item.key,
-      icon: item.icon,
-      label: item.name,
-      onClick: () => router.push(item.path!),
-    })) || []
-  );
-
+  // Fungsi untuk menghandle klik menu dan mengubah route
   const handleMenuClick = (e: { key: string }) => {
-    const selectedItem = menuItems.find(item => item.key === e.key);
-    if (selectedItem?.onClick) {
-      selectedItem.onClick();
+    const selectedItem = menuItems
+      .flatMap(item => (item.children ? item.children : [item]))
+      .find(item => item.key === e.key);
+
+    if (selectedItem?.path && router.pathname !== selectedItem.path) {
+      router.push(selectedItem.path); // Gunakan path tanpa duplikasi
     }
   };
 
@@ -45,12 +40,15 @@ const Sidebar: React.FC = () => {
         />
       </div>
 
-      <Menu
-        theme="dark"
-        mode="inline"
-        items={menuItems}
-        onClick={handleMenuClick}
-      />
+      <Menu theme="dark" mode="inline" onClick={handleMenuClick}>
+        {menuItems.map((menu) =>
+          menu.children?.map((item) => (
+            <Menu.Item key={item.key} icon={item.icon}>
+              {item.name}
+            </Menu.Item>
+          ))
+        )}
+      </Menu>
     </Layout.Sider>
   );
 };

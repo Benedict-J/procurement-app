@@ -9,9 +9,6 @@ import {
 } from 'firebase/auth';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 
-// Fungsi sign in
-// Fungsi sign in
-// SignIn.js
 export const SignIn = async (nik, password) => {
     try {
         console.log("Checking NIK:", nik);
@@ -63,9 +60,6 @@ export const SignIn = async (nik, password) => {
         throw new Error("Login failed! Please check your NIK or password again.");
     }
 };
-
-
-
 
 // Fungsi sign up
 export const SignUp = async (email, password) => {

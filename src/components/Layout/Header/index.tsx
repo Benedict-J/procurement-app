@@ -38,10 +38,10 @@ const Header: React.FC = () => {
     if (userProfile && userProfile.profile[index]) {
       const selectedProfile = userProfile.profile[index];
 
-      // Update the state in the application
+      // Update state pada application
       setSelectedProfile(index);
 
-      // Update `selectedProfileIndex` in Firestore
+      // Update `selectedProfileIndex` di Firestore
       const user = auth.currentUser;
       if (user) {
         const docRef = doc(db, "registeredUsers", user.uid);
