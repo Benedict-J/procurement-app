@@ -1,10 +1,43 @@
 import { db } from "@/firebase/firebase";
 import { Form, Input, Button, Select, Row, DatePicker, Col, Popconfirm } from "antd";
 import dayjs, { Dayjs } from "dayjs";
-import { addDoc, collection } from "firebase/firestore";
+import { addDoc, collection, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { useState } from "react";
 
 const { Option } = Select;
+
+const convertMonthToRoman = (month: number) => {
+  const romanNumerals = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
+  return romanNumerals[month - 1];
+};
+
+const generateRequestNumber = async (entityAbbr: string, division: string) => {
+  const currentYear = dayjs().year();
+  const currentMonth = dayjs().month() + 1; 
+  const romanMonth = convertMonthToRoman(currentMonth); 
+
+  // Ambil counter dari Firebase
+  const counterDocRef = doc(db, "counters", "requestCounter");
+  const counterSnapshot = await getDoc(counterDocRef);
+  let currentIndex = 1;
+
+  if (counterSnapshot.exists()) {
+    currentIndex = counterSnapshot.data().currentIndex + 1;
+  } else {
+    await setDoc(counterDocRef, { currentIndex: 1 });
+  }
+
+  // Update counter di Firebase
+  await updateDoc(counterDocRef, {
+    currentIndex: currentIndex,
+  });
+
+  const requestIndex = currentIndex.toString().padStart(5, "0"); // Nomor urut dengan 5 digit
+
+  // Format final nomor request
+  return `PR${entityAbbr}${currentYear}${requestIndex}${romanMonth}${division}`;
+};
+
 
 const RequestForm = () => {
   const [loading, setLoading] = useState(false);
@@ -63,12 +96,18 @@ const RequestForm = () => {
     }));
 
     try {
+
+      const entityAbbr = values["entity1"].substring(0, 3).toUpperCase(); // Ambil 3 huruf pertama dari entity
+      const division = values["division1"].substring(0, 2).toUpperCase(); // Ambil 2 huruf pertama dari division
+      const requestNumber = await generateRequestNumber(entityAbbr, division);
+
       // Menyimpan request ke Firestore
       await addDoc(collection(db, "requests"), {
         items: items,
+        requestNumber: requestNumber,
         createdAt: dayjs().format('YYYY-MM-DD HH:mm:ss'), // Menyimpan waktu request dibuat
       });
-      alert("Request submitted successfully!");
+      alert(`Request submitted successfully with Request Number: ${requestNumber}`);
     } catch (error) {
       console.error("Error submitting request:", error);
       alert("Failed to submit request.");
@@ -118,9 +157,9 @@ const RequestForm = () => {
             rules={[{ required: true, message: "Please select the asset type!" }]}
           >
             <Select placeholder="Select division">
-              <Option value="Division A">Division A</Option>
-              <Option value="Division B">Division B</Option>
-              <Option value="Division C">Division C</Option>
+              <Option value="IT">IT</Option>
+              <Option value="GENERAL AFFAIR">GENERAL AFFAIR</Option>
+              <Option value="TELEMARKETING">TELEMARKETING</Option>
             </Select>
           </Form.Item>
 
@@ -130,9 +169,9 @@ const RequestForm = () => {
             rules={[{ required: true, message: "Please select the asset type!" }]}
           >
             <Select placeholder="Select entity">
-              <Option value="Entity A">Entity A</Option>
-              <Option value="Entity B">Entity B</Option>
-              <Option value="Entity C">Entity C</Option>
+              <Option value="PDI">PT Pembiayaan Digital</Option>
+              <Option value="BGJ">PT Berkah Jaya Giat</Option>
+              
             </Select>
           </Form.Item>
 
