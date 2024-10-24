@@ -76,30 +76,33 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     // Redirect berdasarkan peran pengguna hanya jika tidak sedang berada di halaman login
     if (userProfile && selectedProfileIndex !== null) {
-      // Jika pengguna berada di halaman login atau halaman lain yang tidak memerlukan redirect, jangan lakukan redirect
-      if (router.pathname === '/auth/login') {
+      // Halaman yang tidak memerlukan redirect otomatis
+      const nonRedirectPaths = [
+        "/auth/login",
+        "/some-other-path" // Tambahkan path lain yang tidak perlu redirect
+      ];
+
+      // Jika path saat ini ada di dalam nonRedirectPaths, jangan lakukan redirect
+      if (nonRedirectPaths.includes(router.pathname)) {
         return;
       }
-  
+
       // Redirect berdasarkan peran pengguna
-      switch (userProfile.profile[selectedProfileIndex].role) {
-        case "Requester":
-          if (router.pathname !== "/requester/request-form") {
-            router.push("/requester/request-form");
-          }
-          break;
-        case "Checker":
-        case "Approval":
-        case "Releaser":
-          if (router.pathname !== "/requester/incoming-request") {
-            router.push("/requester/incoming-request");
-          }
-          break;
-        default:
-          router.push("/auth/login");
+      const defaultPathsForRoles: Record<string, string> = {
+        "Requester": "/requester/request-form",
+        "Checker": "/requester/incoming-request",
+        "Approval": "/requester/incoming-request",
+        "Releaser": "/requester/incoming-request",
+      };
+
+      const defaultPath = defaultPathsForRoles[userProfile.profile[selectedProfileIndex].role];
+
+      // Redirect hanya jika path saat ini bukan default path untuk peran pengguna
+      if (router.pathname !== defaultPath) {
+        router.push(defaultPath);
       }
     }
-  }, [userProfile, selectedProfileIndex, router.pathname]);  
+  }, [userProfile, selectedProfileIndex, router.pathname]);
 
   const setSelectedProfile = (index: number) => {
     if (user) {
