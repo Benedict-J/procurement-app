@@ -25,15 +25,23 @@ export const SignIn = async (nik, password) => {
         let isEmailVerifiedInDB = false;
         let selectedProfileIndex = 0;
 
-        // Loop through the results to find the first match (assuming NIK is unique)
+        // Loop melalui dokumen yang ditemukan untuk memeriksa email di setiap profil
         querySnapshot.forEach((doc) => {
             const userData = doc.data();
-            selectedProfileIndex = userData.selectedProfileIndex || 0; // Ambil index yang dipilih
-            email = userData.profile[selectedProfileIndex]?.email; // Ambil email dari profile pertama
+
+            // Loop melalui setiap profil untuk menemukan email yang sesuai
+            userData.profile.forEach((profile, index) => {
+                if (profile.email) {
+                    // Simpan email pertama yang ditemukan
+                    if (!email) {
+                        email = profile.email;
+                        selectedProfileIndex = index;
+                    }
+                    console.log(`Email found in profile ${index}:`, profile.email);
+                }
+            });
+
             isEmailVerifiedInDB = userData.isEmailVerified || false;
-            selectedProfileIndex = userData.selectedProfileIndex || 0;
-            console.log("Email associated with NIK:", email);
-            console.log("isEmailVerified in DB:", isEmailVerifiedInDB);
         });
 
         if (!email) {
@@ -62,6 +70,7 @@ export const SignIn = async (nik, password) => {
     }
 };
 
+
 // Fungsi sign up
 export const SignUp = async (email, password) => {
     try {
@@ -84,6 +93,7 @@ export const SignOut = async () => {
 };
 
 // Fungsi reset password
+// Fungsi reset password
 export const resetPassword = async (email) => {
     const actionCodeSettings = {
         url: 'http://localhost:3000/auth/forgot-password/reset-password',
@@ -95,35 +105,32 @@ export const resetPassword = async (email) => {
         const querySnapshot = await getDocs(usersRef);  // Ambil semua dokumen
 
         let userFound = false;
-        let userEmail = null;
 
-        // Iterasi setiap dokumen
+        // Iterasi setiap dokumen untuk mencari email di semua profil
         querySnapshot.forEach((doc) => {
             const userData = doc.data();
             const profiles = userData.profile;  // Ambil array profile
 
-            // Cek apakah salah satu profile memiliki email yang sesuai
-            const matchedProfile = profiles.find(profile => profile.email === email);
+            // Cek apakah salah satu profil memiliki email yang sesuai (dengan perbandingan case-insensitive)
+            const matchedProfile = profiles.find(profile => profile.email.toLowerCase() === email.toLowerCase());
 
             if (matchedProfile) {
                 userFound = true;
-                userEmail = matchedProfile.email;  // Ambil email yang sesuai
-                console.log("User found with email:", userEmail);
+                console.log("User found with email:", matchedProfile.email);
             }
         });
 
-        if (!userFound || !userEmail) {
+        if (!userFound) {
             throw new Error("Email not registered");
         }
 
         // Kirim email reset password
-        await sendPasswordResetEmail(auth, userEmail, actionCodeSettings);
+        await sendPasswordResetEmail(auth, email, actionCodeSettings);
     } catch (error) {
         console.error("Error sending reset email:", error);
         throw error;
     }
 };
-
 
 
 // Fungsi konfirmasi reset password
