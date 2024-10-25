@@ -28,7 +28,8 @@ export const SignIn = async (nik, password) => {
         // Loop through the results to find the first match (assuming NIK is unique)
         querySnapshot.forEach((doc) => {
             const userData = doc.data();
-            email = userData.profile[0]?.email; // Ambil email dari profile pertama
+            selectedProfileIndex = userData.selectedProfileIndex || 0; // Ambil index yang dipilih
+            email = userData.profile[selectedProfileIndex]?.email; // Ambil email dari profile pertama
             isEmailVerifiedInDB = userData.isEmailVerified || false;
             selectedProfileIndex = userData.selectedProfileIndex || 0;
             console.log("Email associated with NIK:", email);
