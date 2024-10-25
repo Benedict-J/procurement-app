@@ -39,7 +39,7 @@ const registerUserWithNik = async (nik) => {
   }
 };
 
-const registerUser = async (nik, namaLengkap, divisi, profile, selectedProfile, password) => {
+const registerUser = async (nik, namaLengkap, divisi, profile, selectedProfileIndex, password) => {
 
   const actionCodeSettings = {
     url: 'http://localhost:3000/auth/login',
@@ -47,7 +47,7 @@ const registerUser = async (nik, namaLengkap, divisi, profile, selectedProfile, 
   };
 
   try {
-    const userCredential = await createUserWithEmailAndPassword(auth, selectedProfile.email, password);
+    const userCredential = await createUserWithEmailAndPassword(auth, profile[selectedProfileIndex].email, password);
     const user = userCredential.user;
 
     await setDoc(doc(db, 'registeredUsers', user.uid), {
@@ -56,7 +56,7 @@ const registerUser = async (nik, namaLengkap, divisi, profile, selectedProfile, 
       namaLengkap: namaLengkap,
       divisi: divisi,
       profile: profile,
-      selectedProfileIndex: selectedProfile,
+      selectedProfileIndex: selectedProfileIndex,
       isEmailVerified: false
     });
 

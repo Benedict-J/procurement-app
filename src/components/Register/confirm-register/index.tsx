@@ -39,10 +39,10 @@ import {
           return;
         }
 
-        const selectedProfile = parsedProfiles[selectedProfileIndex];
+      const selectedProfileIndexValue = selectedProfileIndex;
 
       try {
-        const result = await registerUser(nik, namaLengkap, divisi, parsedProfiles, selectedProfile, password);
+        const result = await registerUser(nik, namaLengkap, divisi, parsedProfiles, selectedProfileIndexValue, password);
      
         if (result.success) {
             message.success("Register success! Verification email has been sent");
