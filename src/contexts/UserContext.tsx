@@ -19,6 +19,7 @@ interface UserProfile {
 }
 
 interface UserContextType {
+  user: any | null;
   userProfile: UserProfile | null;
   selectedProfileIndex: number | null;
   loading: boolean;
@@ -126,7 +127,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <UserContext.Provider value={{ userProfile, selectedProfileIndex, loading, setSelectedProfile }}>
+    <UserContext.Provider value={{ user, userProfile, selectedProfileIndex, loading, setSelectedProfile }}>
       {children}
     </UserContext.Provider>
   );
