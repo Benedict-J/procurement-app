@@ -75,17 +75,20 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
-    // Redirect berdasarkan peran pengguna hanya jika tidak sedang berada di halaman login
     if (userProfile && selectedProfileIndex !== null) {
+      // Pengecualian redirect
       const nonRedirectPaths = [
         "/auth/login",
-        "/auth/register"
+        "/auth/register",
+        "/auth/forgot-password",
+        "/auth/forgot-password/reset-password",
+        "/auth/email-verification"
       ];
 
       if (nonRedirectPaths.includes(router.pathname)) {
         return;
       }
-
+      // Redirect berdasarkan peran pengguna
       const defaultPathsForRoles: Record<string, string> = {
         "Requester": "/requester/request-form",
         "Checker": "/requester/incoming-request",
