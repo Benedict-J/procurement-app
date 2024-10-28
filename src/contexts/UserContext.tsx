@@ -108,25 +108,24 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [userProfile, selectedProfileIndex, router.pathname]);
 
-  const setSelectedProfile = async (index: number) => {
+  const setSelectedProfile = (index: number) => {
     if (user) {
       const docRef = doc(db, "registeredUsers", user.uid);
-      await updateDoc(docRef, {
-        selectedProfileIndex: index,
+      getDoc(docRef).then((docSnap) => {
+        if (docSnap.exists()) {
+          const userData = docSnap.data();
+          if (Array.isArray(userData.profile) && userData.profile[index]) {
+            const profile = userData.profile[index];
+            setSelectedProfileIndex(index);
+            setUserProfile((prevState) => ({
+              ...prevState!,
+              entity: profile.entity,
+              role: profile.role,
+              email: profile.email,
+            }));
+          }
+        }
       });
-
-      // Update state lokal dan ambil profil baru
-      const docSnap = await getDoc(docRef);
-      const userData = docSnap.data();
-      if (userData && userData.profile[index]) {
-        setSelectedProfileIndex(index);
-        setUserProfile({
-          email: userData.profile[index].email,
-          entity: userData.profile[index].entity,
-          role: userData.profile[index].role,
-          profile: userData.profile,
-        });
-      }
     }
   };
 
