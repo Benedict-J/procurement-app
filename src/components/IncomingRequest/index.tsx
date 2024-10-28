@@ -18,7 +18,7 @@ const IncomingRequest = () => {
     const { userProfile } = useUserContext();
     const [dataSource, setDataSource] = useState<DataType[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
-    const [pageSize, setPageSize] = useState(20); 
+    const [pageSize, setPageSize] = useState(20);
 
     const role = userProfile?.role;
 
@@ -136,6 +136,9 @@ const IncomingRequest = () => {
                 [`${approvalField}.date`]: dayjs().format("YYYY-MM-DD"),
             });
 
+            // Menghapus item yang di-approve dari dataSource
+            setDataSource((prevData) => prevData.filter((item) => item.id !== id));
+
             console.log(`Request ${id} approved by ${role}`);
             message.success(`Request approved successfully by ${role}`);
         } catch (error) {
@@ -148,6 +151,11 @@ const IncomingRequest = () => {
     const handleReject = (id: string) => {
         console.log("Reject request ID:", id);
         // Panggil fungsi reject di sini
+
+        // Menghapus item yang ditolak dari dataSource
+        setDataSource((prevData) => prevData.filter((item) => item.id !== id));
+
+        message.success(`Request rejected successfully by ${role}`);
     };
 
 
