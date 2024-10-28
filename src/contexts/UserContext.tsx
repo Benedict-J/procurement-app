@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { doc, getDoc } from "firebase/firestore"; // Firebase Firestore
+import { doc, getDoc, updateDoc } from "firebase/firestore"; // Firebase Firestore
 import { auth, db } from "@/firebase/firebase";  // Konfigurasi Firebase
 import { useRouter } from "next/router"; // Router
 
@@ -50,10 +50,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
           if (docSnap.exists()) {
             const userData = docSnap.data();
-            const selectedProfileIndex = userData.selectedProfileIndex || 0;
+            const selectedIndex = userData.selectedProfileIndex || 0;
 
             if (Array.isArray(userData.profile) && userData.profile.length > 0) {
-              const selectedProfile = userData.profile[selectedProfileIndex];
+              const selectedProfile = userData.profile[selectedIndex];
               setUserProfile({
                 namaLengkap: userData.namaLengkap,
                 divisi: userData.divisi,
@@ -62,7 +62,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 role: selectedProfile.role,
                 profile: userData.profile,
               });
-              setSelectedProfileIndex(selectedProfileIndex);
+              setSelectedProfileIndex(selectedIndex);
             }
           }
         } catch (error) {
@@ -79,19 +79,19 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
-    // Redirect berdasarkan peran pengguna hanya jika tidak sedang berada di halaman login
     if (userProfile && selectedProfileIndex !== null) {
-      // Halaman yang tidak memerlukan redirect otomatis
+      // Pengecualian redirect
       const nonRedirectPaths = [
         "/auth/login",
-        "/some-other-path" // Tambahkan path lain yang tidak perlu redirect
+        "/auth/register",
+        "/auth/forgot-password",
+        "/auth/forgot-password/reset-password",
+        "/auth/email-verification"
       ];
 
-      // Jika path saat ini ada di dalam nonRedirectPaths, jangan lakukan redirect
       if (nonRedirectPaths.includes(router.pathname)) {
         return;
       }
-
       // Redirect berdasarkan peran pengguna
       const defaultPathsForRoles: Record<string, string> = {
         "Requester": "/requester/request-form",
@@ -102,31 +102,31 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const defaultPath = defaultPathsForRoles[userProfile.profile[selectedProfileIndex].role];
 
-      // Redirect hanya jika path saat ini bukan default path untuk peran pengguna
       if (router.pathname !== defaultPath) {
         router.push(defaultPath);
       }
     }
   }, [userProfile, selectedProfileIndex, router.pathname]);
 
-  const setSelectedProfile = (index: number) => {
+  const setSelectedProfile = async (index: number) => {
     if (user) {
       const docRef = doc(db, "registeredUsers", user.uid);
-      getDoc(docRef).then((docSnap) => {
-        if (docSnap.exists()) {
-          const userData = docSnap.data();
-          if (Array.isArray(userData.profile) && userData.profile[index]) {
-            const profile = userData.profile[index];
-            setSelectedProfileIndex(index);
-            setUserProfile((prevState) => ({
-              ...prevState!,
-              email: profile.email,
-              entity: profile.entity,
-              role: profile.role,
-            }));
-          }
-        }
+      await updateDoc(docRef, {
+        selectedProfileIndex: index,
       });
+
+      // Update state lokal dan ambil profil baru
+      const docSnap = await getDoc(docRef);
+      const userData = docSnap.data();
+      if (userData && userData.profile[index]) {
+        setSelectedProfileIndex(index);
+        setUserProfile({
+          email: userData.profile[index].email,
+          entity: userData.profile[index].entity,
+          role: userData.profile[index].role,
+          profile: userData.profile,
+        });
+      }
     }
   };
 
