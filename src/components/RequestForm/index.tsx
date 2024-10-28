@@ -3,6 +3,7 @@ import { Form, Input, Button, Select, Row, DatePicker, Col, Popconfirm } from "a
 import dayjs, { Dayjs } from "dayjs";
 import { addDoc, collection, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { useState } from "react";
+import { useUserContext } from "@/contexts/UserContext";
 
 const { Option } = Select;
 
@@ -40,6 +41,9 @@ const generateRequestNumber = async (entityAbbr: string, division: string) => {
 
 
 const RequestForm = () => {
+  const { userProfile} = useUserContext();
+  const { user } = useUserContext(); 
+  const requesterId = user?.uid;
   const [loading, setLoading] = useState(false);
   const [isOtherSelected, setIsOtherSelected] = useState(false);
   const [customAddress, setCustomAddress] = useState("");
@@ -80,10 +84,20 @@ const RequestForm = () => {
   const onFinish = async (values: any) => {
     setLoading(true);
 
+    console.log("User Profile Data:", userProfile);
+
+    if (!userProfile || !userProfile.email || !userProfile.entity || !userProfile.role) {
+      alert("User profile data is missing or incomplete. Please log in again.");
+      setLoading(false);
+      return;
+  }
+
+    if (!requesterId) {
+      alert("User not logged in.");
+      return;
+    }
+
     const items = formList.map((item, index) => ({
-      name: values[`name${index + 1}`] || "",
-      division: values[`division${index + 1}`] || "",
-      entity: values[`entity${index + 1}`] || "",
       deliveryDate: values[`deliveryDate${index + 1}`]?.format('YYYY-MM-DD') || null,
       deliveryAddress: values[`deliveryAddress${index + 1}`] || "",
       customDeliveryAddress: values[`customDeliveryAddress${index + 1}`] || null ,
@@ -95,17 +109,48 @@ const RequestForm = () => {
       budgetMax: values[`budgetMax${index + 1}`] || "",
     }));
 
+    function generateEntityAbbr(entityName: string): string {
+      // Daftar kata yang harus diabaikan (seperti "PT")
+      const skipWords = ["PT"];
+    
+      return entityName
+        .split(" ") // Pisahkan nama berdasarkan spasi
+        .filter(word => !skipWords.includes(word)) // Abaikan kata yang ada di skipWords
+        .map(word => word.charAt(0)) // Ambil huruf pertama dari setiap kata yang tersisa
+        .join("") // Gabungkan huruf pertama dari setiap kata menjadi singkatan
+        .toUpperCase(); // Ubah ke huruf besar
+    }
+
     try {
 
-      const entityAbbr = values["entity1"].substring(0, 3).toUpperCase(); // Ambil 3 huruf pertama dari entity
-      const division = values["division1"].substring(0, 2).toUpperCase(); // Ambil 2 huruf pertama dari division
-      const requestNumber = await generateRequestNumber(entityAbbr, division);
+      if (!userProfile) {
+        alert("User profile data is missing. Please log in.");
+        return;
+      }
+
+      const entityAbbr = generateEntityAbbr(userProfile.entity);
+      const divisionAbbr = userProfile.divisi.substring(0, 3).toUpperCase(); // Ambil 3 huruf pertama dari entity
+      const requestNumber = await generateRequestNumber(entityAbbr, divisionAbbr);
+      const requesterName = userProfile.namaLengkap;
+      const requesterDivision = userProfile.divisi;
+      const requesterEntity = userProfile.entity; 
+
+      const { email, entity, role } = userProfile;
 
       // Menyimpan request ke Firestore
       await addDoc(collection(db, "requests"), {
         items: items,
         requestNumber: requestNumber,
-        createdAt: dayjs().format('YYYY-MM-DD HH:mm:ss'), // Menyimpan waktu request dibuat
+        status: 'pending',
+        requesterId: requesterId,
+        requesterName: requesterName,
+        requesterEntity: requesterEntity,   
+        createdAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+        approvalStatus: {
+          checker: { approved: false, approvedBy: null, approvedAt: null },
+          approval: { approved: false, approvedBy: null, approvedAt: null },
+          releaser: { approved: false, approvedBy: null, approvedAt: null },
+        }, // Menyimpan waktu request dibuat
       });
       alert(`Request submitted successfully with Request Number: ${requestNumber}`);
     } catch (error) {
@@ -141,74 +186,6 @@ const RequestForm = () => {
                   </Popconfirm>
                 </Col>
               )}
-          </Row>
-          
-          <Form.Item
-            label="Name"
-            name={`name${index + 1}`}
-            rules={[{ required: true, message: "Please input your name!" }]}
-          >
-            <Input placeholder="Name" />
-          </Form.Item>
-
-          <Form.Item
-            label="Division"
-            name={`division${index + 1}`}
-            rules={[{ required: true, message: "Please select the asset type!" }]}
-          >
-            <Select placeholder="Select division">
-              <Option value="IT">IT</Option>
-              <Option value="GENERAL AFFAIR">GENERAL AFFAIR</Option>
-              <Option value="TELEMARKETING">TELEMARKETING</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            label="Entity"
-            name={`entity${index + 1}`}
-            rules={[{ required: true, message: "Please select the asset type!" }]}
-          >
-            <Select placeholder="Select entity">
-              <Option value="PDI">PT Pembiayaan Digital</Option>
-              <Option value="BGJ">PT Berkah Jaya Giat</Option>
-              
-            </Select>
-          </Form.Item>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                label="Estimated Delivery Date"
-                name={`deliveryDate${index + 1}`}
-                rules={[{ required: true, message: "Please select the delivery date!" }]}
-              >
-                <DatePicker style={{ width: "100%" }} placeholder="Select Date" disabledDate={disabledDate} />
-              </Form.Item>
-            </Col>
-
-            <Col span={12}>
-              <Form.Item
-                label="Delivery Address"
-                name={`deliveryAddress${index + 1}`}
-                rules={[{ required: !isOtherSelected, message: "Please select the delivery address!" }]}
-              >
-                <Select placeholder="Select Address" onChange={handleAddressChange}>
-                  <Option value="Cyber 2">Cyber 2 Tower</Option>
-                  <Option value="Balekota">Mall Balekota Tangerang</Option>
-                  <Option value="other">Other</Option>
-                </Select>
-              </Form.Item>
-
-              {isOtherSelected && (
-                <Form.Item
-                  label="Custom Delivery Address"
-                  name={`customDeliveryAddress${index + 1}`}
-                  rules={[{ required: true, message: "Please enter the delivery address!" }]}
-                >
-                  <Input placeholder="Enter your delivery address" value={customAddress} onChange={(e) => setCustomAddress(e.target.value)} />
-                </Form.Item>
-              )}
-            </Col>
           </Row>
 
           <Form.Item
@@ -258,6 +235,42 @@ const RequestForm = () => {
           >
             <Input placeholder="Budget Max" value={budgetMax} onChange={handleBudgetChange} addonBefore="Rp" />
           </Form.Item>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                label="Estimated Delivery Date"
+                name={`deliveryDate${index + 1}`}
+                rules={[{ required: true, message: "Please select the delivery date!" }]}
+              >
+                <DatePicker style={{ width: "100%" }} placeholder="Select Date" disabledDate={disabledDate} />
+              </Form.Item>
+            </Col>
+
+            <Col span={12}>
+              <Form.Item
+                label="Delivery Address"
+                name={`deliveryAddress${index + 1}`}
+                rules={[{ required: !isOtherSelected, message: "Please select the delivery address!" }]}
+              >
+                <Select placeholder="Select Address" onChange={handleAddressChange}>
+                  <Option value="Cyber 2">Cyber 2 Tower</Option>
+                  <Option value="Balekota">Mall Balekota Tangerang</Option>
+                  <Option value="other">Other</Option>
+                </Select>
+              </Form.Item>
+
+              {isOtherSelected && (
+                <Form.Item
+                  label="Custom Delivery Address"
+                  name={`customDeliveryAddress${index + 1}`}
+                  rules={[{ required: true, message: "Please enter the delivery address!" }]}
+                >
+                  <Input placeholder="Enter your delivery address" value={customAddress} onChange={(e) => setCustomAddress(e.target.value)} />
+                </Form.Item>
+              )}
+            </Col>
+          </Row>
         </div>
       ))}
 

@@ -12,6 +12,8 @@ interface Profile {
 
 // Definisikan tipe untuk user profile
 interface UserProfile {
+  namaLengkap: string;
+  divisi: string;
   email: string;
   entity: string;
   role: string;
@@ -53,6 +55,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (Array.isArray(userData.profile) && userData.profile.length > 0) {
               const selectedProfile = userData.profile[selectedProfileIndex];
               setUserProfile({
+                namaLengkap: userData.namaLengkap,
+                divisi: userData.divisi,
                 email: selectedProfile.email,
                 entity: selectedProfile.entity,
                 role: selectedProfile.role,
