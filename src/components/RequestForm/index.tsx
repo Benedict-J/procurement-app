@@ -1,5 +1,5 @@
 import { db } from "@/firebase/firebase";
-import { Form, Input, Button, Select, Row, DatePicker, Col, Popconfirm } from "antd";
+import { Form, Input, Button, Select, Row, DatePicker, Col, Popconfirm, message } from "antd";
 import dayjs, { Dayjs } from "dayjs";
 import { addDoc, collection, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { useState } from "react";
@@ -47,6 +47,7 @@ const RequestForm = () => {
   const [loading, setLoading] = useState(false);
   const [isOtherSelected, setIsOtherSelected] = useState(false);
   const [customAddress, setCustomAddress] = useState("");
+  const [form] = Form.useForm();
 
   const handleAddressChange = (value: string) => {
     if (value === "other") {
@@ -114,11 +115,11 @@ const RequestForm = () => {
       const skipWords = ["PT"];
     
       return entityName
-        .split(" ") // Pisahkan nama berdasarkan spasi
-        .filter(word => !skipWords.includes(word)) // Abaikan kata yang ada di skipWords
-        .map(word => word.charAt(0)) // Ambil huruf pertama dari setiap kata yang tersisa
-        .join("") // Gabungkan huruf pertama dari setiap kata menjadi singkatan
-        .toUpperCase(); // Ubah ke huruf besar
+        .split(" ") // 
+        .filter(word => !skipWords.includes(word)) 
+        .map(word => word.charAt(0)) 
+        .join("") 
+        .toUpperCase(); 
     }
 
     try {
@@ -135,7 +136,11 @@ const RequestForm = () => {
       const requesterDivision = userProfile.divisi;
       const requesterEntity = userProfile.entity; 
 
-      const { email, entity, role } = userProfile;
+      if (requesterEntity !== userProfile.entity) {
+        alert(`Your request can only be associated with your entity: ${userProfile.entity}.`);
+        setLoading(false);
+        return;
+    }
 
       // Menyimpan request ke Firestore
       await addDoc(collection(db, "requests"), {
@@ -144,6 +149,7 @@ const RequestForm = () => {
         status: 'pending',
         requesterId: requesterId,
         requesterName: requesterName,
+        requesterDivision: requesterDivision,
         requesterEntity: requesterEntity,   
         createdAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
         approvalStatus: {
@@ -152,7 +158,8 @@ const RequestForm = () => {
           releaser: { approved: false, approvedBy: null, approvedAt: null },
         }, // Menyimpan waktu request dibuat
       });
-      alert(`Request submitted successfully with Request Number: ${requestNumber}`);
+      message.success('Request submitted successfully');
+      form.resetFields();
     } catch (error) {
       console.error("Error submitting request:", error);
       alert("Failed to submit request.");

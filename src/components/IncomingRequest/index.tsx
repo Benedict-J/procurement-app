@@ -66,22 +66,32 @@ const IncomingRequest = () => {
 
     useEffect(() => {
         const fetchRequests = async () => {
-            let roleQuery;
 
+            if (!userProfile) return;
+            
+
+            let roleQuery;
+            const division = userProfile.divisi;
+            const entity = userProfile.entity;
             // Buat query berdasarkan role pengguna
             if (role === "Checker") {
-                roleQuery = query(collection(db, "requests"), where("approvalStatus.checker.approved", "==", false));
+                roleQuery = query(collection(db, "requests"), 
+                where("approvalStatus.checker.approved", "==", false), 
+                where("requesterDivision", "==", division),
+                where("requesterEntity", "==", entity));
             } else if (role === "Approval") {
                 roleQuery = query(
                     collection(db, "requests"),
                     where("approvalStatus.checker.approved", "==", true),
-                    where("approvalStatus.approval.approved", "==", false)
+                    where("approvalStatus.approval.approved", "==", false),
+                    where("requesterEntity", "==", entity)
                 );
             } else if (role === "Releaser") {
                 roleQuery = query(
                     collection(db, "requests"),
                     where("approvalStatus.approval.approved", "==", true),
-                    where("approvalStatus.releaser.approved", "==", false)
+                    where("approvalStatus.releaser.approved", "==", false),
+                    where("requesterEntity", "==", entity)
                 );
             }
 
