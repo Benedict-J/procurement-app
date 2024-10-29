@@ -50,6 +50,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     // Listener untuk autentikasi Firebase
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      setLoading(true);
       if (user) {
         setUser(user);
         try {
@@ -88,20 +89,29 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     if (!loading && userProfile && selectedProfileIndex !== null) {
-      // Cek apakah pengguna saat ini berada di salah satu path dashboard
-      const dashboardPaths = Object.values(defaultPathsForRoles);
-      const currentPath = router.pathname;
+      // Pengecualian redirect
+      const nonRedirectPaths = [
+        "/auth/login",
+        "/auth/register",
+        "/auth/register/confirm-register",
+        "/auth/forgot-password",
+        "/auth/forgot-password/reset-password",
+        "/auth/email-verification"
+      ];
 
-      if (dashboardPaths.includes(currentPath)) {
-        const defaultPath = defaultPathsForRoles[userProfile.profile[selectedProfileIndex].role];
-        
-        // Redirect jika path tidak sesuai dengan role
-        if (currentPath !== defaultPath) {
-          router.replace(defaultPath);
-        }
+      if (nonRedirectPaths.includes(router.pathname)) {
+        return;
+      }
+
+      // Redirect berdasarkan peran pengguna
+      const defaultPath = defaultPathsForRoles[userProfile.profile[selectedProfileIndex].role];
+
+      // Redirect hanya jika path saat ini berbeda dengan defaultPath yang sesuai role
+      if (router.pathname !== defaultPath) {
+        router.replace(defaultPath);
       }
     }
-  }, [loading, userProfile, selectedProfileIndex, router.pathname]);
+  }, [userProfile, selectedProfileIndex, loading, router.pathname]);
 
   const setSelectedProfile = (index: number) => {
     if (user) {
@@ -118,6 +128,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
               role: profile.role,
               email: profile.email,
             }));
+
+            // Redirect hanya saat profile diganti
+            const defaultPath = defaultPathsForRoles[profile.role];
+            if (router.pathname !== defaultPath) {
+              router.replace(defaultPath);
+            }
           }
         }
       });
@@ -126,7 +142,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <UserContext.Provider value={{ user, userProfile, selectedProfileIndex, loading, setSelectedProfile }}>
-      {children}
+      {loading ? (
+        <div>Loading...</div> // Tampilan loading sementara data sedang di-fetch
+      ) : (
+        children
+      )}
     </UserContext.Provider>
   );
 };
