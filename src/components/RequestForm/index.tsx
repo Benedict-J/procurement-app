@@ -1,5 +1,5 @@
 import { db } from "@/firebase/firebase";
-import { Form, Input, Button, Select, Row, DatePicker, Col, Popconfirm, message } from "antd";
+import { Form, Input, Button, Select, Row, DatePicker, Col, Popconfirm, message, InputNumber } from "antd";
 import dayjs, { Dayjs } from "dayjs";
 import { addDoc, collection, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { useState } from "react";
@@ -105,6 +105,7 @@ const RequestForm = () => {
       merk: values[`merk${index + 1}`] || "",
       detailSpecs: values[`detailSpecs${index + 1}`] || "",
       color: values[`color${index + 1}`] || "",
+      qty: values[`qty${index + 1}`] || 0,
       uom: values[`uom${index + 1}`] || "",
       linkRef: values[`linkRef${index + 1}`] || "",
       budgetMax: values[`budgetMax${index + 1}`] || "",
@@ -172,7 +173,7 @@ const RequestForm = () => {
     <>
 
     {/* Form */}
-    <Form layout="vertical" onFinish={onFinish} initialValues={{ remember: true }}>
+    <Form layout="vertical" onFinish={onFinish} initialValues={{ remember: true }} form={form}>
       {formList.map((_, index) => (
         <div key={index} style={{ marginBottom: 36 }}>
           <Row justify="space-between" align="middle">
@@ -220,9 +221,31 @@ const RequestForm = () => {
           </Form.Item>
 
           <Form.Item
+            label="QTY"
+            name={`qty${index + 1}`}
+            rules={[
+              { required: true, message: "Please input the quantity" },
+              { validator: (_, value) => 
+                  !isNaN(value) 
+                      ? Promise.resolve() 
+                      : Promise.reject("Only numbers are allowed"),
+              },
+          ]}
+          >
+            <Input placeholder="Quantity" />
+          </Form.Item>
+
+          <Form.Item
             label="UoM"
             name={`uom${index + 1}`}
-            rules={[{ required: true, message: "Please input the UoM" }]}
+            rules={[
+              { required: true, message: "Please input the UoM" },
+              { validator: (_, value) => 
+                  !isNaN(value) 
+                      ? Promise.resolve() 
+                      : Promise.reject("Only numbers are allowed"),
+              },
+          ]}
           >
             <Input placeholder="UoM" />
           </Form.Item>
@@ -248,6 +271,7 @@ const RequestForm = () => {
               <Form.Item
                 label="Estimated Delivery Date"
                 name={`deliveryDate${index + 1}`}
+                extra="You must choose above 7 days"
                 rules={[{ required: true, message: "Please select the delivery date!" }]}
               >
                 <DatePicker style={{ width: "100%" }} placeholder="Select Date" disabledDate={disabledDate} />
@@ -261,8 +285,8 @@ const RequestForm = () => {
                 rules={[{ required: !isOtherSelected, message: "Please select the delivery address!" }]}
               >
                 <Select placeholder="Select Address" onChange={handleAddressChange}>
-                  <Option value="Cyber 2">Cyber 2 Tower</Option>
-                  <Option value="Balekota">Mall Balekota Tangerang</Option>
+                  <Option value="Cyber 2">Cyber 2 Tower Lt. 28 Jl. H. R. Rasuna Said No.13, RT.7/RW.2, Kuningan, Kecamatan Setiabudi, Kota Jakarta Selatan, Daerah Khusus Ibukota Jakarta 12950</Option>
+                  <Option value="Balekota">Mall Balekota Tangerang Lt. 1 Jl. Jenderal Sudirman No.3, RT.002/RW.012, Buaran Indah, Kec. Tangerang, Kota Tangerang, Banten 15119</Option>
                   <Option value="other">Other</Option>
                 </Select>
               </Form.Item>
