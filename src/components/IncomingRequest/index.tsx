@@ -22,7 +22,6 @@ const IncomingRequest = () => {
 
     const role = userProfile?.role;
 
-    // Kolom untuk tabel
     const columns: TableColumnsType<DataType> = [
         {
             title: "Name",
@@ -35,6 +34,11 @@ const IncomingRequest = () => {
             dataIndex: "requestNo",
             key: "requestNo",
             align: "center",
+            sorter: (a, b) => {
+                const numberA = parseInt(a.requestNo.replace(/\D/g, ''), 10); 
+                const numberB = parseInt(b.requestNo.replace(/\D/g, ''), 10); 
+                return numberA - numberB;
+            },
         },
         {
             title: "Detail Request",
@@ -68,17 +72,17 @@ const IncomingRequest = () => {
         const fetchRequests = async () => {
 
             if (!userProfile) return;
-            
+
 
             let roleQuery;
             const division = userProfile.divisi;
             const entity = userProfile.entity;
             // Buat query berdasarkan role pengguna
             if (role === "Checker") {
-                roleQuery = query(collection(db, "requests"), 
-                where("approvalStatus.checker.approved", "==", false), 
-                where("requesterDivision", "==", division),
-                where("requesterEntity", "==", entity));
+                roleQuery = query(collection(db, "requests"),
+                    where("approvalStatus.checker.approved", "==", false),
+                    where("requesterDivision", "==", division),
+                    where("requesterEntity", "==", entity));
             } else if (role === "Approval") {
                 roleQuery = query(
                     collection(db, "requests"),
