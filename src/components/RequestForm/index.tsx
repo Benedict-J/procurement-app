@@ -147,7 +147,7 @@ const RequestForm = () => {
       await addDoc(collection(db, "requests"), {
         items: items,
         requestNumber: requestNumber,
-        status: 'pending',
+        status: 'On Progress',
         requesterId: requesterId,
         requesterName: requesterName,
         requesterDivision: requesterDivision,
@@ -206,7 +206,7 @@ const RequestForm = () => {
 
           <Form.Item
             label="Detail Specs"
-            name={`detailSpecs${index + 1}}`}
+            name={`detailSpecs${index + 1}`}
             rules={[{ required: true, message: "Please provide Detail Specs!" }]}
           >
             <Input.TextArea placeholder="Enter Detail Specs for asset request" />
@@ -238,14 +238,7 @@ const RequestForm = () => {
           <Form.Item
             label="UoM"
             name={`uom${index + 1}`}
-            rules={[
-              { required: true, message: "Please input the UoM" },
-              { validator: (_, value) => 
-                  !isNaN(value) 
-                      ? Promise.resolve() 
-                      : Promise.reject("Only numbers are allowed"),
-              },
-          ]}
+            rules={[{ required: true, message: "Please input the UoM" }]}
           >
             <Input placeholder="UoM" />
           </Form.Item>
@@ -261,7 +254,14 @@ const RequestForm = () => {
           <Form.Item
             label="Budget Max"
             name={`budgetMax${index + 1}`}
-            rules={[{ required: true, message: "Please input the Budget Max" }]}
+            rules={[
+              { required: true, message: "Please input the UoM" },
+              { validator: (_, value) => 
+                  !isNaN(value) 
+                      ? Promise.resolve() 
+                      : Promise.reject("Only numbers are allowed"),
+              },
+          ]}
           >
             <Input placeholder="Budget Max" value={budgetMax} onChange={handleBudgetChange} addonBefore="Rp" />
           </Form.Item>
