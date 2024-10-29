@@ -17,6 +17,7 @@ interface UserProfile {
   email: string;
   entity: string;
   role: string;
+  userId: string;
   profile: Profile[]; // Menambahkan array profile
 }
 
@@ -61,6 +62,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 entity: selectedProfile.entity,
                 role: selectedProfile.role,
                 profile: userData.profile,
+                userId: userData.uid,
               });
               setSelectedProfileIndex(selectedIndex);
             }
