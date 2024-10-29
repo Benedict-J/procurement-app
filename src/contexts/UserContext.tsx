@@ -39,6 +39,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [selectedProfileIndex, setSelectedProfileIndex] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Definisikan mapping role ke path dashboard
+  const defaultPathsForRoles: Record<string, string> = {
+    "Requester": "/requester/request-form",
+    "Checker": "/requester/incoming-request",
+    "Approval": "/requester/incoming-request",
+    "Releaser": "/requester/incoming-request",
+  };
+
   useEffect(() => {
     // Listener untuk autentikasi Firebase
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -79,34 +87,21 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
-    if (userProfile && selectedProfileIndex !== null) {
-      // Pengecualian redirect
-      const nonRedirectPaths = [
-        "/auth/login",
-        "/auth/register",
-        "/auth/forgot-password",
-        "/auth/forgot-password/reset-password",
-        "/auth/email-verification"
-      ];
+    if (!loading && userProfile && selectedProfileIndex !== null) {
+      // Cek apakah pengguna saat ini berada di salah satu path dashboard
+      const dashboardPaths = Object.values(defaultPathsForRoles);
+      const currentPath = router.pathname;
 
-      if (nonRedirectPaths.includes(router.pathname)) {
-        return;
-      }
-      // Redirect berdasarkan peran pengguna
-      const defaultPathsForRoles: Record<string, string> = {
-        "Requester": "/requester/request-form",
-        "Checker": "/requester/incoming-request",
-        "Approval": "/requester/incoming-request",
-        "Releaser": "/requester/incoming-request",
-      };
-
-      const defaultPath = defaultPathsForRoles[userProfile.profile[selectedProfileIndex].role];
-
-      if (router.pathname !== defaultPath) {
-        router.push(defaultPath);
+      if (dashboardPaths.includes(currentPath)) {
+        const defaultPath = defaultPathsForRoles[userProfile.profile[selectedProfileIndex].role];
+        
+        // Redirect jika path tidak sesuai dengan role
+        if (currentPath !== defaultPath) {
+          router.replace(defaultPath);
+        }
       }
     }
-  }, [userProfile, selectedProfileIndex, router.pathname]);
+  }, [loading, userProfile, selectedProfileIndex, router.pathname]);
 
   const setSelectedProfile = (index: number) => {
     if (user) {
