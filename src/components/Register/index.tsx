@@ -31,34 +31,37 @@ const Register: React.FC | any = () => {
     };
   }, []);
 
-
   const onFinish = async (values: any) => {
-
     const { nik } = values;
     if (!nik) {
       message.error("NIK field cannot be empty");
       return;
     }
-
-    const result = await registerUserWithNik(nik);
-
-    if (result.success && result.userData.profile.length > 0) {
-      message.success("NIK Registered!");
-      router.push({
-        pathname: "register/confirm-register",
-        query: {
-          nik: nik,
-          namaLengkap: result.userData.namaLengkap,
-          divisi: result.userData.divisi,
-          profile: JSON.stringify(result.userData.profile),
-        }
-      });
-    } else if (!result.success) {
-        message.error(result.message);
-    } else {
-      message.error("There's a problem");  
+  
+    try {
+      const result = await registerUserWithNik(nik);
+  
+      if (result.success && result.userData && result.userData.profile && result.userData.profile.length > 0) {
+        message.success("NIK Registered!");
+        router.push({
+          pathname: "register/confirm-register",
+          query: {
+            nik: nik,
+            namaLengkap: result.userData.namaLengkap,
+            divisi: result.userData.divisi,
+            profile: JSON.stringify(result.userData.profile),
+          },
+        });
+      } else if (!result.success || !result.userData) {
+        message.error("Invalid or unregistered NIK. Please try again.");
+      } else {
+        message.error("Profile information is missing or incomplete. Please contact super admin.");
+      }
+    } catch (error) {
+      message.error("An error occurred during the registration process. Try again or contact super admin.");
+      console.error(error); 
     }
-  };
+  };  
 
   const onLogin = (values: any) => {
     router.push("login");
