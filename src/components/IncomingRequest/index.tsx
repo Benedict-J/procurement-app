@@ -1,10 +1,11 @@
-import { Table, Button, Pagination, message } from "antd";
+import { Table, Button, Pagination, message, Modal } from "antd";
 import { useEffect, useState } from "react";
 import type { TableColumnsType } from "antd";
 import { useUserContext } from "@/contexts/UserContext";
 import { collection, doc, getDocs, query, updateDoc, where } from "firebase/firestore";
 import { db } from "@/firebase/firebase";
 import dayjs from "dayjs";
+import TextArea from "antd/es/input/TextArea";
 
 interface DataType {
     key: React.Key;
@@ -19,10 +20,12 @@ const IncomingRequest = () => {
     const [dataSource, setDataSource] = useState<DataType[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(20);
+    const [isRejectModalVisible, setIsRejectModalVisible] = useState(false);
+    const [rejectFeedback, setRejectFeedback] = useState("");
+    const [currentRejectId, setCurrentRejectId] = useState<string | null>(null);
 
     const role = userProfile?.role;
 
-    // Kolom untuk tabel
     const columns: TableColumnsType<DataType> = [
         {
             title: "Name",
@@ -159,13 +162,43 @@ const IncomingRequest = () => {
 
     // Handler untuk reject
     const handleReject = (id: string) => {
-        console.log("Reject request ID:", id);
-        // Panggil fungsi reject di sini
+        setCurrentRejectId(id);
+        setIsRejectModalVisible(true);
+    };
 
-        // Menghapus item yang ditolak dari dataSource
-        setDataSource((prevData) => prevData.filter((item) => item.id !== id));
+    const submitReject = async () => {
+        if (!userProfile || !currentRejectId) {
+            message.error("Failed to reject request. Please try again.");
+            return;
+        }
 
-        message.success(`Request rejected successfully by ${role}`);
+        const role = userProfile.role;
+        const requestDocRef = doc(db, "requests", currentRejectId);
+
+        try {
+            await updateDoc(requestDocRef, {
+                [`approvalStatus.${role.toLowerCase()}`]: {
+                    approved: false,
+                    feedback: rejectFeedback,
+                    rejectedAt: new Date().toISOString(),
+                },
+                status: "rejected", // Update status request menjadi "rejected"
+            });
+
+            // Menghapus request yang direject dari dataSource
+            setDataSource((prevData) => prevData.filter((item) => item.id !== currentRejectId));
+
+            message.success(`Request rejected successfully by ${role}`);
+
+        } catch (error) {
+            console.error("Error rejecting request:", error);
+            message.error("Failed to reject request.");
+        } finally {
+            // Reset modal state
+            setRejectFeedback("");
+            setIsRejectModalVisible(false);
+            setCurrentRejectId(null);
+        }
     };
 
 
@@ -192,6 +225,22 @@ const IncomingRequest = () => {
                 style={{ backgroundColor: "#fff" }}
                 onChange={handleTableChange}
             />
+            <Modal
+                title="Reject Request"
+                open={isRejectModalVisible}
+                onOk={submitReject}
+                onCancel={() => setIsRejectModalVisible(false)}
+                okText="Submit"
+                cancelText="Cancel"
+            >
+                <p>Please provide feedback for the rejection:</p>
+                <TextArea
+                    rows={4}
+                    value={rejectFeedback}
+                    onChange={(e) => setRejectFeedback(e.target.value)}
+                    placeholder="Enter feedback here..."
+                />
+            </Modal>
         </div>
     );
 };
