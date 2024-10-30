@@ -6,7 +6,7 @@ import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
 import { useUserContext } from "@/contexts/UserContext"; 
 import dayjs from "dayjs";
 import { SortOrder } from "antd/es/table/interface";
-import { useRouter } from "next/router"; // Import useRouter untuk navigasi
+import { useRouter } from "next/router"; 
 
 const { Option } = Select;
 
@@ -16,7 +16,7 @@ const HistoryTable = () => {
     const [loading, setLoading] = useState(true);
     const [sortOrder, setSortOrder] = useState<SortOrder>("ascend");
     const [statusFilter, setStatusFilter] = useState("All");
-    const router = useRouter(); // Inisialisasi router
+    const router = useRouter(); 
 
     useEffect(() => {
         const fetchHistory = async () => {
@@ -178,7 +178,7 @@ const HistoryTable = () => {
 
     const handleDetail = (requestNo: string) => {
         // Navigasi ke halaman detail request menggunakan nomor request
-        router.push(`/requester/detail-request/${requestNo}`); // Sesuaikan dengan jalur yang diinginkan
+        router.push(`/requester/detail-request?requestNo=${requestNo}`);
     };
 
     const showFlowStep = (status: string) => {

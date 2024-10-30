@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { Table, Pagination } from "antd";
 import type { TableColumnsType } from "antd";
 import { useUserContext } from "@/contexts/UserContext";
-import { collection, getDocs, query, limit } from "firebase/firestore"; // tambahkan limit
+import { collection, getDocs, query, where } from "firebase/firestore"; 
 import { db } from "@/firebase/firebase";
-import styles from './index.module.scss'; // Import file SCSS
+import styles from './index.module.scss'; 
 
 interface DataType {
     key: React.Key;
@@ -21,18 +21,22 @@ interface DataType {
     budgetMax: string;
 }
 
-const DetailRequestTable = () => {
+interface DetailRequestTableProps {
+    requestNo: string; // Tambahkan prop requestNo
+}
+
+const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) => {
     const { userProfile } = useUserContext();
     const [dataSource, setDataSource] = useState<DataType[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
-    const [requestNumber, setRequestNumber] = useState<string | null>(null); // Nomor request state
-    const pageSize = 1; // Menampilkan satu nomor request per halaman
+    const [requestNumber, setRequestNumber] = useState<string | null>(null);
+    const pageSize = 1; 
 
     // Definisi kolom tabel
     const columns: TableColumnsType<DataType> = [
         {
             title: "Nomor Item",
-            dataIndex: "itemNumber",
+            dataIndex: "itemNumber", 
             key: "itemNumber",
             align: "center",
         },
@@ -92,36 +96,55 @@ const DetailRequestTable = () => {
         },
     ];
 
-    // Mengambil data request dari Firebase
+    // Mengambil data request dari Firebase berdasarkan nomor request
     useEffect(() => {
         const fetchRequest = async () => {
-            if (!userProfile) return;
+            if (!userProfile || !requestNo) return;
 
-            const requestQuery = query(collection(db, "requests"), limit(1));
-            const querySnapshot = await getDocs(requestQuery);
-            if (!querySnapshot.empty) {
-                const firstDoc = querySnapshot.docs[0];
-                setRequestNumber(firstDoc.data().requestNumber || "N/A");
-                const requestData = (firstDoc.data().items || []).map((item: any, index: number) => ({
-                    key: firstDoc.id,
-                    requestNumber: firstDoc.data().requestNumber || "N/A",
-                    itemNumber: index + 1,
-                    estimateDeliveryDate: item.deliveryDate || "N/A",
-                    deliveryAddress: item.deliveryAddress || "N/A",
-                    merk: item.merk || "N/A",
-                    detailSpecs: item.detailSpecs || "N/A",
-                    color: item.color || "N/A",
-                    qty: item.qty || 0,
-                    uom: item.uom || "N/A",
-                    linkRef: item.linkRef || "N/A",
-                    budgetMax: item.budgetMax || "N/A",
-                }));
-                setDataSource(requestData);
+            console.log("Fetching data for requestNo:", requestNo);
+            
+            // Query berdasarkan nomor request
+            const requestQuery = query(
+                collection(db, "requests"),
+                where("requestNumber", "==", requestNo)
+            );
+
+            try {
+                const querySnapshot = await getDocs(requestQuery);
+                if (!querySnapshot.empty) {
+                    const firstDoc = querySnapshot.docs[0];
+                    console.log("Data retrieved:", firstDoc.data());
+                    setRequestNumber(firstDoc.data().requestNumber || "N/A");
+
+                    // Proses data items
+                    const requestData = (firstDoc.data().items || []).map((item: any, index: number) => ({
+                        key: firstDoc.id,
+                        requestNumber: firstDoc.data().requestNumber || "N/A",
+                        itemNumber: index + 1,
+                        estimateDeliveryDate: item.deliveryDate || "N/A",
+                        deliveryAddress: item.deliveryAddress || "N/A",
+                        merk: item.merk || "N/A",
+                        detailSpecs: item.detailSpecs || "N/A",
+                        color: item.color || "N/A",
+                        qty: item.qty || 0,
+                        uom: item.uom || "N/A",
+                        linkRef: item.linkRef || "N/A",
+                        budgetMax: item.budgetMax || "N/A",
+                    }));
+
+                    console.log("Processed request data for table:", requestData);
+
+                    setDataSource(requestData);
+                } else {
+                    console.log("No data found for requestNo:", requestNo);
+                }
+            } catch (error) {
+                console.error("Error fetching request data:", error);
             }
         };
 
         fetchRequest();
-    }, [userProfile]);
+    }, [userProfile, requestNo]); // Tambahkan requestNo sebagai dependensi
 
     // Mengubah halaman tabel
     const handlePageChange = (page: number) => {
