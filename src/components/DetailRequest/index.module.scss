@@ -1,0 +1,23 @@
+.requestContainer {
+    padding: 20px;
+
+    .requestNumber {
+        margin-left: 10px;
+        font-size: 14px;
+        font-weight: bold;
+        color: green;
+    }
+
+    .spacing {
+        margin-bottom: 40px;
+    }
+
+    .table {
+        background-color: #fff;
+    }
+
+    .pagination {
+        margin-top: 20px;
+        text-align: right;
+    }
+}

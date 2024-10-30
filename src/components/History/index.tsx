@@ -3,9 +3,10 @@ import { Table, Button, Select, message } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { db } from "@/firebase/firebase"; 
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
-import { useUserContext } from "@/contexts/UserContext"; // Untuk mendapatkan role pengguna dari context
+import { useUserContext } from "@/contexts/UserContext"; 
 import dayjs from "dayjs";
 import { SortOrder } from "antd/es/table/interface";
+import { useRouter } from "next/router"; // Import useRouter untuk navigasi
 
 const { Option } = Select;
 
@@ -15,6 +16,7 @@ const HistoryTable = () => {
     const [loading, setLoading] = useState(true);
     const [sortOrder, setSortOrder] = useState<SortOrder>("ascend");
     const [statusFilter, setStatusFilter] = useState("All");
+    const router = useRouter(); // Inisialisasi router
 
     useEffect(() => {
         const fetchHistory = async () => {
@@ -25,7 +27,7 @@ const HistoryTable = () => {
 
             const role = userProfile.role;
 
-            // Buat query berdasarkan role
+            // Buat query berdasarkan peran pengguna
             if (role === "Requester") {
                 historyQuery = query(
                     collection(db, "requests"),
@@ -33,7 +35,6 @@ const HistoryTable = () => {
                     orderBy("createdAt", sortOrder === "ascend" ? "asc" : "desc")
                 );
             } else {
-                // Untuk Checker, Approval, Releaser
                 historyQuery = query(
                     collection(db, "requests"),
                     where(`approvalStatus.${role.toLowerCase()}.approvedBy`, "==", userProfile.userId),
@@ -79,7 +80,7 @@ const HistoryTable = () => {
         status: string;
     }    
 
-    // Columns untuk role Requester
+    // Kolom untuk peran Requester
     const requesterColumns: ColumnsType<DataType> = [
         { title: "No.", dataIndex: "key", key: "no", align: "center" as const },
         { title: "No. Request", dataIndex: "requestNo", key: "requestNo", align: "center" as const },
@@ -87,8 +88,8 @@ const HistoryTable = () => {
             title: "Detail Request",
             key: "detail",
             align: "center" as const,
-            render: (text: string, record: { id: string }) => (
-                <Button type="link" onClick={() => handleDetail(record.id)}>View Details</Button>
+            render: (text: string, record: { requestNo: string }) => (
+                <Button type="link" onClick={() => handleDetail(record.requestNo)}>View Details</Button>
             ),
         },
         {
@@ -122,7 +123,7 @@ const HistoryTable = () => {
         },
     ];
 
-    // Columns untuk role Checker, Approval, Releaser
+    // Kolom untuk Checker, Approval, Releaser
     const actionColumns = [
         { title: "No.", dataIndex: "key", key: "no", align: "center" as const},
         { title: "No. Request", dataIndex: "requestNo", key: "requestNo", align: "center" as const},
@@ -130,31 +131,30 @@ const HistoryTable = () => {
             title: "Detail Request",
             key: "detail",
             align: "center" as const,
-            render: (text: string, record: { id: string }) => (
-                <Button type="link" onClick={() => handleDetail(record.id)}>View Details</Button>
+            render: (text: string, record: { requestNo: string }) => (
+                <Button type="link" onClick={() => handleDetail(record.requestNo)}>View Details</Button>
             ),
         },
         { title: "Action Date", dataIndex: "actionDate", key: "actionDate", align: "center" as const},
         { title: "Action", dataIndex: "action", key: "action", align: "center" as const},
     ];
 
-    const handleDetail = (id: string) => {
-        // Navigasi ke halaman detail request menggunakan id
-        console.log(`Navigating to details of request ID: ${id}`);
+    const handleDetail = (requestNo: string) => {
+        // Navigasi ke halaman detail request menggunakan nomor request
+        router.push(`/requester/detail-request/${requestNo}`); // Sesuaikan dengan jalur yang diinginkan
     };
 
     const showFlowStep = (status: string) => {
-        // Menampilkan flow step sesuai status
         console.log(`Flow step for status: ${status}`);
     };
 
     if (loading) {
         return <p>Loading...</p>;
-      }
+    }
     
-      if (!userProfile) {
+    if (!userProfile) {
         return <p>Error: User profile not found</p>;
-      }
+    }
 
     return (
         <div>
@@ -173,7 +173,6 @@ const HistoryTable = () => {
                     loading={loading}
                     pagination={{ pageSize: 10 }}
                     rowKey="key"
-                    
                 />
             )}
         </div>

@@ -47,16 +47,16 @@ const getMenuByRole = (role: string): MenuItem[] => {
           icon: <CheckCircleOutlined />,
           children: [
             {
-              path: "/approval/incoming-request",
+              path: "/requester/incoming-request",
               name: "Incoming Request",
               icon: <FileAddOutlined />,
-              key: "approval:incoming-request",
+              key: ":incoming-request",
             },
             {
-              path: "/approval/history",
+              path: "/requester/history",
               name: "History",
               icon: <HistoryOutlined />,
-              key: "approval:history",
+              key: ":history",
             },
           ],
         },
