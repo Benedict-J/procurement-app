@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Table, Button, Select, message } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { db } from "@/firebase/firebase"; 
-import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { useUserContext } from "@/contexts/UserContext"; 
 import dayjs from "dayjs";
 import { SortOrder } from "antd/es/table/interface";
@@ -27,30 +27,26 @@ const HistoryTable = () => {
 
             const role = userProfile.role;
 
-            // Buat query berdasarkan role
+            // Buat query berdasarkan role tanpa `orderBy`
             if (role === "Requester") {
                 historyQuery = query(
                     collection(db, "requests"),
-                    where("requesterId", "==", userProfile.userId),
-                    orderBy("createdAt", sortOrder === "ascend" ? "asc" : "desc")
+                    where("requesterId", "==", userProfile.userId)
                 );
             } else if (role === "Checker") {
                 historyQuery = query(
                     collection(db, "requests"),
-                    where("approvalStatus.checker.approvedBy", "==", userProfile.userId),
-                    orderBy("approvalStatus.checker.approvedAt", sortOrder === "ascend" ? "asc" : "desc")
+                    where("approvalStatus.checker.approvedBy", "==", userProfile.userId)
                 );
             } else if (role === "Approval") {
                 historyQuery = query(
                     collection(db, "requests"),
-                    where("approvalStatus.approval.approvedBy", "==", userProfile.userId),
-                    orderBy("approvalStatus.approval.approvedAt", sortOrder === "ascend" ? "asc" : "desc")
+                    where("approvalStatus.approval.approvedBy", "==", userProfile.userId)
                 );
             } else if (role === "Releaser") {
                 historyQuery = query(
                     collection(db, "requests"),
-                    where("approvalStatus.releaser.approvedBy", "==", userProfile.userId),
-                    orderBy("approvalStatus.releaser.approvedAt", sortOrder === "ascend" ? "asc" : "desc")
+                    where("approvalStatus.releaser.approvedBy", "==", userProfile.userId)
                 );
             }
 
@@ -82,7 +78,7 @@ const HistoryTable = () => {
         };
 
         fetchHistory();
-    }, [userProfile, sortOrder, statusFilter]);
+    }, [userProfile, statusFilter]);
 
     interface DataType {
         key: React.Key;
@@ -104,7 +100,12 @@ const HistoryTable = () => {
             title: "No. Request", 
             dataIndex: "requestNo", 
             key: "requestNo", 
-            align: "center" as const 
+            align: "center" as const,
+            sorter: (a, b) => {
+                const numberA = parseInt(a.requestNo.replace(/\D/g, ''), 10); 
+                const numberB = parseInt(b.requestNo.replace(/\D/g, ''), 10); 
+                return numberA - numberB;
+            },
         },
         {
             title: "Detail Request",
@@ -121,15 +122,7 @@ const HistoryTable = () => {
             dataIndex: "requestDate",
             key: "requestDate",
             align: "center",
-            sorter: true,
-            sortOrder: sortOrder,
-            onHeaderCell: () => ({
-                onClick: () => setSortOrder(sortOrder === "ascend" ? "descend" : "ascend"),
-                style: { backgroundColor: "#FAFAFA" }
-            }),
-            onCell: () => ({
-                style: { backgroundColor: "#fff" }
-            })
+            sorter: (a, b) => dayjs(a.requestDate).unix() - dayjs(b.requestDate).unix(), // Pengurutan berdasarkan tanggal
         },        
         {
             title: "Status",
@@ -163,7 +156,12 @@ const HistoryTable = () => {
             title: "No. Request", 
             dataIndex: "requestNo", 
             key: "requestNo", 
-            align: "center" as const
+            align: "center" as const,
+            sorter: (a, b) => {
+                const numberA = parseInt(a.requestNo.replace(/\D/g, ''), 10); 
+                const numberB = parseInt(b.requestNo.replace(/\D/g, ''), 10); 
+                return numberA - numberB;
+            },
         },
         {
             title: "Detail Request",
