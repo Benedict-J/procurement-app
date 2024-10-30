@@ -5,7 +5,8 @@ import { useUserContext } from "@/contexts/UserContext";
 import { collection, doc, getDocs, query, updateDoc, where } from "firebase/firestore";
 import { db } from "@/firebase/firebase";
 import dayjs from "dayjs";
-import TextArea from "antd/es/input/TextArea";
+import { Input } from "antd";
+const { TextArea } = Input;
 
 interface DataType {
     key: React.Key;
@@ -132,6 +133,9 @@ const IncomingRequest = () => {
         }
 
         const role = userProfile.role;
+        const userId = userProfile.userId;
+        const userName = userProfile.namaLengkap;
+
 
         let approvalField = "";
         if (role === "Checker") {
@@ -151,14 +155,15 @@ const IncomingRequest = () => {
             // Update approval status
             await updateDoc(requestDocRef, {
                 [`${approvalField}.approved`]: true,
-                [`${approvalField}.date`]: dayjs().format("YYYY-MM-DD"),
+                [`${approvalField}.approvedBy`]: userId,
+                [`${approvalField}.approvedAt`]: dayjs().format("YYYY-MM-DD HH:mm:ss"),
             });
 
             // Menghapus item yang di-approve dari dataSource
             setDataSource((prevData) => prevData.filter((item) => item.id !== id));
 
             console.log(`Request ${id} approved by ${role}`);
-            message.success(`Request approved successfully by ${role}`);
+            message.success(`Request approved successfully by ${userName}`);
         } catch (error) {
             console.error("Error approving request:", error);
             message.error("Failed to approve request.");
