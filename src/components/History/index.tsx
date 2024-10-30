@@ -25,6 +25,7 @@ const HistoryTable = () => {
 
             const role = userProfile.role;
 
+            console.log("User Profile:", userProfile);
             // Buat query berdasarkan role
             if (role === "Requester") {
                 historyQuery = query(
@@ -32,12 +33,23 @@ const HistoryTable = () => {
                     where("requesterId", "==", userProfile.userId),
                     orderBy("createdAt", sortOrder === "ascend" ? "asc" : "desc")
                 );
-            } else {
-                // Untuk Checker, Approval, Releaser
+            } else if (role === "Checker") {
                 historyQuery = query(
                     collection(db, "requests"),
-                    where(`approvalStatus.${role.toLowerCase()}.approvedBy`, "==", userProfile.userId),
-                    orderBy("actionDate", sortOrder === "ascend" ? "asc" : "desc")
+                    where("approvalStatus.checker.approvedBy", "==", userProfile.userId),
+                    orderBy("approvalStatus.checker.approvedAt", sortOrder === "ascend" ? "asc" : "desc")
+                );
+            } else if (role === "Approval") {
+                historyQuery = query(
+                    collection(db, "requests"),
+                    where("approvalStatus.approval.approvedBy", "==", userProfile.userId),
+                    orderBy("approvalStatus.approval.approvedAt", sortOrder === "ascend" ? "asc" : "desc")
+                );
+            } else if (role === "Releaser") {
+                historyQuery = query(
+                    collection(db, "requests"),
+                    where("approvalStatus.releaser.approvedBy", "==", userProfile.userId),
+                    orderBy("approvalStatus.releaser.approvedAt", sortOrder === "ascend" ? "asc" : "desc")
                 );
             }
 
@@ -48,6 +60,9 @@ const HistoryTable = () => {
                 );
             }
 
+            console.log("Checker userId:", userProfile.userId);
+            console.log("Constructed Query:", historyQuery);
+
             try {
                 const querySnapshot = await getDocs(historyQuery);
                 const data = querySnapshot.docs.map(doc => ({
@@ -56,10 +71,11 @@ const HistoryTable = () => {
                     requestNo: doc.data().requestNumber || "N/A",
                     requestDate: doc.data().createdAt ? dayjs(doc.data().createdAt).format("YYYY-MM-DD") : "N/A",
                     status: doc.data().status || "N/A",
-                    actionDate: doc.data().actionDate ? dayjs(doc.data().actionDate).format("YYYY-MM-DD") : "N/A",
-                    action: doc.data().approvalStatus?.checker?.approved ? "Approved" : "Rejected",
+                    actionDate: doc.data().approvalStatus[role.toLowerCase()]?.approvedAt || "N/A",
+                    action: doc.data().approvalStatus[role.toLowerCase()]?.approved ? "Approved" : "Rejected"
                 }));
                 setDataSource(data);
+                console.log("Log Data yang Diambil:", data);
             } catch (error) {
                 console.error("Error fetching history:", error);
                 message.error("Failed to load history.");
@@ -81,7 +97,11 @@ const HistoryTable = () => {
 
     // Columns untuk role Requester
     const requesterColumns: ColumnsType<DataType> = [
-        { title: "No.", dataIndex: "key", key: "no", align: "center" as const },
+        { title: "No.", 
+            key: "no", 
+            align: "center" as const,
+            render: (_: any, __: any, index: number) => index + 1
+        },
         { title: "No. Request", dataIndex: "requestNo", key: "requestNo", align: "center" as const },
         {
             title: "Detail Request",
@@ -124,7 +144,11 @@ const HistoryTable = () => {
 
     // Columns untuk role Checker, Approval, Releaser
     const actionColumns = [
-        { title: "No.", dataIndex: "key", key: "no", align: "center" as const},
+        { title: "No.", 
+            key: "no", 
+            align: "center" as const,
+            render: (_: any, __: any, index: number) => index + 1
+        },
         { title: "No. Request", dataIndex: "requestNo", key: "requestNo", align: "center" as const},
         {
             title: "Detail Request",
@@ -134,8 +158,20 @@ const HistoryTable = () => {
                 <Button type="link" onClick={() => handleDetail(record.id)}>View Details</Button>
             ),
         },
-        { title: "Action Date", dataIndex: "actionDate", key: "actionDate", align: "center" as const},
-        { title: "Action", dataIndex: "action", key: "action", align: "center" as const},
+        {
+            title: "Action Date",
+            dataIndex: "actionDate",
+            key: "actionDate",
+            align: "center" as const,
+            render: (text: string) => text || "N/A",
+        },
+        {
+            title: "Action",
+            dataIndex: "action",
+            key: "action",
+            align: "center" as const,
+            render: (text: string) => text || "N/A", 
+        },
     ];
 
     const handleDetail = (id: string) => {
@@ -173,7 +209,6 @@ const HistoryTable = () => {
                     loading={loading}
                     pagination={{ pageSize: 10 }}
                     rowKey="key"
-                    
                 />
             )}
         </div>

@@ -147,7 +147,7 @@ const RequestForm = () => {
       await addDoc(collection(db, "requests"), {
         items: items,
         requestNumber: requestNumber,
-        status: 'On Progress',
+        status: 'In Progress',
         requesterId: requesterId,
         requesterName: requesterName,
         requesterDivision: requesterDivision,

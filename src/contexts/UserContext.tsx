@@ -91,6 +91,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     if (!loading && userProfile && selectedProfileIndex !== null) {
+      console.log("Current Path:", router.pathname);
+    console.log("Role-based Default Path:", defaultPathsForRoles[userProfile.profile[selectedProfileIndex].role]);
       // Pengecualian redirect
       const nonRedirectPaths = [
         "/auth/login",
@@ -98,10 +100,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         "/auth/register/confirm-register",
         "/auth/forgot-password",
         "/auth/forgot-password/reset-password",
-        "/auth/email-verification"
+        "/auth/email-verification",
+        "/requester/history"
       ];
 
       if (nonRedirectPaths.includes(router.pathname)) {
+        console.log("Path included in non-redirect paths. Exiting useEffect.");
         return;
       }
 
@@ -110,6 +114,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Redirect hanya jika path saat ini berbeda dengan defaultPath yang sesuai role
       if (router.pathname !== defaultPath) {
+        console.log("Redirecting to:", defaultPath);
         router.replace(defaultPath);
       }
     }
