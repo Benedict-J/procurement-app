@@ -47,6 +47,7 @@ const RequestForm = () => {
   const [loading, setLoading] = useState(false);
   const [isOtherSelected, setIsOtherSelected] = useState(false);
   const [customAddress, setCustomAddress] = useState("");
+  const [budgetMax, setBudgetMax] = useState("");
   const [form] = Form.useForm();
 
   const handleAddressChange = (value: string) => {
@@ -61,13 +62,20 @@ const RequestForm = () => {
     return current && (current < dayjs().endOf('day') || current < dayjs().add(7, 'days'));
   };
 
-  const [budgetMax, setBudgetMax] = useState("");
-
   const handleBudgetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     const formattedValue = value.replace(/[^0-9.]/g, "");
 
     setBudgetMax(formattedValue);
+  };
+
+  const formatCurrency = (value: string) => {
+    return value.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  };
+
+  const parseToNumber = (value: string) => {
+    // Mengonversi nilai input ke angka dengan mengganti koma menjadi titik
+    return parseFloat(value.replace(/\./g, "").replace(",", "."));
   };
 
   const [formList, setFormList] = useState([1]);
@@ -255,15 +263,15 @@ const RequestForm = () => {
             label="Budget Max"
             name={`budgetMax${index + 1}`}
             rules={[
-              { required: true, message: "Please input the UoM" },
+              { required: true, message: "Please input the Budget Max" },
               { validator: (_, value) => 
-                  !isNaN(value) 
+                !isNaN(parseToNumber(value))
                       ? Promise.resolve() 
                       : Promise.reject("Only numbers are allowed"),
               },
           ]}
           >
-            <Input placeholder="Budget Max" value={budgetMax} onChange={handleBudgetChange} addonBefore="Rp" />
+            <Input placeholder="Budget Max" value={formatCurrency(budgetMax)} onChange={handleBudgetChange} addonBefore="Rp" />
           </Form.Item>
 
           <Row gutter={16}>
@@ -285,8 +293,8 @@ const RequestForm = () => {
                 rules={[{ required: !isOtherSelected, message: "Please select the delivery address!" }]}
               >
                 <Select placeholder="Select Address" onChange={handleAddressChange}>
-                  <Option value="Cyber 2">Cyber 2 Tower Lt. 28 Jl. H. R. Rasuna Said No.13, RT.7/RW.2, Kuningan, Kecamatan Setiabudi, Kota Jakarta Selatan, Daerah Khusus Ibukota Jakarta 12950</Option>
-                  <Option value="Balekota">Mall Balekota Tangerang Lt. 1 Jl. Jenderal Sudirman No.3, RT.002/RW.012, Buaran Indah, Kec. Tangerang, Kota Tangerang, Banten 15119</Option>
+                  <Option value="Cyber 2 Tower Lt. 28 Jl. H. R. Rasuna Said No.13, RT.7/RW.2, Kuningan, Kecamatan Setiabudi, Kota Jakarta Selatan, Daerah Khusus Ibukota Jakarta 12950">Cyber 2 Tower Lt. 28 Jl. H. R. Rasuna Said No.13, RT.7/RW.2, Kuningan, Kecamatan Setiabudi, Kota Jakarta Selatan, Daerah Khusus Ibukota Jakarta 12950</Option>
+                  <Option value="Mall Balekota Tangerang Lt. 1 Jl. Jenderal Sudirman No.3, RT.002/RW.012, Buaran Indah, Kec. Tangerang, Kota Tangerang, Banten 15119">Mall Balekota Tangerang Lt. 1 Jl. Jenderal Sudirman No.3, RT.002/RW.012, Buaran Indah, Kec. Tangerang, Kota Tangerang, Banten 15119</Option>
                   <Option value="other">Other</Option>
                 </Select>
               </Form.Item>
