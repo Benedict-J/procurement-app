@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Table, Button, Select, message } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { db } from "@/firebase/firebase"; 
-import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { useUserContext } from "@/contexts/UserContext"; 
 import dayjs from "dayjs";
 import { SortOrder } from "antd/es/table/interface";
@@ -27,31 +27,26 @@ const HistoryTable = () => {
 
             const role = userProfile.role;
 
-            console.log("User Profile:", userProfile);
-            // Buat query berdasarkan role
+            // Buat query berdasarkan role tanpa `orderBy`
             if (role === "Requester") {
                 historyQuery = query(
                     collection(db, "requests"),
-                    where("requesterId", "==", userProfile.userId),
-                    orderBy("createdAt", sortOrder === "ascend" ? "asc" : "desc")
+                    where("requesterId", "==", userProfile.userId)
                 );
             } else if (role === "Checker") {
                 historyQuery = query(
                     collection(db, "requests"),
-                    where("approvalStatus.checker.approvedBy", "==", userProfile.userId),
-                    orderBy("approvalStatus.checker.approvedAt", sortOrder === "ascend" ? "asc" : "desc")
+                    where("approvalStatus.checker.approvedBy", "==", userProfile.userId)
                 );
             } else if (role === "Approval") {
                 historyQuery = query(
                     collection(db, "requests"),
-                    where("approvalStatus.approval.approvedBy", "==", userProfile.userId),
-                    orderBy("approvalStatus.approval.approvedAt", sortOrder === "ascend" ? "asc" : "desc")
+                    where("approvalStatus.approval.approvedBy", "==", userProfile.userId)
                 );
             } else if (role === "Releaser") {
                 historyQuery = query(
                     collection(db, "requests"),
-                    where("approvalStatus.releaser.approvedBy", "==", userProfile.userId),
-                    orderBy("approvalStatus.releaser.approvedAt", sortOrder === "ascend" ? "asc" : "desc")
+                    where("approvalStatus.releaser.approvedBy", "==", userProfile.userId)
                 );
             }
 
@@ -61,9 +56,6 @@ const HistoryTable = () => {
                     where("status", "==", statusFilter)
                 );
             }
-
-            console.log("Checker userId:", userProfile.userId);
-            console.log("Constructed Query:", historyQuery);
 
             try {
                 const querySnapshot = await getDocs(historyQuery);
@@ -77,7 +69,6 @@ const HistoryTable = () => {
                     action: doc.data().approvalStatus[role.toLowerCase()]?.approved ? "Approved" : "Rejected"
                 }));
                 setDataSource(data);
-                console.log("Log Data yang Diambil:", data);
             } catch (error) {
                 console.error("Error fetching history:", error);
                 message.error("Failed to load history.");
@@ -87,7 +78,7 @@ const HistoryTable = () => {
         };
 
         fetchHistory();
-    }, [userProfile, sortOrder, statusFilter]);
+    }, [userProfile, statusFilter]);
 
     interface DataType {
         key: React.Key;
@@ -99,31 +90,40 @@ const HistoryTable = () => {
 
     // Kolom untuk peran Requester
     const requesterColumns: ColumnsType<DataType> = [
-        { title: "No.", 
+        { 
+            title: "No.", 
             key: "no", 
             align: "center" as const,
             render: (_: any, __: any, index: number) => index + 1
         },
-        { title: "No. Request", dataIndex: "requestNo", key: "requestNo", align: "center" as const },
+        { 
+            title: "No. Request", 
+            dataIndex: "requestNo", 
+            key: "requestNo", 
+            align: "center" as const,
+            sorter: (a, b) => {
+                const numberA = parseInt(a.requestNo.replace(/\D/g, ''), 10); 
+                const numberB = parseInt(b.requestNo.replace(/\D/g, ''), 10); 
+                return numberA - numberB;
+            },
+        },
         {
             title: "Detail Request",
             key: "detail",
             align: "center" as const,
             render: (text: string, record: { requestNo: string }) => (
-                <Button type="link" onClick={() => handleDetail(record.requestNo)}>View Details</Button>
+                <Button type="primary" size="small" onClick={() => handleDetail(record.requestNo)}>
+                    Check
+                </Button>
             ),
         },
         {
             title: "Request Date",
             dataIndex: "requestDate",
             key: "requestDate",
-            align: "center" as const,
-            sorter: true,
-            sortOrder: sortOrder,
-            onHeaderCell: () => ({
-                onClick: () => setSortOrder(sortOrder === "ascend" ? "descend" : "ascend")
-            }),
-        },
+            align: "center",
+            sorter: (a, b) => dayjs(a.requestDate).unix() - dayjs(b.requestDate).unix(), // Pengurutan berdasarkan tanggal
+        },        
         {
             title: "Status",
             dataIndex: "status",
@@ -145,21 +145,34 @@ const HistoryTable = () => {
     ];
 
     // Kolom untuk Checker, Approval, Releaser
-    const actionColumns = [
-        { title: "No.", 
+    const actionColumns: ColumnsType<DataType> = [
+        { 
+            title: "No.", 
             key: "no", 
             align: "center" as const,
             render: (_: any, __: any, index: number) => index + 1
         },
-        { title: "No. Request", dataIndex: "requestNo", key: "requestNo", align: "center" as const},
+        { 
+            title: "No. Request", 
+            dataIndex: "requestNo", 
+            key: "requestNo", 
+            align: "center" as const,
+            sorter: (a, b) => {
+                const numberA = parseInt(a.requestNo.replace(/\D/g, ''), 10); 
+                const numberB = parseInt(b.requestNo.replace(/\D/g, ''), 10); 
+                return numberA - numberB;
+            },
+        },
         {
             title: "Detail Request",
             key: "detail",
             align: "center" as const,
             render: (text: string, record: { requestNo: string }) => (
-                <Button type="link" onClick={() => handleDetail(record.requestNo)}>View Details</Button>
+                <Button type="primary" size="small" onClick={() => handleDetail(record.requestNo)}>
+                    Check
+                </Button>
             ),
-        },
+        },        
         {
             title: "Action Date",
             dataIndex: "actionDate",
@@ -201,6 +214,9 @@ const HistoryTable = () => {
                     dataSource={dataSource}
                     loading={loading}
                     pagination={{ pageSize: 10 }}
+                    bordered
+                    scroll={{ x: 200 }}
+                    style={{ backgroundColor: "#fff" }}
                     rowKey="key"
                 />
             ) : (
@@ -209,6 +225,9 @@ const HistoryTable = () => {
                     dataSource={dataSource}
                     loading={loading}
                     pagination={{ pageSize: 10 }}
+                    bordered
+                    scroll={{ x: 200 }}
+                    style={{ backgroundColor: "#fff" }}
                     rowKey="key"
                 />
             )}
