@@ -27,7 +27,6 @@ const HistoryTable = () => {
 
             const role = userProfile.role;
 
-            console.log("User Profile:", userProfile);
             // Buat query berdasarkan role
             if (role === "Requester") {
                 historyQuery = query(
@@ -62,9 +61,6 @@ const HistoryTable = () => {
                 );
             }
 
-            console.log("Checker userId:", userProfile.userId);
-            console.log("Constructed Query:", historyQuery);
-
             try {
                 const querySnapshot = await getDocs(historyQuery);
                 const data = querySnapshot.docs.map(doc => ({
@@ -77,7 +73,6 @@ const HistoryTable = () => {
                     action: doc.data().approvalStatus[role.toLowerCase()]?.approved ? "Approved" : "Rejected"
                 }));
                 setDataSource(data);
-                console.log("Log Data yang Diambil:", data);
             } catch (error) {
                 console.error("Error fetching history:", error);
                 message.error("Failed to load history.");
@@ -99,31 +94,43 @@ const HistoryTable = () => {
 
     // Kolom untuk peran Requester
     const requesterColumns: ColumnsType<DataType> = [
-        { title: "No.", 
+        { 
+            title: "No.", 
             key: "no", 
             align: "center" as const,
             render: (_: any, __: any, index: number) => index + 1
         },
-        { title: "No. Request", dataIndex: "requestNo", key: "requestNo", align: "center" as const },
+        { 
+            title: "No. Request", 
+            dataIndex: "requestNo", 
+            key: "requestNo", 
+            align: "center" as const 
+        },
         {
             title: "Detail Request",
             key: "detail",
             align: "center" as const,
             render: (text: string, record: { requestNo: string }) => (
-                <Button type="link" onClick={() => handleDetail(record.requestNo)}>View Details</Button>
+                <Button type="primary" size="small" onClick={() => handleDetail(record.requestNo)}>
+                    Check
+                </Button>
             ),
         },
         {
             title: "Request Date",
             dataIndex: "requestDate",
             key: "requestDate",
-            align: "center" as const,
+            align: "center",
             sorter: true,
             sortOrder: sortOrder,
             onHeaderCell: () => ({
-                onClick: () => setSortOrder(sortOrder === "ascend" ? "descend" : "ascend")
+                onClick: () => setSortOrder(sortOrder === "ascend" ? "descend" : "ascend"),
+                style: { backgroundColor: "#FAFAFA" }
             }),
-        },
+            onCell: () => ({
+                style: { backgroundColor: "#fff" }
+            })
+        },        
         {
             title: "Status",
             dataIndex: "status",
@@ -145,21 +152,29 @@ const HistoryTable = () => {
     ];
 
     // Kolom untuk Checker, Approval, Releaser
-    const actionColumns = [
-        { title: "No.", 
+    const actionColumns: ColumnsType<DataType> = [
+        { 
+            title: "No.", 
             key: "no", 
             align: "center" as const,
             render: (_: any, __: any, index: number) => index + 1
         },
-        { title: "No. Request", dataIndex: "requestNo", key: "requestNo", align: "center" as const},
+        { 
+            title: "No. Request", 
+            dataIndex: "requestNo", 
+            key: "requestNo", 
+            align: "center" as const
+        },
         {
             title: "Detail Request",
             key: "detail",
             align: "center" as const,
             render: (text: string, record: { requestNo: string }) => (
-                <Button type="link" onClick={() => handleDetail(record.requestNo)}>View Details</Button>
+                <Button type="primary" size="small" onClick={() => handleDetail(record.requestNo)}>
+                    Check
+                </Button>
             ),
-        },
+        },        
         {
             title: "Action Date",
             dataIndex: "actionDate",
@@ -201,6 +216,9 @@ const HistoryTable = () => {
                     dataSource={dataSource}
                     loading={loading}
                     pagination={{ pageSize: 10 }}
+                    bordered
+                    scroll={{ x: 200 }}
+                    style={{ backgroundColor: "#fff" }}
                     rowKey="key"
                 />
             ) : (
@@ -209,6 +227,9 @@ const HistoryTable = () => {
                     dataSource={dataSource}
                     loading={loading}
                     pagination={{ pageSize: 10 }}
+                    bordered
+                    scroll={{ x: 200 }}
+                    style={{ backgroundColor: "#fff" }}
                     rowKey="key"
                 />
             )}
