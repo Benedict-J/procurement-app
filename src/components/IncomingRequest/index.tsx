@@ -6,6 +6,8 @@ import { collection, doc, getDocs, query, updateDoc, where } from "firebase/fire
 import { db } from "@/firebase/firebase";
 import dayjs from "dayjs";
 import { Input } from "antd";
+import { useRouter } from "next/router";
+
 const { TextArea } = Input;
 
 interface DataType {
@@ -25,6 +27,7 @@ const IncomingRequest = () => {
     const [rejectFeedback, setRejectFeedback] = useState("");
     const [currentRejectId, setCurrentRejectId] = useState<string | null>(null);
 
+    const router = useRouter(); // Inisialisasi router
     const role = userProfile?.role;
 
     const columns: TableColumnsType<DataType> = [
@@ -51,7 +54,7 @@ const IncomingRequest = () => {
             key: "detail",
             align: "center",
             render: (text, record) => (
-                <Button type="primary" size="small" onClick={() => handleDetailClick(record.id)}>
+                <Button type="primary" size="small" onClick={() => handleDetailClick(record.requestNo)}>
                     Check
                 </Button>
             ),
@@ -75,9 +78,7 @@ const IncomingRequest = () => {
 
     useEffect(() => {
         const fetchRequests = async () => {
-
             if (!userProfile) return;
-
 
             let roleQuery;
             const division = userProfile.divisi;
@@ -120,9 +121,10 @@ const IncomingRequest = () => {
         fetchRequests();
     }, [role]);
 
-    const handleDetailClick = (id: string) => {
-        console.log("Check details for request ID:", id);
-        // Navigasi atau tampilkan detail request
+    // Fungsi untuk menangani klik tombol Check pada Detail Request
+    const handleDetailClick = (requestNo: string) => {
+        // Navigasi ke halaman detail dengan query string berdasarkan nomor request
+        router.push(`/requester/detail-request?requestNo=${requestNo}`);
     };
 
     // Handler untuk approve
