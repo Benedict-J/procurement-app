@@ -122,7 +122,6 @@ const IncomingRequest = () => {
 
     const handleDetailClick = (id: string) => {
         console.log("Check details for request ID:", id);
-        // Navigasi atau tampilkan detail request
     };
 
     // Handler untuk approve
@@ -153,11 +152,17 @@ const IncomingRequest = () => {
             const requestDocRef = doc(db, "requests", id);
 
             // Update approval status
-            await updateDoc(requestDocRef, {
+            const updates = {
                 [`${approvalField}.approved`]: true,
                 [`${approvalField}.approvedBy`]: userId,
                 [`${approvalField}.approvedAt`]: dayjs().format("YYYY-MM-DD HH:mm:ss"),
-            });
+            };
+
+            if (role === 'Releaser') {
+                updates['status'] = "Approved";
+            }
+
+            await updateDoc(requestDocRef, updates);
 
             // Menghapus item yang di-approve dari dataSource
             setDataSource((prevData) => prevData.filter((item) => item.id !== id));
@@ -192,7 +197,7 @@ const IncomingRequest = () => {
                     feedback: rejectFeedback,
                     rejectedAt: new Date().toISOString(),
                 },
-                status: "rejected", // Update status request menjadi "rejected"
+                status: "Rejected",
             });
 
             // Menghapus request yang direject dari dataSource
