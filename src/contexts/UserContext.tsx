@@ -102,7 +102,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         "/auth/forgot-password/reset-password",
         "/auth/email-verification",
         "/requester/history",
-        "/requester/detail-request"
+        "/requester/detail-request",
+        "/requester/flow-steps"
       ];
 
       if (nonRedirectPaths.includes(router.pathname)) {

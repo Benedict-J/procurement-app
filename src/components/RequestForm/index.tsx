@@ -33,7 +33,7 @@ const generateRequestNumber = async (entityAbbr: string, division: string) => {
     currentIndex: currentIndex,
   });
 
-  const requestIndex = currentIndex.toString().padStart(5, "0"); // Nomor urut dengan 5 digit
+  const requestIndex = currentIndex.toString().padStart(5, "0");
 
   // Format final nomor request
   return `PR${entityAbbr}${currentYear}${requestIndex}${romanMonth}${division}`;
