@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { Table, Pagination } from "antd";
 import type { TableColumnsType } from "antd";
 import { useUserContext } from "@/contexts/UserContext";
-import { collection, getDocs, query, where } from "firebase/firestore"; 
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/firebase/firebase";
-import styles from './index.module.scss'; 
+import styles from './index.module.scss';
 
 interface DataType {
     key: React.Key;
@@ -22,21 +22,21 @@ interface DataType {
 }
 
 interface DetailRequestTableProps {
-    requestNo: string; // Tambahkan prop requestNo
+    requestNo: string;
 }
 
 const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) => {
     const { userProfile } = useUserContext();
     const [dataSource, setDataSource] = useState<DataType[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
     const [requestNumber, setRequestNumber] = useState<string | null>(null);
-    const pageSize = 1; 
 
     // Definisi kolom tabel
     const columns: TableColumnsType<DataType> = [
         {
             title: "Nomor Item",
-            dataIndex: "itemNumber", 
+            dataIndex: "itemNumber",
             key: "itemNumber",
             align: "center",
         },
@@ -102,7 +102,7 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
             if (!userProfile || !requestNo) return;
 
             console.log("Fetching data for requestNo:", requestNo);
-            
+
             // Query berdasarkan nomor request
             const requestQuery = query(
                 collection(db, "requests"),
@@ -118,7 +118,7 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
 
                     // Proses data items
                     const requestData = (firstDoc.data().items || []).map((item: any, index: number) => ({
-                        key: firstDoc.id,
+                        key: `${firstDoc.id}-${index}`, // Buat key unik dengan menggabungkan ID dokumen dan index
                         requestNumber: firstDoc.data().requestNumber || "N/A",
                         itemNumber: index + 1,
                         estimateDeliveryDate: item.deliveryDate || "N/A",
@@ -144,11 +144,15 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
         };
 
         fetchRequest();
-    }, [userProfile, requestNo]); // Tambahkan requestNo sebagai dependensi
+    }, [userProfile, requestNo]);
 
-    // Mengubah halaman tabel
-    const handlePageChange = (page: number) => {
+    const handleTableChange = (page: number, size?: number) => {
         setCurrentPage(page);
+        if (size) {
+            setPageSize(size);
+        }
+        console.log("Updated currentPage:", page);
+        console.log("Updated pageSize:", size);
     };
 
     // Data yang ditampilkan pada halaman saat ini
@@ -175,9 +179,10 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
                 current={currentPage}
                 pageSize={pageSize}
                 total={dataSource.length}
-                onChange={handlePageChange}
+                onChange={handleTableChange}
                 className={styles.pagination}
-                showSizeChanger={false}
+                showSizeChanger={true}
+                pageSizeOptions={['10', '20', '50', '100']}
             />
         </div>
     );
