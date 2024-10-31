@@ -121,8 +121,8 @@ const IncomingRequest = () => {
         fetchRequests();
     }, [role]);
 
-    const handleDetailClick = (id: string) => {
-        console.log("Check details for request ID:", id);
+    const handleDetailClick = (requestNo: string) => {
+        router.push(`/requester/detail-request?requestNo=${requestNo}`);
     };
 
     // Handler untuk approve
@@ -135,7 +135,6 @@ const IncomingRequest = () => {
         const role = userProfile.role;
         const userId = userProfile.userId;
         const userName = userProfile.namaLengkap;
-
 
         let approvalField = "";
         if (role === "Checker") {
