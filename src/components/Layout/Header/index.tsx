@@ -1,4 +1,4 @@
-import { Layout, Row, Col, Space, Dropdown, Avatar, Badge, Menu } from "antd";
+import { Layout, Row, Col, Space, Dropdown, Avatar, Badge, Menu, Spin } from "antd";
 import { LogoutOutlined, UserOutlined, BellOutlined } from "@ant-design/icons";
 import { useRouter } from "next/router";
 import { useUserContext } from "@/contexts/UserContext";
@@ -12,7 +12,7 @@ const Header: React.FC = () => {
   const router = useRouter();
   const { userProfile, loading, selectedProfileIndex, setSelectedProfile } = useUserContext();
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <Spin/>;
   if (!userProfile) return <p>User profile not available</p>;
 
   useEffect(() => {

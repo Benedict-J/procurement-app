@@ -1,4 +1,4 @@
-import { Layout, Menu, Image } from "antd";
+import { Layout, Menu, Image, Spin } from "antd";
 import { useRouter } from "next/router";
 import getMenuByRole from "@settings/layout/menus";
 import { useUserContext } from "@/contexts/UserContext";
@@ -8,7 +8,7 @@ const Sidebar: React.FC = () => {
   const router = useRouter();
   const { userProfile, loading } = useUserContext();
 
-  if (loading || !userProfile) return <p>Loading...</p>;
+  if (loading || !userProfile) return <Spin/>;
 
   const menuItems = getMenuByRole(userProfile.role);
 

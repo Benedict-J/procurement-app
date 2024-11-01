@@ -3,7 +3,7 @@ import PageContainer from "@/components/Layout/PageContainer";
 
 const HistoryPage = () => {
     return (
-      <PageContainer title="History Requets">
+      <PageContainer title="History Requests">
         <HistoryTable />
       </PageContainer>
     );
