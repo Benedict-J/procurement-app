@@ -195,7 +195,7 @@ const HistoryTable = () => {
     };
 
     const showFlowStep = (status: string) => {
-        console.log(`Flow step for status: ${status}`);
+        router.push('/requester/flow-steps')
     };
 
     if (loading) {
