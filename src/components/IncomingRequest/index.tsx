@@ -79,102 +79,142 @@ const IncomingRequest = () => {
     useEffect(() => {
         const fetchRequests = async () => {
             if (!userProfile) return;
-
+    
             let roleQuery;
             const division = userProfile.divisi;
             const entity = userProfile.entity;
+            const role = userProfile.role;
+    
             // Buat query berdasarkan role pengguna
             if (role === "Checker") {
-                roleQuery = query(collection(db, "requests"),
+                roleQuery = query(
+                    collection(db, "requests"),
                     where("approvalStatus.checker.approved", "==", false),
+                    where("approvalStatus.checker.rejected", "==", false),
                     where("requesterDivision", "==", division),
-                    where("requesterEntity", "==", entity));
+                    where("requesterEntity", "==", entity),
+                    where("status", "==", "In Progress") // Tambahkan kondisi ini
+                );
             } else if (role === "Approval") {
                 roleQuery = query(
                     collection(db, "requests"),
                     where("approvalStatus.checker.approved", "==", true),
                     where("approvalStatus.approval.approved", "==", false),
-                    where("requesterEntity", "==", entity)
+                    where("approvalStatus.approval.rejected", "==", false),
+                    where("requesterEntity", "==", entity),
+                    where("status", "==", "In Progress") // Tambahkan kondisi ini
                 );
             } else if (role === "Releaser") {
                 roleQuery = query(
                     collection(db, "requests"),
                     where("approvalStatus.approval.approved", "==", true),
                     where("approvalStatus.releaser.approved", "==", false),
-                    where("requesterEntity", "==", entity)
+                    where("approvalStatus.releaser.rejected", "==", false),
+                    where("requesterEntity", "==", entity),
+                    where("status", "==", "In Progress") // Tambahkan kondisi ini
                 );
             }
-
+    
             if (roleQuery) {
                 const querySnapshot = await getDocs(roleQuery);
                 const requestData = querySnapshot.docs.map(doc => ({
                     key: doc.id,
                     id: doc.id,
-                    name: doc.data().requesterName || "Unknown", // Pastikan field ini ada di Firestore
+                    name: doc.data().requesterName || "Unknown", 
                     requestNo: doc.data().requestNumber || "N/A",
                     detail: `Detail for request ${doc.id}`,
                 }));
                 setDataSource(requestData);
             }
         };
-
+    
         fetchRequests();
-    }, [role]);
+    }, [userProfile]);
 
     const handleDetailClick = (id: string) => {
         console.log("Check details for request ID:", id);
     };
 
     // Handler untuk approve
+
     const handleApprove = async (id: string) => {
-        if (!userProfile) {
-            console.error("User profile not found.");
-            return;
-        }
+        if (!userProfile) return;
 
-        const role = userProfile.role;
+        const role = userProfile.role.toLowerCase();
         const userId = userProfile.userId;
-        const userName = userProfile.namaLengkap;
-
-
-        let approvalField = "";
-        if (role === "Checker") {
-            approvalField = "approvalStatus.checker";
-        } else if (role === "Approval") {
-            approvalField = "approvalStatus.approval";
-        } else if (role === "Releaser") {
-            approvalField = "approvalStatus.releaser";
-        } else {
-            console.error("Role not authorized for approval.");
-            return;
-        }
 
         try {
             const requestDocRef = doc(db, "requests", id);
-
-            // Update approval status
-            const updates = {
-                [`${approvalField}.approved`]: true,
-                [`${approvalField}.approvedBy`]: userId,
-                [`${approvalField}.approvedAt`]: dayjs().format("YYYY-MM-DD HH:mm:ss"),
+            const updates: any = {
+                [`approvalStatus.${role}.approved`]: true,
+                [`approvalStatus.${role}.approvedBy`]: userId,
+                [`approvalStatus.${role}.approvedAt`]: dayjs().format("YYYY-MM-DD HH:mm:ss"),
             };
 
-            if (role === 'Releaser') {
+            if (role === 'releaser') {
                 updates['status'] = "Approved";
             }
 
             await updateDoc(requestDocRef, updates);
 
-            // Menghapus item yang di-approve dari dataSource
-            setDataSource((prevData) => prevData.filter((item) => item.id !== id));
-
-            console.log(`Request ${id} approved by ${role}`);
-            message.success(`Request approved successfully by ${userName}`);
+            setDataSource(prevData => prevData.filter(item => item.id !== id));
+            message.success(`Request approved successfully by ${userProfile.namaLengkap}`);
         } catch (error) {
             console.error("Error approving request:", error);
             message.error("Failed to approve request.");
         }
     };
+
+
+    // const handleApprove = async (id: string) => {
+    //     if (!userProfile) {
+    //         console.error("User profile not found.");
+    //         return;
+    //     }
+
+    //     const role = userProfile.role;
+    //     const userId = userProfile.userId;
+    //     const userName = userProfile.namaLengkap;
+
+
+    //     let approvalField = "";
+    //     if (role === "Checker") {
+    //         approvalField = "approvalStatus.checker";
+    //     } else if (role === "Approval") {
+    //         approvalField = "approvalStatus.approval";
+    //     } else if (role === "Releaser") {
+    //         approvalField = "approvalStatus.releaser";
+    //     } else {
+    //         console.error("Role not authorized for approval.");
+    //         return;
+    //     }
+
+    //     try {
+    //         const requestDocRef = doc(db, "requests", id);
+
+    //         // Update approval status
+    //         const updates = {
+    //             [`${approvalField}.approved`]: true,
+    //             [`${approvalField}.approvedBy`]: userId,
+    //             [`${approvalField}.approvedAt`]: dayjs().format("YYYY-MM-DD HH:mm:ss"),
+    //         };
+
+    //         if (role === 'Releaser') {
+    //             updates['status'] = "Approved";
+    //         }
+
+    //         await updateDoc(requestDocRef, updates);
+
+    //         // Menghapus item yang di-approve dari dataSource
+    //         setDataSource((prevData) => prevData.filter((item) => item.id !== id));
+
+    //         console.log(`Request ${id} approved by ${role}`);
+    //         message.success(`Request approved successfully by ${userName}`);
+    //     } catch (error) {
+    //         console.error("Error approving request:", error);
+    //         message.error("Failed to approve request.");
+    //     }
+    // };
 
     // Handler untuk reject
     const handleReject = (id: string) => {
@@ -183,34 +223,26 @@ const IncomingRequest = () => {
     };
 
     const submitReject = async () => {
-        if (!userProfile || !currentRejectId) {
-            message.error("Failed to reject request. Please try again.");
-            return;
-        }
+        if (!userProfile || !currentRejectId) return;
 
-        const role = userProfile.role;
-        const requestDocRef = doc(db, "requests", currentRejectId);
+        const role = userProfile.role.toLowerCase();
 
         try {
+            const requestDocRef = doc(db, "requests", currentRejectId);
             await updateDoc(requestDocRef, {
-                [`approvalStatus.${role.toLowerCase()}`]: {
-                    approved: false,
-                    feedback: rejectFeedback,
-                    rejectedAt: new Date().toISOString(),
-                },
+                [`approvalStatus.${role}.rejected`]: true,
+                [`approvalStatus.${role}.rejectedBy`]: userProfile.userId,
+                [`approvalStatus.${role}.rejectedAt`]: new Date().toISOString(),
+                [`approvalStatus.${role}.feedback`]: rejectFeedback,
                 status: "Rejected",
             });
 
-            // Menghapus request yang direject dari dataSource
-            setDataSource((prevData) => prevData.filter((item) => item.id !== currentRejectId));
-
-            message.success(`Request rejected successfully by ${role}`);
-
+            setDataSource(prevData => prevData.filter(item => item.id !== currentRejectId));
+            message.success(`Request rejected successfully by ${userProfile.role}`);
         } catch (error) {
             console.error("Error rejecting request:", error);
             message.error("Failed to reject request.");
         } finally {
-            // Reset modal state
             setRejectFeedback("");
             setIsRejectModalVisible(false);
             setCurrentRejectId(null);

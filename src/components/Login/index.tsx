@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Layout,
   Card,
@@ -8,7 +8,8 @@ import {
   Image,
   Divider,
   Typography,
-  message
+  message,
+  Spin
 } from "antd";
 import classes from "./index.module.scss";
 import { useRouter } from "next/router";
@@ -38,8 +39,10 @@ const Login: React.FC = () => {
   };
 
   const onLogin = async (values: { nik: string; password: string }) => {
+    setIsLoading(true);
     if (!captchaValue) {
       message.error("Please complete the reCAPTCHA verification.");
+      setIsLoading(false);
       return;
     }
 
@@ -64,15 +67,26 @@ const Login: React.FC = () => {
 
       // Ambil profil sesuai dengan `selectedProfileIndex`
       const selectedProfile = userData.profile.find(
-        (profile: Profile) => profile.email === selectedProfileIndex.email // Cocokkan dengan email atau properti lain
+        
+        (profile: Profile, index: number) => {
+          console.log('Profile:', profile);
+          console.log('SelectedProfileIndex:', selectedProfileIndex);
+          
+          return index === selectedProfileIndex
+        } // Cocokkan dengan email atau properti lain
       );
       console.log("Selected profile:", selectedProfile); 
 
       const userRole = selectedProfile?.role || '';
       console.log("User role based on selected profile:", userRole);
 
-      document.cookie = `userRole=${userRole}; path=/`; // Simpan role di cookie
+      document.cookie = `userRole=${userRole}; path=/`; 
       document.cookie = `token=${token}; path=/`;
+
+      if (document.cookie.includes("token")) {
+        router.push('/');
+        return;
+    }
 
       if (userRole === 'Requester') {
         setTimeout(() => {
@@ -94,6 +108,7 @@ const Login: React.FC = () => {
           setTimeout(() => {
             router.push('/');
           }, 1000);
+          console.log('')
     }
 
       message.success("Login successful!");

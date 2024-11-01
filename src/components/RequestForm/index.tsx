@@ -45,18 +45,20 @@ const RequestForm = () => {
   const { user } = useUserContext(); 
   const requesterId = user?.uid;
   const [loading, setLoading] = useState(false);
-  const [isOtherSelected, setIsOtherSelected] = useState(false);
-  const [customAddress, setCustomAddress] = useState("");
+  const [isOtherSelected, setIsOtherSelected] = useState<{ [key: number]: boolean }>({});
+  const [customAddress, setCustomAddress] = useState<{ [key: number]: string }>({});
   const [budgetMax, setBudgetMax] = useState("");
   const [form] = Form.useForm();
 
-  const handleAddressChange = (value: string) => {
-    if (value === "other") {
-      setIsOtherSelected(true);
-    } else {
-      setIsOtherSelected(false);
-    }
+  const handleAddressChange = (value: string, index: number) => {
+    setIsOtherSelected((prev) => ({ ...prev, [index]: value === "other" }));
   };
+
+  const handleCustomAddressChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const value = e.target.value;
+    setCustomAddress((prev) => ({ ...prev, [index]: value }));
+  };
+
 
   const disabledDate = (current: Dayjs ) => {
     return current && (current < dayjs().endOf('day') || current < dayjs().add(7, 'days'));
@@ -109,6 +111,7 @@ const RequestForm = () => {
     const items = formList.map((item, index) => ({
       deliveryDate: values[`deliveryDate${index + 1}`]?.format('YYYY-MM-DD') || null,
       deliveryAddress: values[`deliveryAddress${index + 1}`] || "",
+      receiver: values[`receiver${index + 1}`] || "",
       customDeliveryAddress: values[`customDeliveryAddress${index + 1}`] || null ,
       merk: values[`merk${index + 1}`] || "",
       detailSpecs: values[`detailSpecs${index + 1}`] || "",
@@ -162,9 +165,9 @@ const RequestForm = () => {
         requesterEntity: requesterEntity,   
         createdAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
         approvalStatus: {
-          checker: { approved: false, approvedBy: null, approvedAt: null },
-          approval: { approved: false, approvedBy: null, approvedAt: null },
-          releaser: { approved: false, approvedBy: null, approvedAt: null },
+          checker: { approved: false, rejected: false, approvedBy: null, approvedAt: null, feedback: null },
+          approval: { approved: false, rejected: false, approvedBy: null, approvedAt: null, feedback: null },
+          releaser: { approved: false, rejected: false, approvedBy: null, approvedAt: null, feedback: null },
         }, // Menyimpan waktu request dibuat
       });
       message.success('Request submitted successfully');
@@ -248,7 +251,7 @@ const RequestForm = () => {
             name={`uom${index + 1}`}
             rules={[{ required: true, message: "Please input the UoM" }]}
           >
-            <Input placeholder="UoM" />
+            <Input placeholder="Unit of Measurement" />
           </Form.Item>
 
           <Form.Item
@@ -284,6 +287,13 @@ const RequestForm = () => {
               >
                 <DatePicker style={{ width: "100%" }} placeholder="Select Date" disabledDate={disabledDate} />
               </Form.Item>
+              <Form.Item
+                label="Receiver"
+                name={`receiver${index + 1}`}
+                rules={[{ required: true, message: "Please input the Receiver" }]}
+              >
+                <Input placeholder="Receiver name" />
+              </Form.Item>
             </Col>
 
             <Col span={12}>
@@ -292,26 +302,26 @@ const RequestForm = () => {
                 name={`deliveryAddress${index + 1}`}
                 rules={[{ required: !isOtherSelected, message: "Please select the delivery address!" }]}
               >
-                <Select placeholder="Select Address" onChange={handleAddressChange}>
+                <Select placeholder="Select Address" onChange={(value) => handleAddressChange(value, index)}>
                   <Option value="Cyber 2 Tower Lt. 28 Jl. H. R. Rasuna Said No.13, RT.7/RW.2, Kuningan, Kecamatan Setiabudi, Kota Jakarta Selatan, Daerah Khusus Ibukota Jakarta 12950">Cyber 2 Tower Lt. 28 Jl. H. R. Rasuna Said No.13, RT.7/RW.2, Kuningan, Kecamatan Setiabudi, Kota Jakarta Selatan, Daerah Khusus Ibukota Jakarta 12950</Option>
                   <Option value="Mall Balekota Tangerang Lt. 1 Jl. Jenderal Sudirman No.3, RT.002/RW.012, Buaran Indah, Kec. Tangerang, Kota Tangerang, Banten 15119">Mall Balekota Tangerang Lt. 1 Jl. Jenderal Sudirman No.3, RT.002/RW.012, Buaran Indah, Kec. Tangerang, Kota Tangerang, Banten 15119</Option>
                   <Option value="other">Other</Option>
                 </Select>
               </Form.Item>
 
-              {isOtherSelected && (
-                <Form.Item
-                  label="Custom Delivery Address"
-                  name={`customDeliveryAddress${index + 1}`}
-                  rules={[{ required: true, message: "Please enter the delivery address!" }]}
-                >
-                  <Input placeholder="Enter your delivery address" value={customAddress} onChange={(e) => setCustomAddress(e.target.value)} />
-                </Form.Item>
-              )}
+              {isOtherSelected[index] && (
+              <Form.Item
+                label="Custom Delivery Address"
+                name={`customDeliveryAddress${index + 1}`}
+                rules={[{ required: true, message: "Please enter the delivery address!" }]}
+              >
+              <Input placeholder="Enter your delivery address" value={customAddress[index] || ""} onChange={(e) => handleCustomAddressChange(e, index)} />
+              </Form.Item>
+            )}
             </Col>
           </Row>
-        </div>
-      ))}
+          </div>
+        ))}
 
     <Row gutter={16}>
       <Col span={12}>

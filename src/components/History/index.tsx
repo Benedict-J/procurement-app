@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Table, Button, Select, message } from "antd";
+import { Table, Button, Select, message, Spin } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { db } from "@/firebase/firebase"; 
 import { collection, getDocs, query, where } from "firebase/firestore";
@@ -15,60 +15,74 @@ const HistoryTable = () => {
     const [dataSource, setDataSource] = useState([]);
     const [loading, setLoading] = useState(true);
     const [sortOrder, setSortOrder] = useState<SortOrder>("ascend");
-    const [statusFilter, setStatusFilter] = useState("All");
+    const [statusFilter, setStatusFilter] = useState<DataType[]>([]);
     const router = useRouter(); 
 
     useEffect(() => {
         const fetchHistory = async () => {
             if (!userProfile) return;
-
+    
             setLoading(true);
-            let historyQuery;
-
-            const role = userProfile.role;
-
-            // Buat query berdasarkan role tanpa `orderBy`
-            if (role === "Requester") {
-                historyQuery = query(
-                    collection(db, "requests"),
-                    where("requesterId", "==", userProfile.userId)
-                );
-            } else if (role === "Checker") {
-                historyQuery = query(
-                    collection(db, "requests"),
-                    where("approvalStatus.checker.approvedBy", "==", userProfile.userId)
-                );
-            } else if (role === "Approval") {
-                historyQuery = query(
-                    collection(db, "requests"),
-                    where("approvalStatus.approval.approvedBy", "==", userProfile.userId)
-                );
-            } else if (role === "Releaser") {
-                historyQuery = query(
-                    collection(db, "requests"),
-                    where("approvalStatus.releaser.approvedBy", "==", userProfile.userId)
-                );
-            }
-
-            if (statusFilter !== "All") {
-                historyQuery = query(
-                    historyQuery,
-                    where("status", "==", statusFilter)
-                );
-            }
-
+            const role = userProfile.role.toLowerCase();
+            let data = [];
+    
+            console.log("Fetching history for role:", role); // Debug log
+    
             try {
-                const querySnapshot = await getDocs(historyQuery);
-                const data = querySnapshot.docs.map(doc => ({
-                    key: doc.id,
-                    id: doc.id,
-                    requestNo: doc.data().requestNumber || "N/A",
-                    requestDate: doc.data().createdAt ? dayjs(doc.data().createdAt).format("YYYY-MM-DD") : "N/A",
-                    status: doc.data().status || "N/A",
-                    actionDate: doc.data().approvalStatus[role.toLowerCase()]?.approvedAt || "N/A",
-                    action: doc.data().approvalStatus[role.toLowerCase()]?.approved ? "Approved" : "Rejected"
-                }));
+                if (role === "requester") {
+                    // Query untuk `requester` hanya berdasarkan requesterId
+                    const historyQuery = query(
+                        collection(db, "requests"),
+                        where("requesterId", "==", userProfile.userId)
+                    );
+    
+                    const querySnapshot = await getDocs(historyQuery);
+                    data = querySnapshot.docs.map(doc => {
+                        const docData = doc.data();
+                        return {
+                            key: doc.id,
+                            id: doc.id,
+                            requestNo: docData.requestNumber || "N/A",
+                            requestDate: docData.createdAt ? dayjs(docData.createdAt).format("YYYY-MM-DD") : "N/A",
+                            status: docData.status || "N/A",
+                        };
+                    });
+    
+                } else {
+                    // Role selain requester, gabungkan `approvedBy` dan `rejectedBy`
+                    const approvedQuery = query(
+                        collection(db, "requests"),
+                        where(`approvalStatus.${role}.approvedBy`, "==", userProfile.userId)
+                    );
+    
+                    const rejectedQuery = query(
+                        collection(db, "requests"),
+                        where(`approvalStatus.${role}.rejectedBy`, "==", userProfile.userId)
+                    );
+    
+                    const approvedDocs = await getDocs(approvedQuery);
+                    const rejectedDocs = await getDocs(rejectedQuery);
+    
+                    // Gabungkan dokumen yang disetujui dan ditolak
+                    const combinedDocs = [...approvedDocs.docs, ...rejectedDocs.docs];
+                    data = combinedDocs.map(doc => {
+                        const docData = doc.data();
+                        const approvalData = docData.approvalStatus[role] || {};
+    
+                        return {
+                            key: doc.id,
+                            id: doc.id,
+                            requestNo: docData.requestNumber || "N/A",
+                            requestDate: docData.createdAt ? dayjs(docData.createdAt).format("YYYY-MM-DD") : "N/A",
+                            status: docData.status || "N/A",
+                            actionDate: approvalData.approvedAt || approvalData.rejectedAt || "N/A",
+                            action: approvalData.approved === false ? "Rejected" : approvalData.approved ? "Approved" : "Pending",
+                        };
+                    });
+                }
+    
                 setDataSource(data);
+                console.log("Fetched history data:", data); // Debug log
             } catch (error) {
                 console.error("Error fetching history:", error);
                 message.error("Failed to load history.");
@@ -76,7 +90,7 @@ const HistoryTable = () => {
                 setLoading(false);
             }
         };
-
+    
         fetchHistory();
     }, [userProfile, statusFilter]);
 
@@ -86,6 +100,8 @@ const HistoryTable = () => {
         requestNo: string;
         requestDate: string;
         status: string;
+        actionDate: string;
+        action: string;
     }    
 
     // Kolom untuk peran Requester
@@ -132,12 +148,11 @@ const HistoryTable = () => {
             filters: [
                 { text: "In Progress", value: "In Progress" },
                 { text: "Rejected", value: "Rejected" },
-                { text: "Done", value: "Done" },
+                { text: "Approved", value: "Approved" },
             ],
-            filteredValue: statusFilter !== "All" ? [statusFilter] : null,
-            onFilter: (value: string | number | boolean, record: {status: string}) => record.status.includes(value as string),
-            render: (status: string) => (
-                <Button type="link" onClick={() => showFlowStep(status)}>
+            onFilter: (value, record) => record.status === value,
+            render: (status: string, record: { requestNo: string }) => (
+                <Button type="link" onClick={() => showFlowStep(record.requestNo)}>
                     {status}
                 </Button>
             ),
@@ -178,6 +193,8 @@ const HistoryTable = () => {
             dataIndex: "actionDate",
             key: "actionDate",
             align: "center" as const,
+            sorter: (a, b) => dayjs(a.actionDate).unix() - dayjs(b.actionDate).unix(),
+            sortDirections: ['ascend', 'descend'],
             render: (text: string) => text || "N/A",
         },
         {
@@ -185,6 +202,11 @@ const HistoryTable = () => {
             dataIndex: "action",
             key: "action",
             align: "center" as const,
+            filters: [
+                { text: "Approved", value: "Approved" },
+                { text: "Rejected", value: "Rejected" },
+            ],
+            onFilter: (value, record) => record.action === value,
             render: (text: string) => text || "N/A", 
         },
     ];
@@ -194,12 +216,12 @@ const HistoryTable = () => {
         router.push(`/requester/detail-request?requestNo=${requestNo}`);
     };
 
-    const showFlowStep = (status: string) => {
-        router.push('/requester/flow-steps')
+    const showFlowStep = (requestNumber: string) => {
+        router.push(`/requester/flow-steps?requestNumber=${requestNumber}`);
     };
 
     if (loading) {
-        return <p>Loading...</p>;
+        return <Spin/>;
     }
     
     if (!userProfile) {
