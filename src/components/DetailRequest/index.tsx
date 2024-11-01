@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Table, Pagination, message, Modal, Button } from "antd";
+import { Table, Pagination, message, Modal } from "antd";
 import type { TableColumnsType } from "antd";
 import { useUserContext } from "@/contexts/UserContext";
 import { collection, getDocs, query, where, deleteDoc, doc } from "firebase/firestore";
@@ -41,9 +41,9 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
     const [name, setName] = useState<string | null>(null);
     const [feedbackData, setFeedbackData] = useState<{ role: string; feedback: string } | null>(null);
 
-    // State untuk menyimpan ID dokumen
     const [docId, setDocId] = useState<string | null>(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
+    const [isApproved, setIsApproved] = useState<boolean>(false);
 
     const columns: TableColumnsType<DataType> = [
         { title: "Nomor Item", dataIndex: "itemNumber", key: "itemNumber", align: "center" },
@@ -56,8 +56,6 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
         { title: "UoM", dataIndex: "uom", key: "uom", align: "center" },
         { title: "Link Ref", dataIndex: "linkRef", key: "linkRef", align: "center" },
         { title: "Budget Max", dataIndex: "budgetMax", key: "budgetMax", align: "center" },
-        // kalau feedback mau pakai kolom tabel
-        // { title: "Feedback", dataIndex: "feedback", key: "feedback", align: "center" },
     ];
 
     useEffect(() => {
@@ -74,13 +72,18 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
                 if (!querySnapshot.empty) {
                     const firstDoc = querySnapshot.docs[0];
                     const data = firstDoc.data();
-                    setDocId(firstDoc.id); // Set ID dokumen
+                    setDocId(firstDoc.id);
                     setRequestNumber(data.requestNumber || "N/A");
 
                     setEntity(data.requesterEntity || "N/A");
                     setDivision(data.requesterDivision || "N/A");
                     setStatus(data.status || "Pending");
                     setName(data.requesterName || "N/A");
+
+                    const isAnyApproved = data.approvalStatus?.checker?.approved ||
+                        data.approvalStatus?.approval?.approved ||
+                        data.approvalStatus?.releaser?.approved;
+                    setIsApproved(isAnyApproved);
 
                     if (data.status === "Rejected") {
                         if (data.approvalStatus?.checker?.feedback) {
@@ -118,7 +121,7 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
         };
 
         fetchRequest();
-    }, [userProfile, requestNo, feedbackData]);
+    }, [userProfile, requestNo]);
 
     const handleTableChange = (page: number, size?: number) => {
         setCurrentPage(page);
@@ -127,37 +130,38 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
         }
     };
 
-    // Fungsi untuk menampilkan modal konfirmasi
     const showCancelConfirmation = () => {
         setIsModalVisible(true);
     };
 
-    // Fungsi untuk menyembunyikan modal tanpa menghapus data
     const handleModalCancel = () => {
         setIsModalVisible(false);
     };
 
-    // Handler untuk menghapus data dari Firebase dan state setelah konfirmasi
     const handleConfirmCancelRequest = async () => {
         if (!docId) {
             message.error("Failed to find the document ID.");
             return;
         }
-    
+
         try {
             const requestDocRef = doc(db, "requests", docId);
             await deleteDoc(requestDocRef);
-    
+
             message.success("Request has been successfully canceled and removed.");
             setIsModalVisible(false);
-    
-            // Mengembalikan pengguna ke halaman sebelumnya
+
             router.back();
         } catch (error) {
             console.error("Error deleting request:", error);
             message.error("Failed to cancel the request.");
         }
-    };    
+    };
+
+    const shouldActionsBeVisible = userProfile?.role === "Requester" && status === "Rejected";
+    console.log("User role:", userProfile?.role);
+    console.log("Request status:", status);
+    console.log("Should actions be visible?", shouldActionsBeVisible);
 
     const currentData = dataSource.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
@@ -171,17 +175,43 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
                     <p><strong>Division:</strong> {division}</p>
                 </div>
                 <div className={styles.requestRight}>
-                    <p className={styles.status}><strong>Status:</strong> {status}</p>
-                    {feedbackData && (
-                        <div>
-                            <p><strong>Feedback from {feedbackData.role}:</strong></p>
-                            <p>{feedbackData.feedback}</p>
-                        </div>
+                    <p className={styles.status}>
+                        <strong>Status: </strong>
+                        <span
+                            className={
+                                status === "Approved"
+                                    ? styles.statusApproved
+                                    : status === "Rejected"
+                                        ? styles.statusRejected
+                                        : status === "In Progress"
+                                            ? styles.statusInProgress
+                                            : ""
+                            }
+                        >
+                            {status}
+                        </span>
+                    </p>
+                    {shouldActionsBeVisible ? (
+                        <>
+                            {feedbackData && (
+                                <div>
+                                    <p><strong>Feedback from {feedbackData.role}:</strong></p>
+                                    <p>{feedbackData.feedback}</p>
+                                </div>
+                            )}
+                            <div className={styles.actions}>
+                                <button className={styles.cancelButton} onClick={showCancelConfirmation}>Cancel Request</button>
+                                <button className={styles.editButton}>Edit Request</button>
+                            </div>
+                        </>
+                    ) : (
+                        feedbackData && (
+                            <div>
+                                <p><strong>Feedback from {feedbackData.role}:</strong></p>
+                                <p>{feedbackData.feedback}</p>
+                            </div>
+                        )
                     )}
-                    <div className={styles.actions}>
-                        <button className={styles.cancelButton} onClick={showCancelConfirmation}>Cancel Request</button>
-                        <button className={styles.editButton}>Edit Request</button>
-                    </div>
                 </div>
             </div>
 
@@ -206,10 +236,9 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
                 pageSizeOptions={['10', '20', '50', '100']}
             />
 
-            {/* Modal Konfirmasi */}
             <Modal
                 title="Confirm Cancel Request"
-                visible={isModalVisible}
+                open={isModalVisible}
                 onOk={handleConfirmCancelRequest}
                 onCancel={handleModalCancel}
                 okText="Yes, Cancel"
