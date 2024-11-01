@@ -12,6 +12,71 @@
         margin-bottom: 40px;
     }
 
+    .requestHeader {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 20px;
+    }
+
+    .requestLeft, .requestRight {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .requestLeft {
+        h3 {
+            font-size: 16px;
+            font-weight: bold;
+            color: green;
+            margin-bottom: 15px; 
+        }
+
+        p {
+            margin: 0;
+            margin-bottom: 10px; 
+        }
+    }
+
+    .requestRight {
+        text-align: right;
+        align-items: flex-end; 
+
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        p {
+            margin: 0;
+            margin-bottom: 10px; 
+        }
+
+        p.status {
+            font-weight: bold;
+            margin: 0;
+            margin-bottom: 10px;
+        }
+
+        .cancelButton {
+            background-color: #f44336;
+            color: #fff;
+            border: none;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 10px;
+        }
+
+        .editButton {
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 10px;
+        }
+    }
+
     .table {
         background-color: #fff;
     }
