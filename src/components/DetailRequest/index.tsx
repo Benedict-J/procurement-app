@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Table, Pagination, message, Modal } from "antd";
+import { Table, Pagination, message, Modal, Card } from "antd"; // Import Card dari Ant Design
 import type { TableColumnsType } from "antd";
 import { useUserContext } from "@/contexts/UserContext";
 import { collection, getDocs, query, where, deleteDoc, doc } from "firebase/firestore";
@@ -159,10 +159,6 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
     };
 
     const shouldActionsBeVisible = userProfile?.role === "Requester" && status === "Rejected";
-    console.log("User role:", userProfile?.role);
-    console.log("Request status:", status);
-    console.log("Should actions be visible?", shouldActionsBeVisible);
-
     const currentData = dataSource.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
     return (
@@ -191,26 +187,11 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
                             {status}
                         </span>
                     </p>
-                    {shouldActionsBeVisible ? (
-                        <>
-                            {feedbackData && (
-                                <div>
-                                    <p><strong>Feedback from {feedbackData.role}:</strong></p>
-                                    <p>{feedbackData.feedback}</p>
-                                </div>
-                            )}
-                            <div className={styles.actions}>
-                                <button className={styles.cancelButton} onClick={showCancelConfirmation}>Cancel Request</button>
-                                <button className={styles.editButton}>Edit Request</button>
-                            </div>
-                        </>
-                    ) : (
-                        feedbackData && (
-                            <div>
-                                <p><strong>Feedback from {feedbackData.role}:</strong></p>
-                                <p>{feedbackData.feedback}</p>
-                            </div>
-                        )
+                    {shouldActionsBeVisible && (
+                        <div className={styles.actions}>
+                            <button className={styles.cancelButton} onClick={showCancelConfirmation}>Cancel Request</button>
+                            <button className={styles.editButton}>Edit Request</button>
+                        </div>
                     )}
                 </div>
             </div>
@@ -235,6 +216,16 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
                 showSizeChanger={true}
                 pageSizeOptions={['10', '20', '50', '100']}
             />
+
+            {userProfile?.role === "Requester" && status === "Rejected" && feedbackData && (
+                <Card
+                    title={`Feedback from: ${name} | ${feedbackData.role}`}
+                    className={styles.feedbackCard}
+                    headStyle={{ textAlign: 'center', backgroundColor: '#FAFAFA' }}
+                >
+                    <p>{feedbackData.feedback}</p>
+                </Card>
+            )}
 
             <Modal
                 title="Confirm Cancel Request"
