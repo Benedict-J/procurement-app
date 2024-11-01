@@ -131,8 +131,8 @@ const IncomingRequest = () => {
         fetchRequests();
     }, [userProfile]);
 
-    const handleDetailClick = (id: string) => {
-        console.log("Check details for request ID:", id);
+    const handleDetailClick = (requestNo: string) => {
+        router.push(`/requester/detail-request?requestNo=${requestNo}`);
     };
 
     // Handler untuk approve

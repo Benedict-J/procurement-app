@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Table, Pagination } from "antd";
+import { Table, Pagination, message, Modal } from "antd";
 import type { TableColumnsType } from "antd";
 import { useUserContext } from "@/contexts/UserContext";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, query, where, deleteDoc, doc } from "firebase/firestore";
 import { db } from "@/firebase/firebase";
 import styles from './index.module.scss';
+import { useRouter } from "next/router";
 
 interface DataType {
     key: React.Key;
@@ -19,6 +20,7 @@ interface DataType {
     uom: string;
     linkRef: string;
     budgetMax: string;
+    feedback: string | null;
 }
 
 interface DetailRequestTableProps {
@@ -31,79 +33,35 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [requestNumber, setRequestNumber] = useState<string | null>(null);
+    const router = useRouter();
 
-    // Definisi kolom tabel
+    const [entity, setEntity] = useState<string | null>(null);
+    const [division, setDivision] = useState<string | null>(null);
+    const [status, setStatus] = useState<string | null>(null);
+    const [name, setName] = useState<string | null>(null);
+    const [feedbackData, setFeedbackData] = useState<{ role: string; feedback: string } | null>(null);
+
+    const [docId, setDocId] = useState<string | null>(null);
+    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [isApproved, setIsApproved] = useState<boolean>(false);
+
     const columns: TableColumnsType<DataType> = [
-        {
-            title: "Nomor Item",
-            dataIndex: "itemNumber",
-            key: "itemNumber",
-            align: "center",
-        },
-        {
-            title: "Estimate Delivery Date",
-            dataIndex: "estimateDeliveryDate",
-            key: "estimateDeliveryDate",
-            align: "center",
-        },
-        {
-            title: "Delivery Address",
-            dataIndex: "deliveryAddress",
-            key: "deliveryAddress",
-            align: "center",
-        },
-        {
-            title: "Merk",
-            dataIndex: "merk",
-            key: "merk",
-            align: "center",
-        },
-        {
-            title: "Detail Specs",
-            dataIndex: "detailSpecs",
-            key: "detailSpecs",
-            align: "center",
-        },
-        {
-            title: "Color",
-            dataIndex: "color",
-            key: "color",
-            align: "center",
-        },
-        {
-            title: "QTY",
-            dataIndex: "qty",
-            key: "qty",
-            align: "center",
-        },
-        {
-            title: "UoM",
-            dataIndex: "uom",
-            key: "uom",
-            align: "center",
-        },
-        {
-            title: "Link Ref",
-            dataIndex: "linkRef",
-            key: "linkRef",
-            align: "center",
-        },
-        {
-            title: "Budget Max",
-            dataIndex: "budgetMax",
-            key: "budgetMax",
-            align: "center",
-        },
+        { title: "Nomor Item", dataIndex: "itemNumber", key: "itemNumber", align: "center" },
+        { title: "Estimate Delivery Date", dataIndex: "estimateDeliveryDate", key: "estimateDeliveryDate", align: "center" },
+        { title: "Delivery Address", dataIndex: "deliveryAddress", key: "deliveryAddress", align: "center" },
+        { title: "Merk", dataIndex: "merk", key: "merk", align: "center" },
+        { title: "Detail Specs", dataIndex: "detailSpecs", key: "detailSpecs", align: "center" },
+        { title: "Color", dataIndex: "color", key: "color", align: "center" },
+        { title: "QTY", dataIndex: "qty", key: "qty", align: "center" },
+        { title: "UoM", dataIndex: "uom", key: "uom", align: "center" },
+        { title: "Link Ref", dataIndex: "linkRef", key: "linkRef", align: "center" },
+        { title: "Budget Max", dataIndex: "budgetMax", key: "budgetMax", align: "center" },
     ];
 
-    // Mengambil data request dari Firebase berdasarkan nomor request
     useEffect(() => {
         const fetchRequest = async () => {
             if (!userProfile || !requestNo) return;
 
-            console.log("Fetching data for requestNo:", requestNo);
-
-            // Query berdasarkan nomor request
             const requestQuery = query(
                 collection(db, "requests"),
                 where("requestNumber", "==", requestNo)
@@ -113,13 +71,33 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
                 const querySnapshot = await getDocs(requestQuery);
                 if (!querySnapshot.empty) {
                     const firstDoc = querySnapshot.docs[0];
-                    console.log("Data retrieved:", firstDoc.data());
-                    setRequestNumber(firstDoc.data().requestNumber || "N/A");
+                    const data = firstDoc.data();
+                    setDocId(firstDoc.id);
+                    setRequestNumber(data.requestNumber || "N/A");
 
-                    // Proses data items
-                    const requestData = (firstDoc.data().items || []).map((item: any, index: number) => ({
-                        key: `${firstDoc.id}-${index}`, // Buat key unik dengan menggabungkan ID dokumen dan index
-                        requestNumber: firstDoc.data().requestNumber || "N/A",
+                    setEntity(data.requesterEntity || "N/A");
+                    setDivision(data.requesterDivision || "N/A");
+                    setStatus(data.status || "Pending");
+                    setName(data.requesterName || "N/A");
+
+                    const isAnyApproved = data.approvalStatus?.checker?.approved ||
+                        data.approvalStatus?.approval?.approved ||
+                        data.approvalStatus?.releaser?.approved;
+                    setIsApproved(isAnyApproved);
+
+                    if (data.status === "Rejected") {
+                        if (data.approvalStatus?.checker?.feedback) {
+                            setFeedbackData({ role: "Checker", feedback: data.approvalStatus.checker.feedback });
+                        } else if (data.approvalStatus?.approval?.feedback) {
+                            setFeedbackData({ role: "Approval", feedback: data.approvalStatus.approval.feedback });
+                        } else if (data.approvalStatus?.releaser?.feedback) {
+                            setFeedbackData({ role: "Releaser", feedback: data.approvalStatus.releaser.feedback });
+                        }
+                    }
+
+                    const requestData = (data.items || []).map((item: any, index: number) => ({
+                        key: `${firstDoc.id}-${index}`,
+                        requestNumber: data.requestNumber || "N/A",
                         itemNumber: index + 1,
                         estimateDeliveryDate: item.deliveryDate || "N/A",
                         deliveryAddress: item.deliveryAddress || "N/A",
@@ -130,9 +108,8 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
                         uom: item.uom || "N/A",
                         linkRef: item.linkRef || "N/A",
                         budgetMax: item.budgetMax || "N/A",
+                        feedback: feedbackData ? feedbackData.feedback : "No feedback",
                     }));
-
-                    console.log("Processed request data for table:", requestData);
 
                     setDataSource(requestData);
                 } else {
@@ -151,22 +128,95 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
         if (size) {
             setPageSize(size);
         }
-        console.log("Updated currentPage:", page);
-        console.log("Updated pageSize:", size);
     };
 
-    // Data yang ditampilkan pada halaman saat ini
+    const showCancelConfirmation = () => {
+        setIsModalVisible(true);
+    };
+
+    const handleModalCancel = () => {
+        setIsModalVisible(false);
+    };
+
+    const handleConfirmCancelRequest = async () => {
+        if (!docId) {
+            message.error("Failed to find the document ID.");
+            return;
+        }
+
+        try {
+            const requestDocRef = doc(db, "requests", docId);
+            await deleteDoc(requestDocRef);
+
+            message.success("Request has been successfully canceled and removed.");
+            setIsModalVisible(false);
+
+            router.back();
+        } catch (error) {
+            console.error("Error deleting request:", error);
+            message.error("Failed to cancel the request.");
+        }
+    };
+
+    const shouldActionsBeVisible = userProfile?.role === "Requester" && status === "Rejected";
+    console.log("User role:", userProfile?.role);
+    console.log("Request status:", status);
+    console.log("Should actions be visible?", shouldActionsBeVisible);
+
     const currentData = dataSource.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
     return (
         <div className={styles.requestContainer}>
-            <h3 style={{ marginBottom: "0px", display: "inline", fontWeight: "bold" }}>
-                Nomor Request:
-            </h3>
-            <span className={styles.requestNumber}>
-                {requestNumber || "N/A"}
-            </span>
+            <div className={styles.requestHeader}>
+                <div className={styles.requestLeft}>
+                    <h3 className={styles.requestTitle}><strong>Request number: </strong>{requestNumber || "N/A"}</h3>
+                    <p><strong>Name:</strong> {name}</p>
+                    <p><strong>Entity:</strong> {entity}</p>
+                    <p><strong>Division:</strong> {division}</p>
+                </div>
+                <div className={styles.requestRight}>
+                    <p className={styles.status}>
+                        <strong>Status: </strong>
+                        <span
+                            className={
+                                status === "Approved"
+                                    ? styles.statusApproved
+                                    : status === "Rejected"
+                                        ? styles.statusRejected
+                                        : status === "In Progress"
+                                            ? styles.statusInProgress
+                                            : ""
+                            }
+                        >
+                            {status}
+                        </span>
+                    </p>
+                    {shouldActionsBeVisible ? (
+                        <>
+                            {feedbackData && (
+                                <div>
+                                    <p><strong>Feedback from {feedbackData.role}:</strong></p>
+                                    <p>{feedbackData.feedback}</p>
+                                </div>
+                            )}
+                            <div className={styles.actions}>
+                                <button className={styles.cancelButton} onClick={showCancelConfirmation}>Cancel Request</button>
+                                <button className={styles.editButton}>Edit Request</button>
+                            </div>
+                        </>
+                    ) : (
+                        feedbackData && (
+                            <div>
+                                <p><strong>Feedback from {feedbackData.role}:</strong></p>
+                                <p>{feedbackData.feedback}</p>
+                            </div>
+                        )
+                    )}
+                </div>
+            </div>
+
             <div className={styles.spacing} />
+
             <Table<DataType>
                 columns={columns}
                 dataSource={currentData}
@@ -175,6 +225,7 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
                 scroll={{ x: 200 }}
                 className={styles.table}
             />
+
             <Pagination
                 current={currentPage}
                 pageSize={pageSize}
@@ -184,6 +235,17 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
                 showSizeChanger={true}
                 pageSizeOptions={['10', '20', '50', '100']}
             />
+
+            <Modal
+                title="Confirm Cancel Request"
+                open={isModalVisible}
+                onOk={handleConfirmCancelRequest}
+                onCancel={handleModalCancel}
+                okText="Yes, Cancel"
+                cancelText="No"
+            >
+                <p>Are you sure you want to cancel this request?</p>
+            </Modal>
         </div>
     );
 };

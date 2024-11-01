@@ -12,6 +12,76 @@
         margin-bottom: 40px;
     }
 
+    .requestHeader {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 20px;
+    }
+
+    .requestLeft,
+    .requestRight {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .requestLeft {
+        h3 {
+            font-size: 16px;
+            font-weight: bold;
+            color: green;
+            margin-bottom: 15px;
+        }
+
+        p {
+            margin: 0;
+            margin-bottom: 10px;
+        }
+    }
+
+    .requestRight {
+        text-align: right;
+        align-items: flex-end;
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
+        p {
+            margin: 0;
+            margin-bottom: 10px;
+        }
+
+        p.status {
+            font-weight: bold;
+            margin: 0;
+            margin-bottom: 10px;
+        }
+
+        .cancelButton {
+            background-color: #f44336;
+            color: #fff;
+            border: none;
+            padding: 5px 8px; // ukuran padding diperkecil
+            font-size: 12px; // ukuran font diperkecil
+            cursor: pointer;
+            border-radius: 8px; // border-radius juga disesuaikan
+        }
+
+        .editButton {
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            padding: 5px 8px; // ukuran padding diperkecil
+            font-size: 12px; // ukuran font diperkecil
+            cursor: pointer;
+            border-radius: 8px; // border-radius juga disesuaikan
+        }
+    }
+
     .table {
         background-color: #fff;
     }
@@ -20,4 +90,16 @@
         margin-top: 20px;
         text-align: right;
     }
+}
+
+.statusApproved {
+    color: green;
+}
+
+.statusRejected {
+    color: red;
+}
+
+.statusInProgress {
+    color: orange;
 }
