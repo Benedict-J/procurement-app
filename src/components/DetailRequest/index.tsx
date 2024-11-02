@@ -102,7 +102,7 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
                         requestNumber: data.requestNumber || "N/A",
                         itemNumber: index + 1,
                         estimateDeliveryDate: item.deliveryDate || "N/A",
-                        deliveryAddress: item.deliveryAddress || "N/A",
+                        deliveryAddress: item.deliveryAddress === "other" ? item.customDeliveryAddress || "N/A" : item.deliveryAddress || "N/A",
                         receiver: item.receiver || "N/A",
                         merk: item.merk || "N/A",
                         detailSpecs: item.detailSpecs || "N/A",
@@ -112,7 +112,7 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
                         linkRef: item.linkRef || "N/A",
                         budgetMax: item.budgetMax || "N/A",
                         feedback: feedbackData ? feedbackData.feedback : "No feedback",
-                    }));
+                    }));                    
 
                     setDataSource(requestData);
                 } else {
