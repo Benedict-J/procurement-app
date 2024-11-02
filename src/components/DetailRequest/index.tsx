@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Table, Pagination, message, Modal, Card } from "antd"; // Import Card dari Ant Design
+import { Table, Pagination, message, Modal, Card } from "antd"; 
 import type { TableColumnsType } from "antd";
 import { useUserContext } from "@/contexts/UserContext";
 import { collection, getDocs, query, where, deleteDoc, doc } from "firebase/firestore";
@@ -21,6 +21,7 @@ interface DataType {
     linkRef: string;
     budgetMax: string;
     feedback: string | null;
+    receiver: string;
 }
 
 interface DetailRequestTableProps {
@@ -49,6 +50,7 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
         { title: "Nomor Item", dataIndex: "itemNumber", key: "itemNumber", align: "center" },
         { title: "Estimate Delivery Date", dataIndex: "estimateDeliveryDate", key: "estimateDeliveryDate", align: "center" },
         { title: "Delivery Address", dataIndex: "deliveryAddress", key: "deliveryAddress", align: "center" },
+        { title: "Receiver", dataIndex: "receiver", key: "receiver", align: "center" },
         { title: "Merk", dataIndex: "merk", key: "merk", align: "center" },
         { title: "Detail Specs", dataIndex: "detailSpecs", key: "detailSpecs", align: "center" },
         { title: "Color", dataIndex: "color", key: "color", align: "center" },
@@ -101,6 +103,7 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
                         itemNumber: index + 1,
                         estimateDeliveryDate: item.deliveryDate || "N/A",
                         deliveryAddress: item.deliveryAddress || "N/A",
+                        receiver: item.receiver || "N/A",
                         merk: item.merk || "N/A",
                         detailSpecs: item.detailSpecs || "N/A",
                         color: item.color || "N/A",
