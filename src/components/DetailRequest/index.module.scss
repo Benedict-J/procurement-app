@@ -57,6 +57,7 @@
 
         p.status {
             font-weight: bold;
+            color: inherit;
             margin: 0;
             margin-bottom: 25px;
         }
@@ -65,20 +66,20 @@
             background-color: #f44336;
             color: #fff;
             border: none;
-            padding: 5px 8px; // ukuran padding diperkecil
-            font-size: 12px; // ukuran font diperkecil
+            padding: 5px 8px;
+            font-size: 12px;
             cursor: pointer;
-            border-radius: 8px; // border-radius juga disesuaikan
+            border-radius: 8px;
         }
 
         .editButton {
             background-color: #4CAF50;
             color: #fff;
             border: none;
-            padding: 5px 8px; // ukuran padding diperkecil
-            font-size: 12px; // ukuran font diperkecil
+            padding: 5px 8px;
+            font-size: 12px;
             cursor: pointer;
-            border-radius: 8px; // border-radius juga disesuaikan
+            border-radius: 8px;
         }
     }
 
