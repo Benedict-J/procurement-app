@@ -26,7 +26,12 @@ interface UserContextType {
   userProfile: UserProfile | null;
   selectedProfileIndex: number | null;
   loading: boolean;
+  isLoggingOut: boolean;
+  isProfileChanging: boolean;
+  setUserProfile: (profile: UserProfile | null) => void;
   setSelectedProfile: (index: number) => void;
+  setIsLoggingOut: (loggingOut: boolean) => void;
+  setIsProfileChanging: (profileChanging: boolean) => void;
 }
 
 // Buat Context untuk user
@@ -39,6 +44,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<any>(null);
   const [selectedProfileIndex, setSelectedProfileIndex] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isProfileChanging, setIsProfileChanging] = useState(false);
 
   // Definisikan mapping role ke path dashboard
   const defaultPathsForRoles: Record<string, string> = {
@@ -150,7 +157,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <UserContext.Provider value={{ user, userProfile, selectedProfileIndex, loading, setSelectedProfile }}>
+    <UserContext.Provider value={{ user, userProfile, selectedProfileIndex, loading, setSelectedProfile, isLoggingOut,
+      isProfileChanging, setUserProfile, setIsLoggingOut, setIsProfileChanging  }}>
       {loading ? (
         <div>Loading...</div> // Tampilan loading sementara data sedang di-fetch
       ) : (

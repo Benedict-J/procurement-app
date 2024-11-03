@@ -1,8 +1,8 @@
 import { db } from "@/firebase/firebase";
-import { Form, Input, Button, Select, Row, DatePicker, Col, Popconfirm, message, InputNumber } from "antd";
+import { Form, Input, Button, Select, Row, DatePicker, Col, Popconfirm, message} from "antd";
 import dayjs, { Dayjs } from "dayjs";
 import { addDoc, collection, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
-import { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useUserContext } from "@/contexts/UserContext";
 
 const { Option } = Select;
@@ -41,7 +41,7 @@ const generateRequestNumber = async (entityAbbr: string, division: string) => {
 
 
 const RequestForm = () => {
-  const { userProfile} = useUserContext();
+  const { userProfile, isLoggingOut, isProfileChanging } = useUserContext();
   const { user } = useUserContext(); 
   const requesterId = user?.uid;
   const [loading, setLoading] = useState(false);
@@ -49,6 +49,11 @@ const RequestForm = () => {
   const [customAddress, setCustomAddress] = useState<{ [key: number]: string }>({});
   const [budgetMax, setBudgetMax] = useState("");
   const [form] = Form.useForm();
+  const [formData, setFormData] = useState({});
+
+  const handleFormChange = (changedValues: any) => {
+    setFormData((prev) => ({ ...prev, ...changedValues }));
+  };
 
   const handleAddressChange = (value: string, index: number) => {
     setIsOtherSelected((prev) => ({ ...prev, [index]: value === "other" }));
@@ -75,11 +80,6 @@ const RequestForm = () => {
     return value.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   };
 
-  const parseToNumber = (value: string) => {
-    // Mengonversi nilai input ke angka dengan mengganti koma menjadi titik
-    return parseFloat(value.replace(/\./g, "").replace(",", "."));
-  };
-
   const [formList, setFormList] = useState([1]);
 
   const addNewForm = () => {
@@ -90,7 +90,6 @@ const RequestForm = () => {
     const updatedFormList = formList.filter((_, i) => i !== index);
     setFormList(updatedFormList);
   };
-
 
   const onFinish = async (values: any) => {
     setLoading(true);
@@ -172,6 +171,7 @@ const RequestForm = () => {
       });
       message.success('Request submitted successfully');
       form.resetFields();
+      sessionStorage.removeItem("requestFormData");
     } catch (error) {
       console.error("Error submitting request:", error);
       alert("Failed to submit request.");
@@ -236,14 +236,18 @@ const RequestForm = () => {
             name={`qty${index + 1}`}
             rules={[
               { required: true, message: "Please input the quantity" },
-              { validator: (_, value) => 
-                  !isNaN(value) 
-                      ? Promise.resolve() 
-                      : Promise.reject("Only numbers are allowed"),
+              { 
+                validator: (_, value) => 
+                   /^\d+$/.test(value) 
+                    ? Promise.resolve() 
+                    : Promise.reject("Only whole numbers are allowed"),
               },
-          ]}
+            ]}
           >
-            <Input placeholder="Quantity" />
+              <Input placeholder="Quantity" onChange={(e) => {
+                const cleanedValue = e.target.value.replace(/\D/g, ""); 
+                form.setFieldsValue({ [`qty${index + 1}`]: cleanedValue }); 
+            }} />
           </Form.Item>
 
           <Form.Item
@@ -259,7 +263,7 @@ const RequestForm = () => {
             name={`linkRef${index + 1}`}
             rules={[{ required: true, message: "Please input the Link Ref" }]}
           >
-            <Input placeholder="Link Ref" />
+            <Input placeholder="Link Reference" />
           </Form.Item>
 
           <Form.Item
@@ -267,15 +271,25 @@ const RequestForm = () => {
             name={`budgetMax${index + 1}`}
             rules={[
               { required: true, message: "Please input the Budget Max" },
-              { validator: (_, value) => 
-                !isNaN(parseToNumber(value))
-                      ? Promise.resolve() 
-                      : Promise.reject("Only numbers are allowed"),
+              {
+                validator: (_, value) => {
+                  const regex = /^[0-9]+(\.[0-9]{3})*$/; // Mengizinkan angka dengan titik pemisah ribuan
+                  if (!value || regex.test(value)) {
+                      return Promise.resolve();
+                  }   else {
+                        return Promise.reject("Only numbers are allowed with '.' as thousand separators");
+                  }
+                },
               },
           ]}
-          >
-            <Input placeholder="Budget Max" value={formatCurrency(budgetMax)} onChange={handleBudgetChange} addonBefore="Rp" />
-          </Form.Item>
+        >
+        <Input 
+            placeholder="Budget Max" 
+            value={formatCurrency(budgetMax)} 
+            onChange={handleBudgetChange} 
+            addonBefore="Rp" 
+        />
+      </Form.Item>
 
           <Row gutter={16}>
             <Col span={12}>
@@ -292,7 +306,7 @@ const RequestForm = () => {
                 name={`receiver${index + 1}`}
                 rules={[{ required: true, message: "Please input the Receiver" }]}
               >
-                <Input placeholder="Receiver name" />
+                <Input placeholder="Receiver Name" />
               </Form.Item>
             </Col>
 

@@ -6,11 +6,11 @@ import { useEffect, useState } from "react";
 import { auth, db } from "@/firebase/firebase";
 import { SignOut } from "@/firebase/auth";
 import styles from "@/components/Layout/Header/index.module.scss";
-import { doc, updateDoc } from "firebase/firestore";
+import { deleteDoc, doc, updateDoc } from "firebase/firestore";
 
 const Header: React.FC = () => {
   const router = useRouter();
-  const { userProfile, loading, selectedProfileIndex, setSelectedProfile } = useUserContext();
+  const { userProfile, loading, user, selectedProfileIndex, setSelectedProfile } = useUserContext();
 
   if (loading) return <Spin/>;
   if (!userProfile) return <p>User profile not available</p>;
@@ -56,12 +56,16 @@ const Header: React.FC = () => {
 
   const handleLogout = async () => {
     try {
-      await SignOut();
-      router.push("/auth/login");
+        const autosaveId = localStorage.getItem("autosaveId");
+        if (autosaveId) {
+            await deleteDoc(doc(db, "autosaveForms", autosaveId));
+        }
+        await SignOut();
+        router.push("/auth/login");
     } catch (error) {
-      console.error("Error during logout:", error);
+        console.error("Error during logout:", error);
     }
-  };
+};
 
   const notificationMenuItems = notifications.map((notification) => ({
     key: notification.key,

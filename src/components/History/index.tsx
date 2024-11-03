@@ -30,10 +30,10 @@ const HistoryTable = () => {
     
             try {
                 if (role === "requester") {
-                    // Query untuk `requester` hanya berdasarkan requesterId
                     const historyQuery = query(
                         collection(db, "requests"),
-                        where("requesterId", "==", userProfile.userId)
+                        where("requesterId", "==", userProfile.userId),
+                        where("requesterEntity", "==", userProfile.entity)
                     );
     
                     const querySnapshot = await getDocs(historyQuery);
@@ -52,12 +52,14 @@ const HistoryTable = () => {
                     // Role selain requester, gabungkan `approvedBy` dan `rejectedBy`
                     const approvedQuery = query(
                         collection(db, "requests"),
-                        where(`approvalStatus.${role}.approvedBy`, "==", userProfile.userId)
+                        where(`approvalStatus.${role}.approvedBy`, "==", userProfile.userId),
+                        where("requesterEntity", "==", userProfile.entity)
                     );
     
                     const rejectedQuery = query(
                         collection(db, "requests"),
-                        where(`approvalStatus.${role}.rejectedBy`, "==", userProfile.userId)
+                        where(`approvalStatus.${role}.rejectedBy`, "==", userProfile.userId),
+                        where("requesterEntity", "==", userProfile.entity)
                     );
     
                     const approvedDocs = await getDocs(approvedQuery);
