@@ -10,7 +10,7 @@ import { deleteDoc, doc, updateDoc } from "firebase/firestore";
 
 const Header: React.FC = () => {
   const router = useRouter();
-  const { userProfile, loading, user, selectedProfileIndex, setSelectedProfile } = useUserContext();
+  const { userProfile, loading, user, selectedProfileIndex, setSelectedProfile, loadDraftData } = useUserContext();
 
   if (loading) return <Spin/>;
   if (!userProfile) return <p>User profile not available</p>;
@@ -51,6 +51,7 @@ const Header: React.FC = () => {
       }
 
       console.log("Switched to:", selectedProfile.email);
+      loadDraftData();
     }
   };
 

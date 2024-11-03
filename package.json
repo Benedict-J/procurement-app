@@ -26,6 +26,7 @@
     "next": "13.4.7",
     "next-redux-wrapper": "^8.1.0",
     "react": "18.2.0",
+    "react-autosave": "^0.4.4",
     "react-cookie": "^4.1.1",
     "react-dom": "18.2.0",
     "react-google-recaptcha": "^3.1.0",

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { doc, getDoc, updateDoc } from "firebase/firestore"; // Firebase Firestore
 import { auth, db } from "@/firebase/firebase";  // Konfigurasi Firebase
 import { useRouter } from "next/router"; // Router
+import { Spin } from "antd";
 
 // Definisikan tipe untuk profil pengguna
 interface Profile {
@@ -32,6 +33,7 @@ interface UserContextType {
   setSelectedProfile: (index: number) => void;
   setIsLoggingOut: (loggingOut: boolean) => void;
   setIsProfileChanging: (profileChanging: boolean) => void;
+  loadDraftData: () => Promise<void>;
 }
 
 // Buat Context untuk user
@@ -129,6 +131,24 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [userProfile, selectedProfileIndex, loading, router.pathname]);
 
+  const loadDraftData = async () => {
+    if (!user || selectedProfileIndex === null) return;
+
+    try {
+      const draftDocRef = doc(db, "draftRequests", `${user.uid}_${selectedProfileIndex}`);
+      const draftDoc = await getDoc(draftDocRef);
+
+      if (draftDoc.exists()) {
+        const draftData = draftDoc.data();
+        // Gunakan draftData, misalnya setFormData(draftData);
+      } else {
+        // Kosongkan form jika tidak ada draft
+      }
+    } catch (error) {
+      console.error("Error loading draft data:", error);
+    }
+  };
+
   const setSelectedProfile = (index: number) => {
     if (user) {
       const docRef = doc(db, "registeredUsers", user.uid);
@@ -158,9 +178,19 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <UserContext.Provider value={{ user, userProfile, selectedProfileIndex, loading, setSelectedProfile, isLoggingOut,
-      isProfileChanging, setUserProfile, setIsLoggingOut, setIsProfileChanging  }}>
+      isProfileChanging, setUserProfile, setIsLoggingOut, setIsProfileChanging, loadDraftData,  }}>
       {loading ? (
-        <div>Loading...</div> // Tampilan loading sementara data sedang di-fetch
+       <div
+       style={{
+         display: "flex",
+         alignItems: "center",
+         justifyContent: "center",
+         height: "100vh",
+         width: "100vw",
+       }}
+     >
+       <Spin size="large" /> {/* Tampilan loading berada di tengah */}
+     </div>// Tampilan loading sementara data sedang di-fetch
       ) : (
         children
       )}

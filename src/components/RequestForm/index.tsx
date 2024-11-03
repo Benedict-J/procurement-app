@@ -4,8 +4,11 @@ import dayjs, { Dayjs } from "dayjs";
 import { addDoc, collection, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import React, { useState, useEffect, useCallback } from "react";
 import { useUserContext } from "@/contexts/UserContext";
+import { Autosave, useAutosave } from 'react-autosave';
 
 const { Option } = Select;
+
+const STORAGE_KEY = "requestFormData";
 
 const convertMonthToRoman = (month: number) => {
   const romanNumerals = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
@@ -41,7 +44,7 @@ const generateRequestNumber = async (entityAbbr: string, division: string) => {
 
 
 const RequestForm = () => {
-  const { userProfile, isLoggingOut, isProfileChanging } = useUserContext();
+  const { userProfile, selectedProfileIndex} = useUserContext();
   const { user } = useUserContext(); 
   const requesterId = user?.uid;
   const [loading, setLoading] = useState(false);
@@ -49,10 +52,87 @@ const RequestForm = () => {
   const [customAddress, setCustomAddress] = useState<{ [key: number]: string }>({});
   const [budgetMax, setBudgetMax] = useState("");
   const [form] = Form.useForm();
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState<FormData>({} as FormData);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleFormChange = (changedValues: any) => {
-    setFormData((prev) => ({ ...prev, ...changedValues }));
+  useEffect(() => {
+    // Muat data sementara dari Firebase saat pertama kali membuka form
+    const loadDraftData = async () => {
+      if (!requesterId || !user || selectedProfileIndex === null) return;
+    
+      try {
+        const draftDocRef = doc(db, "draftRequests", `${requesterId}_${selectedProfileIndex}`);
+        const draftDoc = await getDoc(draftDocRef);
+    
+        if (draftDoc.exists()) {
+          const draftData = draftDoc.data();
+          setFormData(draftData as FormData);
+          form.setFieldsValue(draftData); // Set nilai form dari draft yang tersimpan
+        } else {
+          setFormData({} as FormData); // Kosongkan form jika tidak ada draft
+          form.resetFields();
+        }
+      } catch (error) {
+        console.error("Error loading draft data:", error);
+      }
+    };
+
+    loadDraftData();
+  }, [form, requesterId]);
+
+  const cleanData = (data: any) => {
+    return Object.fromEntries(
+      Object.entries(data).map(([key, value]) => {
+        // Cek apakah `value` adalah objek `dayjs`
+        if (dayjs.isDayjs(value)) {
+          return [key, value.format("YYYY-MM-DD")]; // Konversi objek tanggal ke format string
+        }
+        return [key, value === undefined ? null : value];
+      })
+    );
+  };
+
+  const saveDraftToFirebase = async (data: any) => {
+    if (!user || selectedProfileIndex === null || Object.keys(data).length === 0 || isSubmitting) return;
+  
+    try {
+      const cleanedData = cleanData(data); // Bersihkan data sebelum disimpan
+      const draftDocRef = doc(db, "draftRequests", `${user.uid}_${selectedProfileIndex}`);
+      await setDoc(draftDocRef, cleanedData);
+      console.log("Data form sementara disimpan ke Firebase:", cleanedData);
+    } catch (error) {
+      console.error("Gagal menyimpan data sementara ke Firebase:", error);
+    }
+  };
+
+  const loadDraftData = async () => {
+    if (!user || selectedProfileIndex === null) return;
+  
+    try {
+      const draftDocRef = doc(db, "draftRequests", `${user.uid}_${selectedProfileIndex}`);
+      const draftDoc = await getDoc(draftDocRef);
+  
+      if (draftDoc.exists()) {
+        const draftData = draftDoc.data();
+        setFormData(draftData as FormData);
+        form.setFieldsValue(draftData); // Set nilai form dari draft yang tersimpan
+      } else {
+        setFormData({} as FormData); // Kosongkan form jika tidak ada draft
+        form.resetFields();
+      }
+    } catch (error) {
+      console.error("Error loading draft data:", error);
+    }
+  };
+  
+  useEffect(() => {
+    if (requesterId) {
+      loadDraftData();
+    }
+  }, [user, selectedProfileIndex, form]);
+
+  const handleFormChange = (changedValues: FormData, allValues: FormData) => {
+    setFormData(allValues);
   };
 
   const handleAddressChange = (value: string, index: number) => {
@@ -93,7 +173,8 @@ const RequestForm = () => {
 
   const onFinish = async (values: any) => {
     setLoading(true);
-
+    setIsSubmitting(true);
+    console.log("Data yang akan dikirim ke Firestore:", values);
     console.log("User Profile Data:", userProfile);
 
     if (!userProfile || !userProfile.email || !userProfile.entity || !userProfile.role) {
@@ -169,22 +250,36 @@ const RequestForm = () => {
           releaser: { approved: false, rejected: false, approvedBy: null, approvedAt: null, feedback: null },
         }, // Menyimpan waktu request dibuat
       });
-      message.success('Request submitted successfully');
+      await setDoc(doc(db, "draftRequests", `${requesterId}_${selectedProfileIndex}`), {});
+      // Kosongkan data form di UI
+      setFormData({} as FormData);
       form.resetFields();
-      sessionStorage.removeItem("requestFormData");
+      message.success('Request submitted successfully');
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000)
     } catch (error) {
       console.error("Error submitting request:", error);
       alert("Failed to submit request.");
     } finally {
       setLoading(false);
+      setIsSubmitting(false);
     }
   };
+  
 
   return (
     <>
 
     {/* Form */}
-    <Form layout="vertical" onFinish={onFinish} initialValues={{ remember: true }} form={form}>
+    <Form 
+    layout="vertical"
+    onFinish={onFinish} 
+    initialValues={formData} 
+    form={form}
+    onValuesChange={handleFormChange}
+    >
+    <Autosave data={formData} onSave={saveDraftToFirebase} />
       {formList.map((_, index) => (
         <div key={index} style={{ marginBottom: 36 }}>
           <Row justify="space-between" align="middle">
