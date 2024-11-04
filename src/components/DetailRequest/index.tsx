@@ -32,7 +32,7 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
     const { userProfile } = useUserContext();
     const [dataSource, setDataSource] = useState<DataType[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
-    const [pageSize, setPageSize] = useState(10);
+    const [pageSize, setPageSize] = useState(20);
     const [requestNumber, setRequestNumber] = useState<string | null>(null);
     const [isEditMode, setIsEditMode] = useState(false);
     const router = useRouter();
