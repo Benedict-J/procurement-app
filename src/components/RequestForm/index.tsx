@@ -1,14 +1,17 @@
 import { db } from "@/firebase/firebase";
-import { Form, Input, Button, Select, Row, DatePicker, Col, Popconfirm, message} from "antd";
+import { Form, Input, Button, Select, Row, DatePicker, Col, Popconfirm, message, ConfigProvider} from "antd";
 import dayjs, { Dayjs } from "dayjs";
+import "dayjs/locale/id"
+dayjs.locale("id")
+
+import idID from 'antd/locale/id_ID';
+
 import { addDoc, collection, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import React, { useState, useEffect, useCallback } from "react";
 import { useUserContext } from "@/contexts/UserContext";
 import { Autosave, useAutosave } from 'react-autosave';
 
 const { Option } = Select;
-
-const STORAGE_KEY = "requestFormData";
 
 const convertMonthToRoman = (month: number) => {
   const romanNumerals = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
@@ -55,31 +58,6 @@ const RequestForm = () => {
   const [formData, setFormData] = useState<FormData>({} as FormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    // Muat data sementara dari Firebase saat pertama kali membuka form
-    const loadDraftData = async () => {
-      if (!requesterId || !user || selectedProfileIndex === null) return;
-    
-      try {
-        const draftDocRef = doc(db, "draftRequests", `${requesterId}_${selectedProfileIndex}`);
-        const draftDoc = await getDoc(draftDocRef);
-    
-        if (draftDoc.exists()) {
-          const draftData = draftDoc.data();
-          setFormData(draftData as FormData);
-          form.setFieldsValue(draftData); // Set nilai form dari draft yang tersimpan
-        } else {
-          setFormData({} as FormData); // Kosongkan form jika tidak ada draft
-          form.resetFields();
-        }
-      } catch (error) {
-        console.error("Error loading draft data:", error);
-      }
-    };
-
-    loadDraftData();
-  }, [form, requesterId]);
-
   const cleanData = (data: any) => {
     return Object.fromEntries(
       Object.entries(data).map(([key, value]) => {
@@ -125,11 +103,11 @@ const RequestForm = () => {
     }
   };
   
-  useEffect(() => {
-    if (requesterId) {
-      loadDraftData();
-    }
-  }, [user, selectedProfileIndex, form]);
+  // useEffect(() => {
+  //   if (requesterId) {
+  //     loadDraftData();
+  //   }
+  // }, [user, selectedProfileIndex, form]);
 
   const handleFormChange = (changedValues: FormData, allValues: FormData) => {
     setFormData(allValues);
@@ -189,7 +167,9 @@ const RequestForm = () => {
     }
 
     const items = formList.map((item, index) => ({
-      deliveryDate: values[`deliveryDate${index + 1}`]?.format('YYYY-MM-DD') || null,
+      deliveryDate: values[`deliveryDate${index + 1}`]
+    ? dayjs(values[`deliveryDate${index + 1}`]).format("YYYY-MM-DD")
+    : null,
       deliveryAddress: values[`deliveryAddress${index + 1}`] || "",
       receiver: values[`receiver${index + 1}`] || "",
       customDeliveryAddress: values[`customDeliveryAddress${index + 1}`] || null ,
@@ -389,13 +369,17 @@ const RequestForm = () => {
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
+                // initialValue={dayjs().valueOf()}
                 label="Estimated Delivery Date"
                 name={`deliveryDate${index + 1}`}
                 extra="You must choose above 7 days"
                 rules={[{ required: true, message: "Please select the delivery date!" }]}
+                getValueProps={(value) => ({ value: value && dayjs(Number(value)) })}
+                normalize={(value) => value && `${dayjs(value).valueOf()}`}
               >
-                <DatePicker style={{ width: "100%" }} placeholder="Select Date" disabledDate={disabledDate} />
+                <DatePicker style={{ width: "100%" }} placeholder="Select Date" disabledDate={disabledDate}/>
               </Form.Item>
+                
               <Form.Item
                 label="Receiver"
                 name={`receiver${index + 1}`}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import moment from "moment";
+import dayjs from "dayjs";
 
 const DateTime = () => {
   const [dateTime, setDateTime] = useState(new Date());
@@ -12,7 +12,7 @@ const DateTime = () => {
     return () => clearInterval(intervalId);
   }, []);
 
-  return <span>{moment(dateTime).format("MMM, Do YYYY, h:mm:ss a")}</span>;
+  return <span>{dayjs(dateTime).format("MMM, D YYYY, h:mm:ss a")}</span>;
 };
 
 export default DateTime;

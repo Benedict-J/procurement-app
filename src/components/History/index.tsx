@@ -5,6 +5,8 @@ import { db } from "@/firebase/firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { useUserContext } from "@/contexts/UserContext"; 
 import dayjs from "dayjs";
+import "dayjs/locale/id"; // Pastikan locale yang tepat diimpor
+dayjs.locale("id"); // Setel locale
 import { SortOrder } from "antd/es/table/interface";
 import { useRouter } from "next/router"; 
 
