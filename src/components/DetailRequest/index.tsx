@@ -387,9 +387,14 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
                 <Card
                     title={`Feedback from: ${name} | ${feedbackData.role}`}
                     className={styles.feedbackCard}
-                    headStyle={{ textAlign: 'center', backgroundColor: '#FAFAFA' }}
+                    headStyle={{
+                        textAlign: 'center',
+                        backgroundColor: '#FAFAFA',
+                        fontSize: '14px',
+                        fontWeight: 600,
+                    }}
                 >
-                    <p>{feedbackData.feedback}</p>
+                    <p style={{ fontSize: '14px', color: '#333' }}>{feedbackData.feedback}</p>
                 </Card>
             )}
 
