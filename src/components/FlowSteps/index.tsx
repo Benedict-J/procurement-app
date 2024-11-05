@@ -3,8 +3,10 @@ import { Steps } from "antd";
 import { LoadingOutlined, SmileOutlined, SolutionOutlined, UserOutlined } from '@ant-design/icons';
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { useRouter } from "next/router"
+import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import { useUserContext } from "@/contexts/UserContext";
+import styles from "./index.module.scss";
 
 type StepStatus = "wait" | "process" | "finish" | "error";
 
@@ -36,6 +38,14 @@ const FlowSteps: React.FC<FlowStepsProps> = ({ requestNumber }) => {
         purchaseOrderRelease: ""
     });
 
+    const [subtitles, setSubtitles] = useState({
+        purchaseRequest: "",
+        pendingApproval: "",
+        approvalFinance: "",
+        processProcurement: "",
+        purchaseOrderRelease: ""
+    });
+
     useEffect(() => {
         console.log("useEffect dijalankan, requestNumber:", requestNumber);
         const fetchStatus = async () => {
@@ -53,6 +63,9 @@ const FlowSteps: React.FC<FlowStepsProps> = ({ requestNumber }) => {
                 if (!querySnapshot.empty) {
                     const docSnap = querySnapshot.docs[0];
                     const data = docSnap.data();
+
+                    const formatDate = (dateTime: string) => dayjs(dateTime).format("YYYY-MM-DD");
+
                     console.log("Data fetched from Firestore:", data);
 
                     setStepStatus({
@@ -81,35 +94,33 @@ const FlowSteps: React.FC<FlowStepsProps> = ({ requestNumber }) => {
 
                     setDescriptions({
                         purchaseRequest: data.status === 'In Progress'
-                            ? "Request Form Submitted"
+                            ? `Request Form Submitted${data.createdAt ? ` <br /> <span style="font-size:12px; color:#333333; display:block;">${formatDate(data.createdAt)}</span>` : ''}`
                             : "Waiting for request submission",
                             
                         pendingApproval: data.approvalStatus?.checker?.approved
-                            ? "Head has agreed to your request"
+                            ? `Head has agreed to your request${data.approvalStatus?.checker?.approvedAt ? `<br /> <span style="font-size:12px; color:#333333; display:block;">${formatDate(data.approvalStatus.checker.approvedAt)}</span>` : ''}`
                             : data.approvalStatus?.checker?.rejected
-                                ? "Head rejects your request"
-                                : data.status === 'In Progress'
-                                    ? "Waiting for Head Actions"
-                                    : "",
-                    
+                                ? `Head rejects your request${data.approvalStatus?.checker?.rejectedAt ? ` <br /> <span style="font-size:12px; color:#333333; display:block;">${formatDate(data.approvalStatus.checker.rejectedAt)}</span>` : ''}`
+                                : "Waiting for Head Actions",
+                        
                         approvalFinance: data.approvalStatus?.checker?.approved
                             ? data.approvalStatus?.approval?.approved
-                                ? "Finance has agreed to your request"
+                                ? `Finance has agreed to your request${data.approvalStatus?.approval?.approvedAt ? ` <br /> <span style="font-size:12px; color:#333333; display:block;">${formatDate(data.approvalStatus.approval.approvedAt)}</span>` : ''}`
                                 : data.approvalStatus?.approval?.rejected
-                                    ? "Finance rejects your request"
+                                    ? `Finance rejects your request${data.approvalStatus?.approval?.rejectedAt ? ` <br /> <span style="font-size:12px; color:#333333; display:block;">${formatDate(data.approvalStatus.approval.rejectedAt)}</span>` : ''}`
                                     : "Waiting for Finance Actions"
                             : "",
-                    
+                        
                         processProcurement: data.approvalStatus?.approval?.approved
                             ? data.approvalStatus?.releaser?.approved
-                                ? "Procurement has agreed to your request"
+                                ? `Procurement has agreed to your request${data.approvalStatus?.releaser?.approvedAt ? `<span style="font-size:12px; color:#333333; display:block;">${formatDate(data.approvalStatus.releaser.approvedAt)}</span>` : ''}`
                                 : data.approvalStatus?.releaser?.rejected
-                                    ? "Procurement rejects your request"
+                                    ? `Procurement rejects your request${data.approvalStatus?.releaser?.rejectedAt ? ` <br /> <span style="font-size:12px; color:#333333; display:block;">${formatDate(data.approvalStatus.releaser.rejectedAt)}</span>` : ''}`
                                     : "Waiting for Procurement Actions"
                             : "",
-                    
+                        
                         purchaseOrderRelease: data.approvalStatus?.releaser?.approved
-                            ? "Your request has been successfully approved, please wait for your item to arrive."
+                            ? `Your request has been successfully approved, please wait for your item to arrive.${data.approvalStatus?.releaser?.approvedAt ? ` <br /> <span style="font-size:12px; color:#333333; display:block;">${formatDate(data.approvalStatus.releaser.approvedAt)}</span>` : ''}`
                             : ""
                     });
                 }
@@ -126,32 +137,35 @@ const FlowSteps: React.FC<FlowStepsProps> = ({ requestNumber }) => {
             <Steps.Step 
                 title="Purchase Request" 
                 status={stepStatus.purchaseRequest} 
-                description={descriptions.purchaseRequest}
+                description={<span dangerouslySetInnerHTML={{ __html: descriptions.purchaseRequest }} />}
                 icon={stepStatus.purchaseRequest === "process" ? <LoadingOutlined /> : null}  
+                
             />
             <Steps.Step 
                 title="Pending Approval" 
                 status={stepStatus.pendingApproval} 
-                description={descriptions.pendingApproval}
+                description={<span dangerouslySetInnerHTML={{ __html: descriptions.pendingApproval }} />}
                 icon={stepStatus.pendingApproval === "process" ? <LoadingOutlined /> : null}
             />
             <Steps.Step 
                 title="Approval Finance" 
                 status={stepStatus.approvalFinance} 
-                description={descriptions.approvalFinance} 
+                description={<span dangerouslySetInnerHTML={{ __html: descriptions.approvalFinance }} />}
                 icon={stepStatus.approvalFinance === "process" ? <LoadingOutlined /> : null}
             />
             <Steps.Step 
                 title="Process Procurement" 
                 status={stepStatus.processProcurement} 
-                description={descriptions.processProcurement}
+                description={<span dangerouslySetInnerHTML={{ __html: descriptions.processProcurement }} />}
                 icon={stepStatus.processProcurement === "process" ? <LoadingOutlined /> : null} 
+        
             />
             <Steps.Step 
                 title="Purchase Order Release" 
                 status={stepStatus.purchaseOrderRelease} 
-                description={descriptions.purchaseOrderRelease}
+                description={<span dangerouslySetInnerHTML={{ __html: descriptions.purchaseOrderRelease }} />}
                 icon={stepStatus.purchaseOrderRelease === "process" ? <LoadingOutlined /> : null}
+                
             />
         </Steps>
     );
