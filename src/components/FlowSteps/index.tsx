@@ -69,7 +69,7 @@ const FlowSteps: React.FC<FlowStepsProps> = ({ requestNumber }) => {
                     console.log("Data fetched from Firestore:", data);
 
                     setStepStatus({
-                        purchaseRequest: data.status === 'In Progress' ? 'finish' : 'wait',
+                        purchaseRequest: data.status == 'In Progress' ? 'finish' : 'finish',
                         pendingApproval: data.approvalStatus?.checker?.approved
                             ? 'finish'
                             : data.approvalStatus?.checker?.rejected
@@ -94,33 +94,33 @@ const FlowSteps: React.FC<FlowStepsProps> = ({ requestNumber }) => {
 
                     setDescriptions({
                         purchaseRequest: data.status === 'In Progress'
-                            ? `Request Form Submitted${data.createdAt ? ` <br /> <span style="font-size:12px; color:#333333; display:block;">${formatDate(data.createdAt)}</span>` : ''}`
+                            ? `Request Form Submitted${data.createdAt ? ` <br /> <span style="font-size:12px; color:#616161; display:block;">${formatDate(data.createdAt)}</span>` : ''}`
                             : "Waiting for request submission",
                             
                         pendingApproval: data.approvalStatus?.checker?.approved
-                            ? `Head has agreed to your request${data.approvalStatus?.checker?.approvedAt ? `<br /> <span style="font-size:12px; color:#333333; display:block;">${formatDate(data.approvalStatus.checker.approvedAt)}</span>` : ''}`
+                            ? `Head has agreed to your request${data.approvalStatus?.checker?.approvedAt ? `<br /> <span style="font-size:12px; color:#616161; display:block;">${formatDate(data.approvalStatus.checker.approvedAt)}</span>` : ''}`
                             : data.approvalStatus?.checker?.rejected
-                                ? `Head rejects your request${data.approvalStatus?.checker?.rejectedAt ? ` <br /> <span style="font-size:12px; color:#333333; display:block;">${formatDate(data.approvalStatus.checker.rejectedAt)}</span>` : ''}`
+                                ? `Head rejects your request${data.approvalStatus?.checker?.rejectedAt ? ` <br /> <span style="font-size:12px; color:#616161; display:block;">${formatDate(data.approvalStatus.checker.rejectedAt)}</span>` : ''}`
                                 : "Waiting for Head Actions",
                         
                         approvalFinance: data.approvalStatus?.checker?.approved
                             ? data.approvalStatus?.approval?.approved
-                                ? `Finance has agreed to your request${data.approvalStatus?.approval?.approvedAt ? ` <br /> <span style="font-size:12px; color:#333333; display:block;">${formatDate(data.approvalStatus.approval.approvedAt)}</span>` : ''}`
+                                ? `Finance has agreed to your request${data.approvalStatus?.approval?.approvedAt ? ` <br /> <span style="font-size:12px; color:#616161; display:block;">${formatDate(data.approvalStatus.approval.approvedAt)}</span>` : ''}`
                                 : data.approvalStatus?.approval?.rejected
-                                    ? `Finance rejects your request${data.approvalStatus?.approval?.rejectedAt ? ` <br /> <span style="font-size:12px; color:#333333; display:block;">${formatDate(data.approvalStatus.approval.rejectedAt)}</span>` : ''}`
+                                    ? `Finance rejects your request${data.approvalStatus?.approval?.rejectedAt ? ` <br /> <span style="font-size:12px; color:#616161; display:block;">${formatDate(data.approvalStatus.approval.rejectedAt)}</span>` : ''}`
                                     : "Waiting for Finance Actions"
                             : "",
                         
                         processProcurement: data.approvalStatus?.approval?.approved
                             ? data.approvalStatus?.releaser?.approved
-                                ? `Procurement has agreed to your request${data.approvalStatus?.releaser?.approvedAt ? `<span style="font-size:12px; color:#333333; display:block;">${formatDate(data.approvalStatus.releaser.approvedAt)}</span>` : ''}`
+                                ? `Procurement has agreed to your request${data.approvalStatus?.releaser?.approvedAt ? `<span style="font-size:12px; color:#616161; display:block;">${formatDate(data.approvalStatus.releaser.approvedAt)}</span>` : ''}`
                                 : data.approvalStatus?.releaser?.rejected
-                                    ? `Procurement rejects your request${data.approvalStatus?.releaser?.rejectedAt ? ` <br /> <span style="font-size:12px; color:#333333; display:block;">${formatDate(data.approvalStatus.releaser.rejectedAt)}</span>` : ''}`
+                                    ? `Procurement rejects your request${data.approvalStatus?.releaser?.rejectedAt ? ` <br /> <span style="font-size:12px; color:#616161; display:block;">${formatDate(data.approvalStatus.releaser.rejectedAt)}</span>` : ''}`
                                     : "Waiting for Procurement Actions"
                             : "",
                         
                         purchaseOrderRelease: data.approvalStatus?.releaser?.approved
-                            ? `Your request has been successfully approved, please wait for your item to arrive.${data.approvalStatus?.releaser?.approvedAt ? ` <br /> <span style="font-size:12px; color:#333333; display:block;">${formatDate(data.approvalStatus.releaser.approvedAt)}</span>` : ''}`
+                            ? `Your request has been successfully approved, please wait for your item to arrive.${data.approvalStatus?.releaser?.approvedAt ? ` <br /> <span style="font-size:12px; color:#616161; display:block;">${formatDate(data.approvalStatus.releaser.approvedAt)}</span>` : ''}`
                             : ""
                     });
                 }
