@@ -82,6 +82,7 @@ const RequestForm = () => {
       console.error("Gagal menyimpan data sementara ke Firebase:", error);
     }
   };
+  
 
   const loadDraftData = async () => {
     if (!user || selectedProfileIndex === null) return;
@@ -102,6 +103,12 @@ const RequestForm = () => {
       console.error("Error loading draft data:", error);
     }
   };
+
+    useEffect(() => {
+    if (requesterId) {
+      loadDraftData();
+    }
+  }, [user, selectedProfileIndex, form]);
   
 
   const handleFormChange = (changedValues: FormData, allValues: FormData) => {

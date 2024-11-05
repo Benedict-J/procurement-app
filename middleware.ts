@@ -1,5 +1,4 @@
 import { auth } from '@/firebase/firebase';
-import { getAuth } from 'firebase/auth';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { verifyIdToken } from '@/firebase/firebaseAdmin';
