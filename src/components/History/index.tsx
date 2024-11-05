@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Table, Button, Select, message, Spin } from "antd";
+import { Table, Button, Select, message, Spin, Pagination } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { db } from "@/firebase/firebase"; 
 import { collection, getDocs, query, where } from "firebase/firestore";
@@ -18,6 +18,8 @@ const HistoryTable = () => {
     const [loading, setLoading] = useState(true);
     const [sortOrder, setSortOrder] = useState<SortOrder>("ascend");
     const [statusFilter, setStatusFilter] = useState<DataType[]>([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(20);
     const router = useRouter(); 
 
     useEffect(() => {
@@ -114,7 +116,7 @@ const HistoryTable = () => {
             title: "No.", 
             key: "no", 
             align: "center" as const,
-            render: (_: any, __: any, index: number) => index + 1
+            render: (_: any, __: any, index: number) => index + 1 + (currentPage - 1) * pageSize // Menyesuaikan nomor berdasarkan halaman
         },
         { 
             title: "No. Request", 
@@ -142,7 +144,7 @@ const HistoryTable = () => {
             dataIndex: "requestDate",
             key: "requestDate",
             align: "center",
-            sorter: (a, b) => dayjs(a.requestDate).unix() - dayjs(b.requestDate).unix(), // Pengurutan berdasarkan tanggal
+            sorter: (a, b) => dayjs(a.requestDate).unix() - dayjs(b.requestDate).unix(),
         },        
         {
             title: "Status",
@@ -169,7 +171,7 @@ const HistoryTable = () => {
             title: "No.", 
             key: "no", 
             align: "center" as const,
-            render: (_: any, __: any, index: number) => index + 1
+            render: (_: any, __: any, index: number) => index + 1 + (currentPage - 1) * pageSize
         },
         { 
             title: "No. Request", 
@@ -224,8 +226,17 @@ const HistoryTable = () => {
         router.push(`/requester/flow-steps?requestNumber=${requestNumber}`);
     };
 
+    const handleTableChange = (page: number, size?: number) => {
+        setCurrentPage(page);
+        if (size) {
+            setPageSize(size);
+        }
+    };
+
+    const currentData = dataSource.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
     if (loading) {
-        return <Spin/>;
+        return <Spin />;
     }
     
     if (!userProfile) {
@@ -234,29 +245,26 @@ const HistoryTable = () => {
 
     return (
         <div>
-            {userProfile.role === "Requester" ? (
-                <Table
-                    columns={requesterColumns}
-                    dataSource={dataSource}
-                    loading={loading}
-                    pagination={{ pageSize: 10 }}
-                    bordered
-                    scroll={{ x: 200 }}
-                    style={{ backgroundColor: "#fff" }}
-                    rowKey="key"
-                />
-            ) : (
-                <Table
-                    columns={actionColumns}
-                    dataSource={dataSource}
-                    loading={loading}
-                    pagination={{ pageSize: 10 }}
-                    bordered
-                    scroll={{ x: 200 }}
-                    style={{ backgroundColor: "#fff" }}
-                    rowKey="key"
-                />
-            )}
+            <Table
+                columns={userProfile.role === "Requester" ? requesterColumns : actionColumns}
+                dataSource={currentData}
+                loading={loading}
+                pagination={false}
+                bordered
+                scroll={{ x: 200 }}
+                style={{ backgroundColor: "#fff" }}
+                rowKey="key"
+            />
+
+            <Pagination
+                current={currentPage}
+                pageSize={pageSize}
+                total={dataSource.length}
+                onChange={handleTableChange}
+                showSizeChanger={true}
+                pageSizeOptions={['10', '20', '50', '100']}
+                style={{ marginTop: "16px", textAlign: "right" }}
+            />
         </div>
     );
 };
