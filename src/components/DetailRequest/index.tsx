@@ -301,7 +301,6 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
             align: "center",
             render: (_, record, index) => isEditMode ? (
                 <Input
-                    type="number"
                     value={record.budgetMax}
                     onChange={(e) => handleInputChange(index, 'budgetMax', e.target.value)}
                 />
