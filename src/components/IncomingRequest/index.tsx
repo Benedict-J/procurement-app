@@ -232,7 +232,7 @@ const IncomingRequest = () => {
             await updateDoc(requestDocRef, {
                 [`approvalStatus.${role}.rejected`]: true,
                 [`approvalStatus.${role}.rejectedBy`]: userProfile.userId,
-                [`approvalStatus.${role}.rejectedAt`]: new Date().toISOString(),
+                [`approvalStatus.${role}.rejectedAt`]: dayjs().format("YYYY-MM-DD HH:mm:ss"),
                 [`approvalStatus.${role}.feedback`]: rejectFeedback,
                 status: "Rejected",
             });
