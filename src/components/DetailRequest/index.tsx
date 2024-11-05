@@ -45,70 +45,73 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
     const [docId, setDocId] = useState<string | null>(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isApproved, setIsApproved] = useState<boolean>(false);
+    const fetchRequest = async () => {
+        if (!userProfile || !requestNo) return;
+
+        const requestQuery = query(
+            collection(db, "requests"),
+            where("requestNumber", "==", requestNo)
+        );
+
+        try {
+            const querySnapshot = await getDocs(requestQuery);
+            if (!querySnapshot.empty) {
+                const firstDoc = querySnapshot.docs[0];
+                const data = firstDoc.data();
+                setDocId(firstDoc.id);
+                setRequestNumber(data.requestNumber || "N/A");
+
+                setEntity(data.requesterEntity || "N/A");
+                setDivision(data.requesterDivision || "N/A");
+                setStatus(data.status || "Pending");
+                setName(data.requesterName || "N/A");
+
+                const isAnyApproved = data.approvalStatus?.checker?.approved ||
+                    data.approvalStatus?.approval?.approved ||
+                    data.approvalStatus?.releaser?.approved;
+                setIsApproved(isAnyApproved);
+
+                if (data.status === "Rejected") {
+                    if (data.approvalStatus?.checker?.feedback) {
+                        setFeedbackData({ role: "Checker", feedback: data.approvalStatus.checker.feedback });
+                    } else if (data.approvalStatus?.approval?.feedback) {
+                        setFeedbackData({ role: "Approval", feedback: data.approvalStatus.approval.feedback });
+                    } else if (data.approvalStatus?.releaser?.feedback) {
+                        setFeedbackData({ role: "Releaser", feedback: data.approvalStatus.releaser.feedback });
+                    }
+                }
+
+                const createdAt = new Date(data.createdAt);
+                const requestDateFormatted = `${createdAt.getFullYear()}-${String(createdAt.getMonth() + 1).padStart(2, '0')}-${String(createdAt.getDate()).padStart(2, '0')}`;
+
+                const requestData = (data.items || []).map((item: any, index: number) => ({
+                    key: `${firstDoc.id}-${index}`,
+                    requestNumber: data.requestNumber || "N/A",
+                    itemNumber: index + 1,
+                    estimateDeliveryDate: item.deliveryDate || "N/A",
+                    deliveryAddress: item.deliveryAddress === "other" ? item.customDeliveryAddress || "N/A" : item.deliveryAddress || "N/A",
+                    receiver: item.receiver || "N/A",
+                    merk: item.merk || "N/A",
+                    detailSpecs: item.detailSpecs || "N/A",
+                    color: item.color || "N/A",
+                    qty: item.qty || 0,
+                    uom: item.uom || "N/A",
+                    linkRef: item.linkRef || "N/A",
+                    budgetMax: item.budgetMax || "N/A",
+                    feedback: feedbackData ? feedbackData.feedback : "No feedback",
+                    requestDate: requestDateFormatted,
+                }));
+
+                setDataSource(requestData);
+            } else {
+                console.log("No data found for requestNo:", requestNo);
+            }
+        } catch (error) {
+            console.error("Error fetching request data:", error);
+        }
+    };
 
     useEffect(() => {
-        const fetchRequest = async () => {
-            if (!userProfile || !requestNo) return;
-
-            const requestQuery = query(
-                collection(db, "requests"),
-                where("requestNumber", "==", requestNo)
-            );
-
-            try {
-                const querySnapshot = await getDocs(requestQuery);
-                if (!querySnapshot.empty) {
-                    const firstDoc = querySnapshot.docs[0];
-                    const data = firstDoc.data();
-                    setDocId(firstDoc.id);
-                    setRequestNumber(data.requestNumber || "N/A");
-
-                    setEntity(data.requesterEntity || "N/A");
-                    setDivision(data.requesterDivision || "N/A");
-                    setStatus(data.status || "Pending");
-                    setName(data.requesterName || "N/A");
-
-                    const isAnyApproved = data.approvalStatus?.checker?.approved ||
-                        data.approvalStatus?.approval?.approved ||
-                        data.approvalStatus?.releaser?.approved;
-                    setIsApproved(isAnyApproved);
-
-                    if (data.status === "Rejected") {
-                        if (data.approvalStatus?.checker?.feedback) {
-                            setFeedbackData({ role: "Checker", feedback: data.approvalStatus.checker.feedback });
-                        } else if (data.approvalStatus?.approval?.feedback) {
-                            setFeedbackData({ role: "Approval", feedback: data.approvalStatus.approval.feedback });
-                        } else if (data.approvalStatus?.releaser?.feedback) {
-                            setFeedbackData({ role: "Releaser", feedback: data.approvalStatus.releaser.feedback });
-                        }
-                    }
-
-                    const requestData = (data.items || []).map((item: any, index: number) => ({
-                        key: `${firstDoc.id}-${index}`,
-                        requestNumber: data.requestNumber || "N/A",
-                        itemNumber: index + 1,
-                        estimateDeliveryDate: item.deliveryDate || "N/A",
-                        deliveryAddress: item.deliveryAddress === "other" ? item.customDeliveryAddress || "N/A" : item.deliveryAddress || "N/A",
-                        receiver: item.receiver || "N/A",
-                        merk: item.merk || "N/A",
-                        detailSpecs: item.detailSpecs || "N/A",
-                        color: item.color || "N/A",
-                        qty: item.qty || 0,
-                        uom: item.uom || "N/A",
-                        linkRef: item.linkRef || "N/A",
-                        budgetMax: item.budgetMax || "N/A",
-                        feedback: feedbackData ? feedbackData.feedback : "No feedback",
-                    }));
-
-                    setDataSource(requestData);
-                } else {
-                    console.log("No data found for requestNo:", requestNo);
-                }
-            } catch (error) {
-                console.error("Error fetching request data:", error);
-            }
-        };
-
         fetchRequest();
     }, [userProfile, requestNo]);
 
@@ -145,9 +148,12 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
                 budgetMax: item.budgetMax,
             }));
 
-            // Reset approval status and set the status back to "In Progress"
+            const currentDate = new Date();
+            const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')} ${String(currentDate.getHours()).padStart(2, '0')}:${String(currentDate.getMinutes()).padStart(2, '0')}:${String(currentDate.getSeconds()).padStart(2, '0')}`;
+
             await updateDoc(requestDocRef, {
                 items: updatedItems,
+                createdAt: formattedDate,
                 status: "In Progress",
                 approvalStatus: {
                     checker: { approved: false, rejected: false, feedback: null },
@@ -156,9 +162,10 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
                 }
             });
 
-            message.success("Request updated and sent back for checker.");
+            message.success("Request updated and sent back for Checker.");
             setIsEditMode(false);
             setStatus("In Progress");
+            await fetchRequest();
         } catch (error) {
             console.error("Error updating request:", error);
             message.error("Failed to update request.");
@@ -170,6 +177,12 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
             title: "Nomor Item",
             dataIndex: "itemNumber",
             key: "itemNumber",
+            align: "center"
+        },
+        {
+            title: "Request Date",
+            dataIndex: "requestDate",
+            key: "requestDate",
             align: "center"
         },
         {
