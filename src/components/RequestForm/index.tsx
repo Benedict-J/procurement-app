@@ -103,11 +103,6 @@ const RequestForm = () => {
     }
   };
   
-  // useEffect(() => {
-  //   if (requesterId) {
-  //     loadDraftData();
-  //   }
-  // }, [user, selectedProfileIndex, form]);
 
   const handleFormChange = (changedValues: FormData, allValues: FormData) => {
     setFormData(allValues);
@@ -270,7 +265,7 @@ const RequestForm = () => {
                 <Col>
                   <Popconfirm
                     title="Are you sure you want to delete this item?"
-                    onConfirm={() => deleteForm(index)}  // Aksi ketika pengguna mengkonfirmasi
+                    onConfirm={() => deleteForm(index)} 
                     okText="Yes"
                     cancelText="No"
                   >
@@ -374,8 +369,8 @@ const RequestForm = () => {
                 name={`deliveryDate${index + 1}`}
                 extra="You must choose above 7 days"
                 rules={[{ required: true, message: "Please select the delivery date!" }]}
-                getValueProps={(value) => ({ value: value && dayjs(Number(value)) })}
-                normalize={(value) => value && `${dayjs(value).valueOf()}`}
+                getValueProps={(value) => ({ value: value ? dayjs(value) : null })}
+                normalize={(value) => value ? dayjs(value).toISOString() : null}
               >
                 <DatePicker style={{ width: "100%" }} placeholder="Select Date" disabledDate={disabledDate}/>
               </Form.Item>
