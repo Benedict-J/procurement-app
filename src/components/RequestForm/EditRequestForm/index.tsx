@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { Form, Input, Button, Select, Row, DatePicker, Col, message, Collapse } from "antd";
+import { Form, Input, Button, Select, Row, DatePicker, Col, message, Collapse, Popconfirm } from "antd";
 import dayjs, { Dayjs } from "dayjs";
 import { db } from "@/firebase/firebase";
 import { collection, getDocs, query, where, updateDoc, doc } from "firebase/firestore";
@@ -21,6 +21,7 @@ const EditRequestForm: React.FC<EditRequestFormProps> = ({ requestNo }) => {
     const [isOtherSelected, setIsOtherSelected] = useState<{ [key: number]: boolean }>({});
     const [customAddress, setCustomAddress] = useState<{ [key: number]: string }>({});
     const [docId, setDocId] = useState<string | null>(null);
+    const [formList, setFormList] = useState<number[]>([0]);
 
     const fetchRequestData = async () => {
         if (!requestNo) return;
@@ -58,6 +59,7 @@ const EditRequestForm: React.FC<EditRequestFormProps> = ({ requestNo }) => {
                     return acc;
                 }, {});
                 setIsOtherSelected(updatedIsOtherSelected);
+                setFormList(Array.from({ length: itemsWithFormattedDates.length }, (_, i) => i));
             } else {
                 message.error("No data found for the given request number.");
             }
@@ -71,7 +73,7 @@ const EditRequestForm: React.FC<EditRequestFormProps> = ({ requestNo }) => {
         fetchRequestData();
     }, [requestNo, form]);
 
-    const handleSave = async (values: any) => {
+    const handleSave = async () => {
         setLoading(true);
         try {
             if (!docId) {
@@ -79,7 +81,8 @@ const EditRequestForm: React.FC<EditRequestFormProps> = ({ requestNo }) => {
                 return;
             }
 
-            const formattedItems = values.items.map((item: any) => ({
+            // Ambil nilai items dari form
+            const formattedItems = form.getFieldValue('items').map((item: any) => ({
                 ...item,
                 deliveryDate: item.deliveryDate ? item.deliveryDate.format("YYYY-MM-DD") : null,
             }));
@@ -119,9 +122,17 @@ const EditRequestForm: React.FC<EditRequestFormProps> = ({ requestNo }) => {
         setCustomAddress((prev) => ({ ...prev, [index]: value }));
     };
 
-    // Function to disable dates less than 7 days from today
     const disabledDate = (current: Dayjs) => {
         return current && (current < dayjs().endOf('day') || current < dayjs().add(7, 'days'));
+    };
+
+    const addNewItem = () => {
+        setFormList([...formList, formList.length]);
+    };
+
+    const deleteItem = (index: number) => {
+        const newList = formList.filter((_, i) => i !== index);
+        setFormList(newList);
     };
 
     return (
@@ -130,14 +141,16 @@ const EditRequestForm: React.FC<EditRequestFormProps> = ({ requestNo }) => {
             layout="vertical"
             onFinish={handleSave}
         >
-            <Collapse defaultActiveKey={[]}>
-                {initialData?.items?.map((item: any, index: number) => (
+            <Button type="dashed" onClick={addNewItem} style={{ marginBottom: 16 }}>
+                Add New Item
+            </Button>
+            <Collapse defaultActiveKey={formList.map((_, index) => index.toString())}>
+                {formList.map((_, index) => (
                     <Panel header={`Item ${index + 1}`} key={index}>
                         <Form.Item
                             label="Brand"
                             name={['items', index, 'merk']}
                             rules={[{ required: true, message: "Please enter the brand" }]}
-                            initialValue={item.merk}
                         >
                             <Input placeholder="Brand" />
                         </Form.Item>
@@ -146,7 +159,6 @@ const EditRequestForm: React.FC<EditRequestFormProps> = ({ requestNo }) => {
                             label="Detail Specs"
                             name={['items', index, 'detailSpecs']}
                             rules={[{ required: true, message: "Please enter detailed specs!" }]}
-                            initialValue={item.detailSpecs}
                         >
                             <Input.TextArea placeholder="Enter detailed specs for the asset request" />
                         </Form.Item>
@@ -155,7 +167,6 @@ const EditRequestForm: React.FC<EditRequestFormProps> = ({ requestNo }) => {
                             label="Color"
                             name={['items', index, 'color']}
                             rules={[{ required: true, message: "Please enter the color" }]}
-                            initialValue={item.color}
                         >
                             <Input placeholder="Color" />
                         </Form.Item>
@@ -171,7 +182,6 @@ const EditRequestForm: React.FC<EditRequestFormProps> = ({ requestNo }) => {
                                         : Promise.reject("Only whole numbers are allowed"),
                             },
                             ]}
-                            initialValue={item.qty}
                         >
                             <Input placeholder="Quantity" />
                         </Form.Item>
@@ -180,7 +190,6 @@ const EditRequestForm: React.FC<EditRequestFormProps> = ({ requestNo }) => {
                             label="Unit of Measurement"
                             name={['items', index, 'uom']}
                             rules={[{ required: true, message: "Please enter the unit of measurement" }]}
-                            initialValue={item.uom}
                         >
                             <Input placeholder="Unit of Measurement" />
                         </Form.Item>
@@ -189,7 +198,6 @@ const EditRequestForm: React.FC<EditRequestFormProps> = ({ requestNo }) => {
                             label="Reference Link"
                             name={['items', index, 'linkRef']}
                             rules={[{ required: true, message: "Please enter the reference link" }]}
-                            initialValue={item.linkRef}
                         >
                             <Input placeholder="Reference Link" />
                         </Form.Item>
@@ -210,7 +218,6 @@ const EditRequestForm: React.FC<EditRequestFormProps> = ({ requestNo }) => {
                                     },
                                 },
                             ]}
-                            initialValue={item.budgetMax}
                         >
                             <Input placeholder="Maximum Budget" addonBefore="Rp" />
                         </Form.Item>
@@ -222,7 +229,6 @@ const EditRequestForm: React.FC<EditRequestFormProps> = ({ requestNo }) => {
                                     name={['items', index, 'deliveryDate']}
                                     extra="You must choose above 7 days"
                                     rules={[{ required: true, message: "Please select the delivery date!" }]}
-                                    initialValue={item.deliveryDate}
                                 >
                                     <DatePicker style={{ width: "100%" }} placeholder="Select Date" disabledDate={disabledDate} />
                                 </Form.Item>
@@ -231,7 +237,6 @@ const EditRequestForm: React.FC<EditRequestFormProps> = ({ requestNo }) => {
                                     label="Receiver"
                                     name={['items', index, 'receiver']}
                                     rules={[{ required: true, message: "Please enter the receiver's name" }]}
-                                    initialValue={item.receiver}
                                 >
                                     <Input placeholder="Receiver Name" />
                                 </Form.Item>
@@ -242,11 +247,10 @@ const EditRequestForm: React.FC<EditRequestFormProps> = ({ requestNo }) => {
                                     label="Delivery Address"
                                     name={['items', index, 'deliveryAddress']}
                                     rules={[{ required: true, message: "Please select the delivery address!" }]}
-                                    initialValue={item.deliveryAddress}
                                 >
                                     <Select placeholder="Select Address" onChange={(value) => handleAddressChange(value, index)}>
-                                        <Option value="Cyber 2 Tower Lt. 28 Jl. H. R. Rasuna Said">Cyber 2 Tower Lt. 28 Jl. H. R. Rasuna Said</Option>
-                                        <Option value="Mall Balekota Tangerang">Mall Balekota Tangerang</Option>
+                                        <Option value="Cyber 2 Tower Lt. 28 Jl. H. R. Rasuna Said No.13, RT.7/RW.2, Kuningan, Kecamatan Setiabudi, Kota Jakarta Selatan, Daerah Khusus Ibukota Jakarta 12950">Cyber 2 Tower Lt. 28 Jl. H. R. Rasuna Said No.13, RT.7/RW.2, Kuningan, Kecamatan Setiabudi, Kota Jakarta Selatan, Daerah Khusus Ibukota Jakarta 12950</Option>
+                                        <Option value="Mall Balekota Tangerang Lt. 1 Jl. Jenderal Sudirman No.3, RT.002/RW.012, Buaran Indah, Kec. Tangerang, Kota Tangerang, Banten 15119">Mall Balekota Tangerang Lt. 1 Jl. Jenderal Sudirman No.3, RT.002/RW.012, Buaran Indah, Kec. Tangerang, Kota Tangerang, Banten 15119</Option>
                                         <Option value="other">Other</Option>
                                     </Select>
                                 </Form.Item>
@@ -256,13 +260,25 @@ const EditRequestForm: React.FC<EditRequestFormProps> = ({ requestNo }) => {
                                         label="Custom Delivery Address"
                                         name={['items', index, 'customDeliveryAddress']}
                                         rules={[{ required: true, message: "Please enter the delivery address!" }]}
-                                        initialValue={item.customDeliveryAddress}
                                     >
                                         <Input placeholder="Enter your delivery address" value={customAddress[index] || ""} onChange={(e) => handleCustomAddressChange(e, index)} />
                                     </Form.Item>
                                 )}
                             </Col>
                         </Row>
+
+                        {index > 0 && (
+                            <Popconfirm
+                                title="Are you sure you want to delete this item?"
+                                onConfirm={() => deleteItem(index)}
+                                okText="Yes"
+                                cancelText="No"
+                            >
+                                <Button danger>
+                                    Delete Item {index + 1}
+                                </Button>
+                            </Popconfirm>
+                        )}
                     </Panel>
                 ))}
             </Collapse>
