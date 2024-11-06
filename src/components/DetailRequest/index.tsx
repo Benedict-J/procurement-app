@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { Table, Pagination, message, Modal, Card, Button, Input } from "antd";
+import { Table, Pagination, message, Modal, Card, Button } from "antd";
 import type { TableColumnsType } from "antd";
 import { useUserContext } from "@/contexts/UserContext";
-import { collection, getDocs, query, where, deleteDoc, doc, updateDoc } from "firebase/firestore";
+import { collection, getDocs, query, where, deleteDoc, doc } from "firebase/firestore";
 import { db } from "@/firebase/firebase";
 import styles from './index.module.scss';
 import { useRouter } from "next/router";
@@ -34,7 +34,6 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(20);
     const [requestNumber, setRequestNumber] = useState<string | null>(null);
-    const [isEditMode, setIsEditMode] = useState(false);
     const router = useRouter();
 
     const [entity, setEntity] = useState<string | null>(null);
@@ -44,7 +43,7 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
     const [feedbackData, setFeedbackData] = useState<{ role: string; feedback: string } | null>(null);
     const [docId, setDocId] = useState<string | null>(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
-    const [isApproved, setIsApproved] = useState<boolean>(false);
+
     const fetchRequest = async () => {
         if (!userProfile || !requestNo) return;
 
@@ -65,11 +64,6 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
                 setDivision(data.requesterDivision || "N/A");
                 setStatus(data.status || "Pending");
                 setName(data.requesterName || "N/A");
-
-                const isAnyApproved = data.approvalStatus?.checker?.approved ||
-                    data.approvalStatus?.approval?.approved ||
-                    data.approvalStatus?.releaser?.approved;
-                setIsApproved(isAnyApproved);
 
                 if (data.status === "Rejected") {
                     if (data.approvalStatus?.checker?.feedback) {
@@ -115,205 +109,15 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
         fetchRequest();
     }, [userProfile, requestNo]);
 
-    const handleTableChange = (page: number, size?: number) => {
-        setCurrentPage(page);
-        if (size) {
-            setPageSize(size);
-        }
-    };
-
-    const handleInputChange = (index: number, field: string, value: string) => {
-        setDataSource(prevData => {
-            const newData = [...prevData];
-            newData[index] = { ...newData[index], [field]: value };
-            return newData;
+    const navigateToEditPage = () => {
+        router.push({
+            pathname: '/requester/edit-request',
+            query: { requestNo }
         });
     };
 
-    const handleSave = async () => {
-        if (!docId) return;
-
-        try {
-            const requestDocRef = doc(db, "requests", docId);
-            const updatedItems = dataSource.map((item) => ({
-                deliveryDate: item.estimateDeliveryDate,
-                deliveryAddress: item.deliveryAddress,
-                receiver: item.receiver,
-                merk: item.merk,
-                detailSpecs: item.detailSpecs,
-                color: item.color,
-                qty: item.qty,
-                uom: item.uom,
-                linkRef: item.linkRef,
-                budgetMax: item.budgetMax,
-            }));
-
-            const currentDate = new Date();
-            const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')} ${String(currentDate.getHours()).padStart(2, '0')}:${String(currentDate.getMinutes()).padStart(2, '0')}:${String(currentDate.getSeconds()).padStart(2, '0')}`;
-
-            await updateDoc(requestDocRef, {
-                items: updatedItems,
-                createdAt: formattedDate,
-                status: "In Progress",
-                approvalStatus: {
-                    checker: { approved: false, rejected: false, feedback: null },
-                    approval: { approved: false, rejected: false, feedback: null },
-                    releaser: { approved: false, rejected: false, feedback: null }
-                }
-            });
-
-            message.success("Request updated and sent back for Checker.");
-            setIsEditMode(false);
-            setStatus("In Progress");
-            await fetchRequest();
-        } catch (error) {
-            console.error("Error updating request:", error);
-            message.error("Failed to update request.");
-        }
-    };
-
-    const columns: TableColumnsType<DataType> = [
-        {
-            title: "Nomor Item",
-            dataIndex: "itemNumber",
-            key: "itemNumber",
-            align: "center"
-        },
-        {
-            title: "Request Date",
-            dataIndex: "requestDate",
-            key: "requestDate",
-            align: "center"
-        },
-        {
-            title: "Estimate Delivery Date",
-            dataIndex: "estimateDeliveryDate",
-            key: "estimateDeliveryDate",
-            align: "center",
-            render: (_, record, index) => isEditMode ? (
-                <Input
-                    value={record.estimateDeliveryDate}
-                    onChange={(e) => handleInputChange(index, 'estimateDeliveryDate', e.target.value)}
-                />
-            ) : record.estimateDeliveryDate,
-        },
-        {
-            title: "Delivery Address",
-            dataIndex: "deliveryAddress",
-            key: "deliveryAddress",
-            align: "center",
-            render: (_, record, index) => isEditMode ? (
-                <Input
-                    value={record.deliveryAddress}
-                    onChange={(e) => handleInputChange(index, 'deliveryAddress', e.target.value)}
-                />
-            ) : record.deliveryAddress,
-        },
-        {
-            title: "Receiver",
-            dataIndex: "receiver",
-            key: "receiver",
-            align: "center",
-            render: (_, record, index) => isEditMode ? (
-                <Input
-                    value={record.receiver}
-                    onChange={(e) => handleInputChange(index, 'receiver', e.target.value)}
-                />
-            ) : record.receiver,
-        },
-        {
-            title: "Merk",
-            dataIndex: "merk",
-            key: "merk",
-            align: "center",
-            render: (_, record, index) => isEditMode ? (
-                <Input
-                    value={record.merk}
-                    onChange={(e) => handleInputChange(index, 'merk', e.target.value)}
-                />
-            ) : record.merk,
-        },
-        {
-            title: "Detail Specs",
-            dataIndex: "detailSpecs",
-            key: "detailSpecs",
-            align: "center",
-            render: (_, record, index) => isEditMode ? (
-                <Input
-                    value={record.detailSpecs}
-                    onChange={(e) => handleInputChange(index, 'detailSpecs', e.target.value)}
-                />
-            ) : record.detailSpecs,
-        },
-        {
-            title: "Color",
-            dataIndex: "color",
-            key: "color",
-            align: "center",
-            render: (_, record, index) => isEditMode ? (
-                <Input
-                    value={record.color}
-                    onChange={(e) => handleInputChange(index, 'color', e.target.value)}
-                />
-            ) : record.color,
-        },
-        {
-            title: "QTY",
-            dataIndex: "qty",
-            key: "qty",
-            align: "center",
-            render: (_, record, index) => isEditMode ? (
-                <Input
-                    type="number"
-                    value={record.qty}
-                    onChange={(e) => handleInputChange(index, 'qty', e.target.value)}
-                />
-            ) : record.qty,
-        },
-        {
-            title: "UoM",
-            dataIndex: "uom",
-            key: "uom",
-            align: "center",
-            render: (_, record, index) => isEditMode ? (
-                <Input
-                    value={record.uom}
-                    onChange={(e) => handleInputChange(index, 'uom', e.target.value)}
-                />
-            ) : record.uom,
-        },
-        {
-            title: "Link Ref",
-            dataIndex: "linkRef",
-            key: "linkRef",
-            align: "center",
-            render: (_, record, index) => isEditMode ? (
-                <Input
-                    value={record.linkRef}
-                    onChange={(e) => handleInputChange(index, 'linkRef', e.target.value)}
-                />
-            ) : record.linkRef,
-        },
-        {
-            title: "Budget Max",
-            dataIndex: "budgetMax",
-            key: "budgetMax",
-            align: "center",
-            render: (_, record, index) => isEditMode ? (
-                <Input
-                    value={record.budgetMax}
-                    onChange={(e) => handleInputChange(index, 'budgetMax', e.target.value)}
-                />
-            ) : record.budgetMax,
-        }
-    ];
-
     const showCancelConfirmation = () => {
         setIsModalVisible(true);
-    };
-
-    const handleModalCancel = () => {
-        setIsModalVisible(false);
     };
 
     const handleConfirmCancelRequest = async () => {
@@ -331,6 +135,25 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
             message.error("Failed to cancel the request.");
         }
     };
+
+    const handleModalCancel = () => {
+        setIsModalVisible(false);
+    };
+
+    const columns: TableColumnsType<DataType> = [
+        { title: "Nomor Item", dataIndex: "itemNumber", key: "itemNumber", align: "center" },
+        { title: "Request Date", dataIndex: "requestDate", key: "requestDate", align: "center" },
+        { title: "Estimate Delivery Date", dataIndex: "estimateDeliveryDate", key: "estimateDeliveryDate", align: "center" },
+        { title: "Delivery Address", dataIndex: "deliveryAddress", key: "deliveryAddress", align: "center" },
+        { title: "Receiver", dataIndex: "receiver", key: "receiver", align: "center" },
+        { title: "Merk", dataIndex: "merk", key: "merk", align: "center" },
+        { title: "Detail Specs", dataIndex: "detailSpecs", key: "detailSpecs", align: "center" },
+        { title: "Color", dataIndex: "color", key: "color", align: "center" },
+        { title: "QTY", dataIndex: "qty", key: "qty", align: "center" },
+        { title: "UoM", dataIndex: "uom", key: "uom", align: "center" },
+        { title: "Link Ref", dataIndex: "linkRef", key: "linkRef", align: "center" },
+        { title: "Budget Max", dataIndex: "budgetMax", key: "budgetMax", align: "center" }
+    ];
 
     const shouldActionsBeVisible = userProfile?.role === "Requester" && status === "Rejected";
     const currentData = dataSource.slice((currentPage - 1) * pageSize, currentPage * pageSize);
@@ -360,15 +183,9 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
                             <Button className={styles.cancelButton} onClick={showCancelConfirmation}>
                                 Cancel Request
                             </Button>
-                            {isEditMode ? (
-                                <Button className={`${styles.editButton} ${styles.saveButton}`} onClick={handleSave}>
-                                    Save
-                                </Button>
-                            ) : (
-                                <Button className={styles.editButton} onClick={() => setIsEditMode(true)}>
-                                    Edit Request
-                                </Button>
-                            )}
+                            <Button className={styles.editButton} onClick={navigateToEditPage}>
+                                Edit Request
+                            </Button>
                         </div>
                     )}
                 </div>
@@ -389,7 +206,7 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
                 current={currentPage}
                 pageSize={pageSize}
                 total={dataSource.length}
-                onChange={handleTableChange}
+                onChange={(page, size) => { setCurrentPage(page); if (size) setPageSize(size); }}
                 className={styles.pagination}
                 showSizeChanger={true}
                 pageSizeOptions={['10', '20', '50', '100']}
