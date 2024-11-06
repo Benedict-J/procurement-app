@@ -4,8 +4,6 @@ import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/id"
 dayjs.locale("id")
 
-import idID from 'antd/locale/id_ID';
-
 import { addDoc, collection, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import React, { useState, useEffect, useCallback } from "react";
 import { useUserContext } from "@/contexts/UserContext";
@@ -61,9 +59,8 @@ const RequestForm = () => {
   const cleanData = (data: any) => {
     return Object.fromEntries(
       Object.entries(data).map(([key, value]) => {
-        // Cek apakah `value` adalah objek `dayjs`
         if (dayjs.isDayjs(value)) {
-          return [key, value.format("YYYY-MM-DD")]; // Konversi objek tanggal ke format string
+          return [key, value.format("YYYY-MM-DD")];
         }
         return [key, value === undefined ? null : value];
       })
@@ -74,7 +71,7 @@ const RequestForm = () => {
     if (!user || selectedProfileIndex === null || Object.keys(data).length === 0 || isSubmitting) return;
   
     try {
-      const cleanedData = cleanData(data); // Bersihkan data sebelum disimpan
+      const cleanedData = cleanData(data); 
       const draftDocRef = doc(db, "draftRequests", `${user.uid}_${selectedProfileIndex}`);
       await setDoc(draftDocRef, cleanedData);
       console.log("Data form sementara disimpan ke Firebase:", cleanedData);
@@ -94,9 +91,9 @@ const RequestForm = () => {
       if (draftDoc.exists()) {
         const draftData = draftDoc.data();
         setFormData(draftData as FormData);
-        form.setFieldsValue(draftData); // Set nilai form dari draft yang tersimpan
+        form.setFieldsValue(draftData);
       } else {
-        setFormData({} as FormData); // Kosongkan form jika tidak ada draft
+        setFormData({} as FormData);
         form.resetFields();
       }
     } catch (error) {
@@ -146,10 +143,28 @@ const RequestForm = () => {
     setFormList([...formList, formList.length + 1]);
   };
 
-  const deleteForm = (index: number) => {
-    const updatedFormList = formList.filter((_, i) => i !== index);
-    setFormList(updatedFormList);
-  };
+
+const deleteForm = (indexToDelete: number) => {
+  const updatedFormList = formList.filter((_, i) => i !== indexToDelete);
+
+  const newValues: Record<string, any> = {};
+  updatedFormList.forEach((_, newIndex) => {
+    newValues[`merk${newIndex + 1}`] = form.getFieldValue(`merk${newIndex + 2}`);
+    newValues[`detailSpecs${newIndex + 1}`] = form.getFieldValue(`detailSpecs${newIndex + 2}`);
+    newValues[`color${newIndex + 1}`] = form.getFieldValue(`color${newIndex + 2}`);
+    newValues[`qty${newIndex + 1}`] = form.getFieldValue(`qty${newIndex + 2}`);
+    newValues[`uom${newIndex + 1}`] = form.getFieldValue(`uom${newIndex + 2}`);
+    newValues[`linkRef${newIndex + 1}`] = form.getFieldValue(`linkRef${newIndex + 2}`);
+    newValues[`budgetMax${newIndex + 1}`] = form.getFieldValue(`budgetMax${newIndex + 2}`);
+    newValues[`deliveryDate${newIndex + 1}`] = form.getFieldValue(`deliveryDate${newIndex + 2}`);
+    newValues[`receiver${newIndex + 1}`] = form.getFieldValue(`receiver${newIndex + 2}`);
+    newValues[`deliveryAddress${newIndex + 1}`] = form.getFieldValue(`deliveryAddress${newIndex + 2}`);
+    newValues[`customDeliveryAddress${newIndex + 1}`] = form.getFieldValue(`customDeliveryAddress${newIndex + 2}`);
+  });
+
+  form.setFieldsValue(newValues);
+  setFormList(updatedFormList); 
+};
 
   const onFinish = async (values: any) => {
     setLoading(true);
@@ -268,7 +283,7 @@ const RequestForm = () => {
               <Col>
                 <p style={{ fontSize: 20, fontWeight: 600, color: "grey" }}>Item {index + 1}</p>
               </Col>
-              {index > 0 && (
+              {formList.length > 1 && (
                 <Col>
                   <Popconfirm
                     title="Are you sure you want to delete this item?"
