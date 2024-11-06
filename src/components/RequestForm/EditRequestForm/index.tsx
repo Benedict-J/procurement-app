@@ -23,26 +23,45 @@ const EditRequestForm: React.FC<EditRequestFormProps> = ({ requestNo }) => {
 
     const fetchRequestData = async () => {
         if (!requestNo) return;
-
+    
         const requestQuery = query(
             collection(db, "requests"),
             where("requestNumber", "==", requestNo)
         );
-
+    
         try {
             const querySnapshot = await getDocs(requestQuery);
             if (!querySnapshot.empty) {
                 const firstDoc = querySnapshot.docs[0];
                 const data = firstDoc.data();
                 setDocId(firstDoc.id);
-
-                const itemsWithFormattedDates = (data.items || []).map((item: any) => ({
-                    ...item,
-                    deliveryDate: item.deliveryDate ? dayjs(item.deliveryDate) : null,
-                }));
-
+    
+                const itemsWithFormattedDates = (data.items || []).map((item: any, index: number) => {
+                    const isOther = item.deliveryAddress === "other";
+                    
+                    // Set custom address if deliveryAddress is "other"
+                    if (isOther) {
+                        setCustomAddress((prev) => ({ ...prev, [index]: item.customDeliveryAddress || "" }));
+                    }
+                    
+                    // Return item with formatted deliveryDate
+                    return {
+                        ...item,
+                        deliveryDate: item.deliveryDate ? dayjs(item.deliveryDate) : null,
+                    };
+                });
+    
+                // Set initialData dan nilai form
                 setInitialData({ ...data, items: itemsWithFormattedDates });
                 form.setFieldsValue({ items: itemsWithFormattedDates });
+    
+                // Update state `isOtherSelected` untuk setiap item yang `deliveryAddress`-nya "other"
+                const updatedIsOtherSelected = itemsWithFormattedDates.reduce((acc: any, item: any, index: number) => {
+                    acc[index] = item.deliveryAddress === "other";
+                    return acc;
+                }, {});
+                setIsOtherSelected(updatedIsOtherSelected);
+    
             } else {
                 message.error("No data found for the given request number.");
             }
@@ -50,7 +69,7 @@ const EditRequestForm: React.FC<EditRequestFormProps> = ({ requestNo }) => {
             console.error("Error fetching request data:", error);
             message.error("Failed to fetch request data.");
         }
-    };
+    };    
 
     useEffect(() => {
         fetchRequestData();
