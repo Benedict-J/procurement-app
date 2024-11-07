@@ -88,14 +88,15 @@ const Login: React.FC = () => {
     //     return;
     // }
 
+      console.log('user role:', userRole);
       if (userRole === 'Requester') {
         router.push('/requester/request-form');
       } else if (userRole === 'Approval') {
-        router.push('/approval/incoming-request');
+        router.push('/requester/incoming-request');
       } else if (userRole === 'Checker') {
-        router.push('/checker/incoming-request');
+        router.push('/requester/incoming-request');
       } else if (userRole === 'Releaser') {
-        router.push('/releaser/incoming-request');
+        router.push('/requester/incoming-request');
       } else {
           router.push('/');
       }
