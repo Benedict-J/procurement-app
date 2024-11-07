@@ -214,7 +214,9 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
 
             {userProfile?.role === "Requester" && status === "Rejected" && feedbackData && (
                 <Card
-                    title={`Feedback from: ${name} | ${feedbackData.role}`}
+                    // role name belum jadi, sementara belum dipakai
+                    // title={`Feedback from: ${name} | ${feedbackData.role}`}
+                    title={`Feedback from: ${feedbackData.role}`}
                     className={styles.feedbackCard}
                     headStyle={{
                         textAlign: 'center',
