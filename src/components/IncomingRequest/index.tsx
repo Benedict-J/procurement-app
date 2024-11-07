@@ -93,7 +93,7 @@ const IncomingRequest = () => {
                     where("approvalStatus.checker.rejected", "==", false),
                     where("requesterDivision", "==", division),
                     where("requesterEntity", "==", entity),
-                    where("status", "==", "In Progress") // Tambahkan kondisi ini
+                    where("status", "==", "In Progress")
                 );
             } else if (role === "Approval") {
                 roleQuery = query(
@@ -102,7 +102,7 @@ const IncomingRequest = () => {
                     where("approvalStatus.approval.approved", "==", false),
                     where("approvalStatus.approval.rejected", "==", false),
                     where("requesterEntity", "==", entity),
-                    where("status", "==", "In Progress") // Tambahkan kondisi ini
+                    where("status", "==", "In Progress")
                 );
             } else if (role === "Releaser") {
                 roleQuery = query(
@@ -110,8 +110,8 @@ const IncomingRequest = () => {
                     where("approvalStatus.approval.approved", "==", true),
                     where("approvalStatus.releaser.approved", "==", false),
                     where("approvalStatus.releaser.rejected", "==", false),
-                    where("requesterEntity", "==", entity),
-                    where("status", "==", "In Progress") // Tambahkan kondisi ini
+                    // where("requesterEntity", "==", entity),
+                    where("status", "==", "In Progress")
                 );
             }
     
