@@ -12,7 +12,7 @@ const Header: React.FC = () => {
     >
       <Row justify="space-between" gutter={2}>
         <Col style={{ color: "#ffffff" }}>
-          Boilerplate ©2023 Created by Barkah Hadi. Email: barkah.hadi@gmail.com
+          
         </Col>
         <Col xs={0} lg={12} style={{ textAlign: "right", color: "#ffffff" }}>
           <DateTime />
