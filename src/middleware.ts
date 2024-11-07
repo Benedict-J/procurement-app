@@ -32,5 +32,5 @@ export async function middleware(request: NextRequest) {
 }
  
 export const config = {
-  matcher: ["/((?!auth/*|requester/*|_next/static|next/image).*)"],
+  matcher: ["/((?!auth/*|requester/*|.next/static|images/*).*)"],
 };

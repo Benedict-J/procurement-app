@@ -5,9 +5,9 @@ import {
   Button,
   Form,
   Input,
-  Image,
   Divider,
   Typography,
+  Image,
   message,
   Spin
 } from "antd";
@@ -83,33 +83,22 @@ const Login: React.FC = () => {
       document.cookie = `userRole=${userRole}; path=/`; 
       document.cookie = `token=${token}; path=/`;
 
-      if (document.cookie.includes("token")) {
-        router.push('/');
-        return;
-    }
+    //   if (document.cookie.includes("token")) {
+    //     router.push('/');
+    //     return;
+    // }
 
       if (userRole === 'Requester') {
-        setTimeout(() => {
-            router.push('/requester/request-form');
-        }, 1000);
+        router.push('/requester/request-form');
       } else if (userRole === 'Approval') {
-        setTimeout(() => {
-            router.push('/approval/incoming-request');
-        }, 1000);
+        router.push('/approval/incoming-request');
       } else if (userRole === 'Checker') {
-      setTimeout(() => {
-          router.push('/checker/incoming-request');
-      }, 1000);
+        router.push('/checker/incoming-request');
       } else if (userRole === 'Releaser') {
-        setTimeout(() => {
-          router.push('/releaser/incoming-request');
-      }, 1000);
+        router.push('/releaser/incoming-request');
       } else {
-          setTimeout(() => {
-            router.push('/');
-          }, 1000);
-          console.log('')
-    }
+          router.push('/');
+      }
 
       message.success("Login successful!");
     } catch (error) {
@@ -133,7 +122,7 @@ const Login: React.FC = () => {
             <Image
               src="/images/app-logo/logo-adakami-login.png"
               width={160}
-              preview={false}
+              preview= {false}
               alt="logo"
             />
           </div>
