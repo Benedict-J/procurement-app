@@ -3,7 +3,7 @@ import UserManagement from "@/components/UserManagement";
 
 const UserManagementPage = () => {
     return (
-      <PageContainer title="History Requests">
+      <PageContainer title="User Management">
         <UserManagement />
       </PageContainer>
     );

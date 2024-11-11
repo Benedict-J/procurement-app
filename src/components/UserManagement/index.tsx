@@ -1,110 +1,146 @@
-// pages/super-admin/user-management.tsx
-
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Modal, Form, Input, message } from 'antd';
+import { Table, Button, Pagination, Modal, Form, Input, message } from 'antd';
+import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { db } from '@/firebase/firebase';
 import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs } from 'firebase/firestore';
 
 const UserManagement: React.FC = () => {
-  const [users, setUsers] = useState([]);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingUser, setEditingUser] = useState(null);
-  const [form] = Form.useForm();
+    const [users, setUsers] = useState([]);
+    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [editingUser, setEditingUser] = useState(null);
+    const [form] = Form.useForm();
+    const [currentPage, setCurrentPage] = useState(1); // Tambahkan state untuk halaman saat ini
+    const [pageSize, setPageSize] = useState(10); // Tambahkan state untuk ukuran halaman
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      const querySnapshot = await getDocs(collection(db, 'registeredUsers'));
-      const usersData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-      setUsers(usersData);
+    useEffect(() => {
+        const fetchUsers = async () => {
+            const querySnapshot = await getDocs(collection(db, 'registeredUsers'));
+            const usersData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+            setUsers(usersData);
+        };
+
+        fetchUsers();
+    }, []);
+
+    const handleAddUser = async (values: any) => {
+        try {
+            await addDoc(collection(db, 'preRegisteredUsers'), values);
+            message.success("User berhasil ditambahkan!");
+            form.resetFields();
+            setIsModalVisible(false);
+        } catch (error) {
+            message.error("Gagal menambahkan user!");
+        }
     };
 
-    fetchUsers();
-  }, []);
+    const handleEditUser = (user: any) => {
+        setEditingUser(user);
+        form.setFieldsValue(user);
+        setIsModalVisible(true);
+    };
 
-  const handleAddUser = async (values: any) => {
-    try {
-      await addDoc(collection(db, 'preRegisteredUsers'), values);
-      message.success("User added successfully!");
-      form.resetFields();
-      setIsModalVisible(false);
-    } catch (error) {
-      message.error("Failed to add user!");
-    }
-  };
+    const handleUpdateUser = async (values: any) => {
+        if (!editingUser) return;
+        try {
+            await updateDoc(doc(db, 'registeredUsers', editingUser.id), values);
+            message.success("User berhasil diperbarui!");
+            setEditingUser(null);
+            setIsModalVisible(false);
+        } catch (error) {
+            message.error("Gagal memperbarui user!");
+        }
+    };
 
-  const handleEditUser = (user: any) => {
-    setEditingUser(user);
-    form.setFieldsValue(user);
-    setIsModalVisible(true);
-  };
+    const handleDeleteUser = async (userId: string) => {
+        try {
+            await deleteDoc(doc(db, 'registeredUsers', userId));
+            message.success("User berhasil dihapus!");
+        } catch (error) {
+            message.error("Gagal menghapus user!");
+        }
+    };
 
-  const handleUpdateUser = async (values: any) => {
-    if (!editingUser) return;
-    try {
-      await updateDoc(doc(db, 'registeredUsers', editingUser.id), values);
-      message.success("User updated successfully!");
-      setEditingUser(null);
-      setIsModalVisible(false);
-    } catch (error) {
-      message.error("Failed to update user!");
-    }
-  };
+    const columns = [
+        { title: 'NIK', dataIndex: 'nik', key: 'nik', align: 'center' as 'center' },
+        { title: 'Name', dataIndex: 'name', key: 'name', align: 'center' as 'center' },
+        { title: 'Entity', dataIndex: 'entity', key: 'entity', align: 'center' as 'center' },
+        { title: 'Division', dataIndex: 'division', key: 'division', align: 'center' as 'center' },
+        { title: 'Email', dataIndex: 'email', key: 'email', align: 'center' as 'center' },
+        { title: 'Role', dataIndex: 'role', key: 'role', align: 'center' as 'center' },
+        {
+            title: 'Operation',
+            key: 'operation',
+            align: 'center' as 'center',
+            render: (_: any, user: any) => (
+                <>
+                    <Button
+                        icon={<EditOutlined />}
+                        onClick={() => handleEditUser(user)}
+                        style={{ marginRight: 8 }}
+                    />
+                    <Button
+                        icon={<DeleteOutlined />}
+                        onClick={() => handleDeleteUser(user.id)}
+                        danger
+                    />
+                </>
+            )
+        }
+    ];
 
-  const handleDeleteUser = async (userId: string) => {
-    try {
-      await deleteDoc(doc(db, 'registeredUsers', userId));
-      message.success("User deleted successfully!");
-    } catch (error) {
-      message.error("Failed to delete user!");
-    }
-  };
+    const onFinish = (values: any) => {
+        if (editingUser) {
+            handleUpdateUser(values);
+        } else {
+            handleAddUser(values);
+        }
+    };
 
-  const columns = [
-    { title: 'NIK', dataIndex: 'nik', key: 'nik' },
-    { title: 'Name', dataIndex: 'name', key: 'name' },
-    { title: 'Entity', dataIndex: 'entity', key: 'entity' },
-    { title: 'Division', dataIndex: 'division', key: 'division' },
-    { title: 'Email', dataIndex: 'email', key: 'email' },
-    { title: 'Role', dataIndex: 'role', key: 'role' },
-    { title: 'Actions', key: 'actions', render: (_: any, user: any) => (
-      <>
-        <Button onClick={() => handleEditUser(user)}>Edit</Button>
-        <Button onClick={() => handleDeleteUser(user.id)} danger>Delete</Button>
-      </>
-    )}
-  ];
+    // Handler untuk perubahan pada pagination
+    const handleTableChange = (pagination: any) => {
+        setCurrentPage(pagination.current);
+        setPageSize(pagination.pageSize);
+    };
 
-  const onFinish = (values: any) => {
-    if (editingUser) {
-      handleUpdateUser(values);
-    } else {
-      handleAddUser(values);
-    }
-  };
-
-  return (
-    <div>
-      <Button type="primary" onClick={() => setIsModalVisible(true)}>Add User</Button>
-      <Table dataSource={users} columns={columns} rowKey="id" />
-      <Modal
-        onCancel={() => setIsModalVisible(false)}
-        onOk={() => form.submit()}
-        title={editingUser ? "Edit User" : "Add User"}
-      >
-        <Form form={form} onFinish={onFinish} layout="vertical">
-          <Form.Item name="name" label="Name" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email' }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="role" label="Role" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-        </Form>
-      </Modal>
-    </div>
-  );
+    return (
+        <div style={{ padding: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '30px' }}>
+                <Button type="primary" onClick={() => setIsModalVisible(true)}>Add New</Button>
+            </div>
+            <Table
+                dataSource={users}
+                columns={columns}
+                rowKey="id"
+                pagination={{
+                    current: currentPage,
+                    pageSize: pageSize,
+                    total: users.length,
+                    showSizeChanger: true,
+                    pageSizeOptions: [10, 20, 50, 100],
+                }}
+                onChange={handleTableChange}
+                style={{ textAlign: 'center' }}
+            />
+            <Modal
+                visible={isModalVisible}
+                onCancel={() => setIsModalVisible(false)}
+                onOk={() => form.submit()}
+                title={editingUser ? "Edit User" : "Add User"}
+            >
+                <Form form={form} onFinish={onFinish} layout="vertical">
+                    <Form.Item name="name" label="Name" rules={[{ required: true }]}>
+                        <Input />
+                    </Form.Item>
+                    <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email' }]}>
+                        <Input />
+                    </Form.Item>
+                    <Form.Item name="role" label="Role" rules={[{ required: true }]}>
+                        <Input />
+                    </Form.Item>
+                </Form>
+            </Modal>
+        </div>
+    );
 };
 
 export default UserManagement;

@@ -113,7 +113,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         "/requester/history",
         "/requester/detail-request",
         "/requester/flow-steps",
-        "/requester/edit-request"
+        "/requester/edit-request",
+        "/requester/user-management"
       ];
 
       if (nonRedirectPaths.includes(router.pathname)) {
