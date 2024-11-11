@@ -3,6 +3,7 @@ import {
   HistoryOutlined,
   UserOutlined,
   CheckCircleOutlined,
+  TeamOutlined,
 } from "@ant-design/icons";
 
 export interface MenuItem {
@@ -57,6 +58,22 @@ const getMenuByRole = (role: string): MenuItem[] => {
               name: "History",
               icon: <HistoryOutlined />,
               key: ":history",
+            },
+          ],
+        },
+      ];
+      case "Super Admin":
+      return [
+        {
+          key: "superadmin",
+          name: "User Management",
+          icon: <TeamOutlined />,
+          children: [
+            {
+              path: "/requester/user-management",
+              name: "Manage Users",
+              icon: <UserOutlined />,
+              key: "superadmin:user-management",
             },
           ],
         },
