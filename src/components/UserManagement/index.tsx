@@ -1,5 +1,3 @@
-// pages/super-admin/user-management.tsx
-
 import React, { useEffect, useState } from 'react';
 import { Table, Button, Modal, Form, Input, message } from 'antd';
 import { db } from '@/firebase/firebase';

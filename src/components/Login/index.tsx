@@ -9,7 +9,6 @@ import {
   Typography,
   Image,
   message,
-  Spin
 } from "antd";
 import classes from "./index.module.scss";
 import { useRouter } from "next/router";
@@ -65,7 +64,6 @@ const Login: React.FC = () => {
       const selectedProfileIndex = userData.selectedProfileIndex; 
       console.log("Selected profile index:", selectedProfileIndex);
 
-      // Ambil profil sesuai dengan `selectedProfileIndex`
       const selectedProfile = userData.profile.find(
         
         (profile: Profile, index: number) => {
@@ -73,7 +71,7 @@ const Login: React.FC = () => {
           console.log('SelectedProfileIndex:', selectedProfileIndex);
           
           return index === selectedProfileIndex
-        } // Cocokkan dengan email atau properti lain
+        } 
       );
       console.log("Selected profile:", selectedProfile); 
 
@@ -83,10 +81,10 @@ const Login: React.FC = () => {
       document.cookie = `userRole=${userRole}; path=/`; 
       document.cookie = `token=${token}; path=/`;
 
-    //   if (document.cookie.includes("token")) {
-    //     router.push('/');
-    //     return;
-    // }
+      if (userRole === 'Super Admin') {
+          router.push('/requester/user-management');
+          return;
+        }
 
       console.log('user role:', userRole);
       if (userRole === 'Requester') {

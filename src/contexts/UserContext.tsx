@@ -55,6 +55,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     "Checker": "/requester/incoming-request",
     "Approval": "/requester/incoming-request",
     "Releaser": "/requester/incoming-request",
+    "Super Admin": "/requester/user-management", 
   };
 
   useEffect(() => {
@@ -100,8 +101,13 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     if (!loading && userProfile && selectedProfileIndex !== null) {
-      console.log("Current Path:", router.pathname);
-    console.log("Role-based Default Path:", defaultPathsForRoles[userProfile.profile[selectedProfileIndex].role]);
+      const currentRole = userProfile.profile[selectedProfileIndex]?.role;
+      const defaultPath = defaultPathsForRoles[currentRole];
+  
+      // Tambahkan log untuk memastikan `defaultPath` sudah benar
+      console.log("Redirecting role:", currentRole);
+      console.log("Expected defaultPath:", defaultPath);
+  
       // Pengecualian redirect
       const nonRedirectPaths = [
         "/auth/login",
@@ -113,18 +119,16 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         "/requester/history",
         "/requester/detail-request",
         "/requester/flow-steps",
-        "/requester/edit-request"
+        "/requester/edit-request",
+        "/requester/user-management"
       ];
-
+  
       if (nonRedirectPaths.includes(router.pathname)) {
         console.log("Path included in non-redirect paths. Exiting useEffect.");
         return;
       }
-
-      // Redirect berdasarkan peran pengguna
-      const defaultPath = defaultPathsForRoles[userProfile.profile[selectedProfileIndex].role];
-
-      // Redirect hanya jika path saat ini berbeda dengan defaultPath yang sesuai role
+  
+      // Redirect jika path saat ini berbeda dengan defaultPath yang sesuai role
       if (router.pathname !== defaultPath) {
         console.log("Redirecting to:", defaultPath);
         router.replace(defaultPath);
