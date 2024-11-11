@@ -62,11 +62,46 @@ const UserManagement: React.FC = () => {
 
     const columns = [
         { title: 'NIK', dataIndex: 'nik', key: 'nik', align: 'center' as 'center' },
-        { title: 'Name', dataIndex: 'name', key: 'name', align: 'center' as 'center' },
-        { title: 'Entity', dataIndex: 'entity', key: 'entity', align: 'center' as 'center' },
-        { title: 'Division', dataIndex: 'division', key: 'division', align: 'center' as 'center' },
-        { title: 'Email', dataIndex: 'email', key: 'email', align: 'center' as 'center' },
-        { title: 'Role', dataIndex: 'role', key: 'role', align: 'center' as 'center' },
+        { title: 'Name', dataIndex: 'namaLengkap', key: 'namaLengkap', align: 'center' as 'center' },
+        { title: 'Division', dataIndex: 'divisi', key: 'divisi', align: 'center' as 'center' },
+        {
+            title: 'Entity',
+            key: 'entity',
+            align: 'center' as 'center',
+            render: (_: any, user: any) => (
+                <div>
+                    {user.profile.map((profile: any, index: number) => (
+                        <div key={index}>{profile.entity}</div>
+                    ))}
+                </div>
+            )
+        },
+
+        {
+            title: 'Role',
+            key: 'role',
+            align: 'center' as 'center',
+            render: (_: any, user: any) => (
+                <div>
+                    {user.profile.map((profile: any, index: number) => (
+                        <div key={index}>{profile.role}</div>
+                    ))}
+                </div>
+            )
+        },
+        {
+            title: 'Email',
+            key: 'email',
+            align: 'center' as 'center',
+            render: (_: any, user: any) => (
+                <div>
+                    {user.profile.map((profile: any, index: number) => (
+                        <div key={index}>{profile.email}</div>
+                    ))}
+                </div>
+            )
+        },
+    
         {
             title: 'Operation',
             key: 'operation',
