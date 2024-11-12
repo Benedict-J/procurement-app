@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Pagination, Modal, Form, Input, message } from 'antd';
+import { Table, Button, Pagination, Modal, Form, Input, message, Select } from 'antd';
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { db } from '@/firebase/firebase';
-import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, setDoc } from 'firebase/firestore';
 
 const UserManagement: React.FC = () => {
     const [users, setUsers] = useState([]);
@@ -24,14 +24,22 @@ const UserManagement: React.FC = () => {
 
     const handleAddUser = async (values: any) => {
         try {
-            await addDoc(collection(db, 'preRegisteredUsers'), values);
+            const userData = {
+                namaLengkap: values.fullName,
+                divisi: values.division,
+                profile: values.profiles,
+            };
+    
+            await setDoc(doc(db, 'preRegisteredUsers', values.nik), userData);
             message.success("User berhasil ditambahkan!");
             form.resetFields();
             setIsModalVisible(false);
         } catch (error) {
+            console.error("Error adding user:", error);
             message.error("Gagal menambahkan user!");
         }
     };
+    
 
     const handleEditUser = (user: any) => {
         setEditingUser(user);
@@ -123,6 +131,22 @@ const UserManagement: React.FC = () => {
         }
     ];
 
+    const entityOptions = [
+        { label: "Pembiayaan Digital Indonesia", value: "Pembiayaan Digital Indonesia" },
+        { label: "Berkah Giat Jaya", value: "Berkah Giat Jaya" },
+        { label: "Teknologi Cerdas Finansial", value: "Teknologi Cerdas Finansial" },
+        { label: "BLU", value: "BLU" },
+        { label: "PIF", value: "PIF" },
+    ];
+    
+    const roleOptions = [
+        { label: "Requester", value: "requester" },
+        { label: "Checker", value: "checker" },
+        { label: "Approval", value: "approval" },
+        { label: "Releaser", value: "releaser" },
+        { label: "Super Admin", value: "Super Admin" },
+    ];
+
     const onFinish = (values: any) => {
         if (editingUser) {
             handleUpdateUser(values);
@@ -156,24 +180,96 @@ const UserManagement: React.FC = () => {
                 onChange={handleTableChange}
                 style={{ textAlign: 'center' }}
             />
-            <Modal
-                visible={isModalVisible}
-                onCancel={() => setIsModalVisible(false)}
-                onOk={() => form.submit()}
-                title={editingUser ? "Edit User" : "Add User"}
-            >
-                <Form form={form} onFinish={onFinish} layout="vertical">
-                    <Form.Item name="name" label="Name" rules={[{ required: true }]}>
-                        <Input />
-                    </Form.Item>
-                    <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email' }]}>
-                        <Input />
-                    </Form.Item>
-                    <Form.Item name="role" label="Role" rules={[{ required: true }]}>
-                        <Input />
-                    </Form.Item>
-                </Form>
-            </Modal>
+        <Modal
+         visible={isModalVisible}
+         onCancel={() => setIsModalVisible(false)}
+         onOk={() => form.submit()}
+         title={editingUser ? "Edit User" : "Add User"}
+         width={900} 
+        >
+            <Form form={form} onFinish={handleAddUser} layout="vertical">
+                <Form.Item name="nik" label="NIK (UID)" rules={[{ required: true }]}>
+                <Input />
+            </Form.Item>
+
+            <Form.Item name="fullName" label="Full Name" rules={[{ required: true }]}>
+                <Input />
+            </Form.Item>
+
+            <Form.Item name="division" label="Division" rules={[{ required: true }]}>
+                <Input />
+            </Form.Item>
+            <Form.List 
+            name="profiles"
+            rules={[
+                {
+                    validator: async (_, profiles) => {
+                        if (!profiles || profiles.length === 0) {
+                            return Promise.reject(new Error('Please add at least one profile.'));
+                        }
+                    },
+                },
+            ]}>
+                {(fields, { add, remove }) => (
+                    <>
+                        {fields.map(({ key, name, ...restField }) => (
+                            <div key={key} style={{ display: 'flex', gap: '10px', marginBottom: '8px' }}>
+                                {/* Email */}
+                            <Form.Item
+                                {...restField}
+                                name={[name, 'email']}
+                                rules={[{ required: true, type: 'email', message: 'Please enter a valid email' }]}
+                                style={{ flex: 1 }}
+                            >
+                                <Input placeholder="Email"/>
+                            </Form.Item>
+
+                            {/* Entity */}
+                            <Form.Item
+                                {...restField}
+                                name={[name, 'entity']}
+                                rules={[{ required: true, message: 'Please select entity' }]}
+                                style={{ flex: 1 }}
+                            >
+                                <Select placeholder="Select Entity">
+                                    {entityOptions.map(option => (
+                                        <Select.Option key={option.value} value={option.value}>
+                                            {option.label}
+                                        </Select.Option>
+                                    ))}
+                                </Select>
+                            </Form.Item>
+
+                            {/* Role */}
+                            <Form.Item
+                                {...restField}
+                                name={[name, 'role']}
+                                rules={[{ required: true, message: 'Please select role' }]}
+                                style={{ flex: 1 }}
+                            >
+                                <Select placeholder="Select Role">
+                                    {roleOptions.map(option => (
+                                        <Select.Option key={option.value} value={option.value}>
+                                            {option.label}
+                                        </Select.Option>
+                                    ))}
+                                </Select>
+                            </Form.Item>
+                                <Button type="link" onClick={() => remove(name)}>
+                                    Hapus
+                                </Button>
+                            </div>
+                        ))}
+                        <Form.Item>
+                            <Button type="dashed" onClick={() => add()} block>
+                                Tambah Profile
+                            </Button>
+                        </Form.Item>
+                    </>
+                )}
+            </Form.List>
+        </Form>
+    </Modal>
         </div>
     );
 };
