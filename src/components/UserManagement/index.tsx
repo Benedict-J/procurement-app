@@ -40,7 +40,6 @@ const UserManagement: React.FC = () => {
         }
     };
 
-
     const handleEditUser = (user: any) => {
         setEditingUser(user);
         form.setFieldsValue({
@@ -75,6 +74,17 @@ const UserManagement: React.FC = () => {
         } catch (error) {
             message.error("Failed to update user.");
         }
+    };
+
+    const confirmDeleteUser = (userId: string) => {
+        Modal.confirm({
+            title: 'Delete user',
+            content: 'Are you sure you want to delete this user?',
+            okText: 'Yes, Delete',
+            okType: 'danger',
+            cancelText: 'Cancel',
+            onOk: () => handleDeleteUser(userId),
+        });
     };
 
     const handleDeleteUser = async (userId: string) => {
@@ -146,7 +156,7 @@ const UserManagement: React.FC = () => {
                     />
                     <Button
                         icon={<DeleteOutlined />}
-                        onClick={() => handleDeleteUser(user.id)}
+                        onClick={() => confirmDeleteUser(user.id)}
                         danger
                     />
                 </>
@@ -206,7 +216,7 @@ const UserManagement: React.FC = () => {
                 visible={isModalVisible}
                 onCancel={() => { setIsModalVisible(false); form.resetFields(); }}
                 onOk={() => form.submit()}
-                title={editingUser ? "Edit User" : "Add User"}
+                title={editingUser ? "Add New User" : "Add User"}
             >
                 <Form form={form} onFinish={onFinish} layout="vertical">
                     <Form.Item name="nik" label="NIK" rules={[{ required: true }]}>
@@ -222,7 +232,7 @@ const UserManagement: React.FC = () => {
                     <Form.List name="profile">
                         {(fields, { add, remove }) => (
                             <>
-                                {fields.map(({ key, name, fieldKey, ...restField }) => (
+                                {fields.map(({ key, name, fieldKey, ...restField }, index) => (
                                     <div key={key} style={{ marginBottom: '15px', border: '1px solid #e8e8e8', padding: '10px', borderRadius: '5px' }}>
                                         <Form.Item
                                             {...restField}
@@ -251,9 +261,21 @@ const UserManagement: React.FC = () => {
                                         >
                                             <Input />
                                         </Form.Item>
-                                        <Button type="dashed" onClick={() => remove(name)} block icon={<DeleteOutlined />}>
-                                            Remove Profile
-                                        </Button>
+                                        {fields.length > 1 ? (
+                                            <Button type="dashed" onClick={() => remove(name)} block icon={<DeleteOutlined />}>
+                                                Remove Profile
+                                            </Button>
+                                        ) : (
+                                            <Button
+                                                type="dashed"
+                                                onClick={() => message.error('At least one profile is required.')}
+                                                block
+                                                icon={<DeleteOutlined />}
+                                                disabled
+                                            >
+                                                Remove Profile
+                                            </Button>
+                                        )}
                                     </div>
                                 ))}
                                 <Button type="dashed" onClick={() => add()} block icon={<EditOutlined />}>
