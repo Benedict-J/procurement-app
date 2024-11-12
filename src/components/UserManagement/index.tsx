@@ -9,8 +9,8 @@ const UserManagement: React.FC = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
     const [form] = Form.useForm();
-    const [currentPage, setCurrentPage] = useState(1); // Tambahkan state untuk halaman saat ini
-    const [pageSize, setPageSize] = useState(10); // Tambahkan state untuk ukuran halaman
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10); 
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -154,8 +154,7 @@ const UserManagement: React.FC = () => {
             handleAddUser(values);
         }
     };
-
-    // Handler untuk perubahan pada pagination
+    
     const handleTableChange = (pagination: any) => {
         setCurrentPage(pagination.current);
         setPageSize(pagination.pageSize);
