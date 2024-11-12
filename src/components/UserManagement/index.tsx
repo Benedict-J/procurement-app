@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Modal, Form, Input, message } from 'antd';
+import { Table, Button, Pagination, Modal, Form, Input, message, Select } from 'antd';
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { db } from '@/firebase/firebase';
-import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, setDoc } from 'firebase/firestore';
 
 const UserManagement: React.FC = () => {
     const [users, setUsers] = useState([]);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
     const [form] = Form.useForm();
-    const [currentPage, setCurrentPage] = useState(1); 
+    const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
 
     useEffect(() => {
@@ -24,14 +24,22 @@ const UserManagement: React.FC = () => {
 
     const handleAddUser = async (values: any) => {
         try {
-            await addDoc(collection(db, 'registeredUsers'), values);
-            message.success("User added successfully!");
+            const userData = {
+                namaLengkap: values.fullName,
+                divisi: values.division,
+                profile: values.profiles,
+            };
+
+            await setDoc(doc(db, 'preRegisteredUsers', values.nik), userData);
+            message.success("User berhasil ditambahkan!");
             form.resetFields();
             setIsModalVisible(false);
         } catch (error) {
-            message.error("Failed to add user.");
+            console.error("Error adding user:", error);
+            message.error("Gagal menambahkan user!");
         }
     };
+
 
     const handleEditUser = (user: any) => {
         setEditingUser(user);
@@ -59,7 +67,7 @@ const UserManagement: React.FC = () => {
             setEditingUser(null);
             setIsModalVisible(false);
             form.resetFields();
-            
+
             // Refresh user data
             const querySnapshot = await getDocs(collection(db, 'registeredUsers'));
             const usersData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
@@ -146,6 +154,22 @@ const UserManagement: React.FC = () => {
         }
     ];
 
+    const entityOptions = [
+        { label: "Pembiayaan Digital Indonesia", value: "Pembiayaan Digital Indonesia" },
+        { label: "Berkah Giat Jaya", value: "Berkah Giat Jaya" },
+        { label: "Teknologi Cerdas Finansial", value: "Teknologi Cerdas Finansial" },
+        { label: "BLU", value: "BLU" },
+        { label: "PIF", value: "PIF" },
+    ];
+
+    const roleOptions = [
+        { label: "Requester", value: "requester" },
+        { label: "Checker", value: "checker" },
+        { label: "Approval", value: "approval" },
+        { label: "Releaser", value: "releaser" },
+        { label: "Super Admin", value: "Super Admin" },
+    ];
+
     const onFinish = (values: any) => {
         if (editingUser) {
             handleUpdateUser(values);
@@ -194,7 +218,7 @@ const UserManagement: React.FC = () => {
                     <Form.Item name="division" label="Division" rules={[{ required: true }]}>
                         <Input />
                     </Form.Item>
-                    
+
                     <Form.List name="profile">
                         {(fields, { add, remove }) => (
                             <>
