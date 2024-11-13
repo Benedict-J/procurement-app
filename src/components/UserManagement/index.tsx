@@ -228,7 +228,7 @@ const UserManagement: React.FC = () => {
                 visible={isModalVisible}
                 onCancel={() => { setIsModalVisible(false); form.resetFields(); }}
                 onOk={() => form.submit()}
-                title={editingUser ? "Add New User" : "Add User"}
+                title={editingUser ? "Update User" : "Add New User"}
                 width={1000}
             >
                 <Form form={form} onFinish={onFinish} layout="vertical">
