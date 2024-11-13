@@ -13,15 +13,15 @@ const Header: React.FC = () => {
   const { userProfile, loading, user, selectedProfileIndex, setSelectedProfile, loadDraftData } = useUserContext();
 
   if (loading) return <Spin/>;
-  if (!userProfile) return <p>User profile not available</p>;
+  if (!userProfile) return <p>Profil pengguna tidak tersedia</p>;
 
   useEffect(() => {
     const checkAuthStatus = () => {
       const user = auth.currentUser;
       if (user) {
-        console.log("User logged in:", user.email);
+        console.log("Pengguna masuk:", user.email);
       } else {
-        console.log("No user logged in.");
+        console.log("Tidak ada pengguna yang masuk.");
       }
     };
 
@@ -38,7 +38,7 @@ const Header: React.FC = () => {
     if (userProfile && userProfile.profile[index]) {
       const selectedProfile = userProfile.profile[index];
 
-      // Update state pada application
+      // Update state pada aplikasi
       setSelectedProfile(index);
 
       // Update `selectedProfileIndex` di Firestore
@@ -50,7 +50,7 @@ const Header: React.FC = () => {
         });
       }
 
-      console.log("Switched to:", selectedProfile.email);
+      console.log("Berpindah ke profil:", selectedProfile.email);
       loadDraftData();
     }
   };
@@ -64,9 +64,9 @@ const Header: React.FC = () => {
         await SignOut();
         router.push("/auth/login");
     } catch (error) {
-        console.error("Error during logout:", error);
+        console.error("Kesalahan saat logout:", error);
     }
-};
+  };
 
   const notificationMenuItems = notifications.map((notification) => ({
     key: notification.key,
@@ -77,11 +77,12 @@ const Header: React.FC = () => {
     ...userProfile.profile.map((profile, index) => ({
       key: index.toString(),
       label: (
-        <Space onClick={() => handleSwitchUser(index)}>
+        <Space>
           <UserOutlined style={{ color: index === selectedProfileIndex ? "#87d068" : "#bfbfbf" }} />
           <span style={{ color: index === selectedProfileIndex ? "#87d068" : "#bfbfbf" }}>{profile.email}</span>
         </Space>
       ),
+      onClick: () => handleSwitchUser(index),  // Menambahkan trigger handleSwitchUser pada seluruh area hover
     })),
     {
       type: "divider" as const,
@@ -89,11 +90,12 @@ const Header: React.FC = () => {
     {
       key: "logout",
       label: (
-        <Space onClick={handleLogout}>
+        <Space>
           <LogoutOutlined />
           Logout
         </Space>
       ),
+      onClick: handleLogout,  // Menambahkan trigger logout pada area hover secara keseluruhan
     },
   ];
 
