@@ -14,11 +14,27 @@ const UserManagement: React.FC = () => {
 
     useEffect(() => {
         const fetchUsers = async () => {
-            const querySnapshot = await getDocs(collection(db, 'registeredUsers'));
-            const usersData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-            setUsers(usersData);
+            // Ambil data dari registeredUsers
+            const registeredUsersSnapshot = await getDocs(collection(db, 'registeredUsers'));
+            const registeredUsersData = registeredUsersSnapshot.docs.map(doc => ({
+                ...doc.data(),
+                id: doc.id,
+                source: 'registeredUsers', // Tandai asal data
+            }));
+    
+            // Ambil data dari preRegisteredUsers
+            const preRegisteredUsersSnapshot = await getDocs(collection(db, 'preRegisteredUsers'));
+            const preRegisteredUsersData = preRegisteredUsersSnapshot.docs.map(doc => ({
+                ...doc.data(),
+                id: doc.id,
+                nik: doc.id, // Gunakan ID dokumen sebagai NIK
+                source: 'preRegisteredUsers', // Tandai asal data
+            }));
+    
+            // Gabungkan data dari kedua koleksi
+            setUsers([...registeredUsersData, ...preRegisteredUsersData]);
         };
-
+    
         fetchUsers();
     }, []);
 
@@ -68,7 +84,9 @@ const UserManagement: React.FC = () => {
         try {
             const updatedProfiles = values.profiles || [];
 
-            await updateDoc(doc(db, 'registeredUsers', editingUser.id), {
+            const collectionName = editingUser.registered ? 'registeredUsers' : 'preRegisteredUsers';
+
+            await updateDoc(doc(db, collectionName, editingUser.id), {
                 namaLengkap: values.namaLengkap,
                 nik: values.nik,
                 divisi: values.divisi,
@@ -80,7 +98,7 @@ const UserManagement: React.FC = () => {
             form.resetFields();
 
             // Refresh user data
-            const querySnapshot = await getDocs(collection(db, 'registeredUsers'));
+            const querySnapshot = await getDocs(collection(db, collectionName));
             const usersData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
             setUsers(usersData);
         } catch (error) {
@@ -88,25 +106,26 @@ const UserManagement: React.FC = () => {
         }
     };
 
-    const confirmDeleteUser = (userId: string) => {
+    const handleDeleteUser = async (userId: string, registered: boolean) => {
+        const collectionName = registered ? 'registeredUsers' : 'preRegisteredUsers';
+        try {
+            await deleteDoc(doc(db, collectionName, userId));
+            message.success("User deleted successfully!");
+            setUsers(users.filter(user => user.id !== userId));
+        } catch (error) {
+            message.error("Failed to delete user.");
+        }
+    };
+
+    const confirmDeleteUser = (userId: string, registered: boolean) => {
         Modal.confirm({
             title: 'Delete user',
             content: 'Are you sure you want to delete this user?',
             okText: 'Yes, Delete',
             okType: 'danger',
             cancelText: 'Cancel',
-            onOk: () => handleDeleteUser(userId),
+            onOk: () => handleDeleteUser(userId, registered),
         });
-    };
-
-    const handleDeleteUser = async (userId: string) => {
-        try {
-            await deleteDoc(doc(db, 'registeredUsers', userId));
-            message.success("User deleted successfully!");
-            setUsers(users.filter(user => user.id !== userId));
-        } catch (error) {
-            message.error("Failed to delete user.");
-        }
     };
 
     const columns = [
@@ -116,18 +135,33 @@ const UserManagement: React.FC = () => {
             align: 'center' as 'center',
             render: (_: any, __: any, index: number) => (currentPage - 1) * pageSize + index + 1,
         },
-        { title: 'NIK', dataIndex: 'nik', key: 'nik', align: 'center' as 'center' },
+        {
+            title: 'NIK',
+            key: 'nik',
+            align: 'center' as 'center',
+            render: (user: any) => user.source === 'preRegisteredUsers' ? user.id : user.nik,
+        },
         { title: 'Name', dataIndex: 'namaLengkap', key: 'namaLengkap', align: 'center' as 'center' },
         { title: 'Division', dataIndex: 'divisi', key: 'divisi', align: 'center' as 'center' },
+        {
+            title: 'Registered',
+            key: 'registered',
+            align: 'center' as 'center',
+            render: (text: any, user: any) => (user.registered ? 'Yes' : 'No'),
+        },
         {
             title: 'Entity',
             key: 'entity',
             align: 'center' as 'center',
             render: (_: any, user: any) => (
                 <div>
-                    {user.profile.map((profile: any, index: number) => (
-                        <div key={index}>{profile.entity}</div>
-                    ))}
+                    {Array.isArray(user.profile) ? (
+                        user.profile.map((profile: any, index: number) => (
+                            <div key={index}>{profile.entity}</div>
+                        ))
+                    ) : (
+                        <div>-</div>
+                    )}
                 </div>
             )
         },
@@ -168,7 +202,7 @@ const UserManagement: React.FC = () => {
                     />
                     <Button
                         icon={<DeleteOutlined />}
-                        onClick={() => confirmDeleteUser(user.id)}
+                        onClick={() => confirmDeleteUser(user.id, user.registered)}
                         danger
                     />
                 </>
