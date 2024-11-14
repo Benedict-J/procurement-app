@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Table, Button, Modal, Form, Input, message, Select } from 'antd';
 import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { db } from '@/firebase/firebase';
-import { collection, updateDoc, deleteDoc, doc, getDocs, setDoc, getDoc } from 'firebase/firestore';
+import { collection, updateDoc, deleteDoc, doc, getDocs, setDoc } from 'firebase/firestore';
 
 const UserManagement: React.FC = () => {
     const [users, setUsers] = useState([]);
@@ -81,20 +81,6 @@ const UserManagement: React.FC = () => {
         if (!editingUser) return;
         try {
             const updatedProfiles = values.profiles || [];
-    
-            // Pastikan kondisi pemilihan koleksi benar
-            const collectionName = editingUser.source === 'registeredUsers' ? 'registeredUsers' : 'preRegisteredUsers';
-            const userDocRef = doc(db, collectionName, editingUser.id);
-    
-            console.log("Updating document in collection:", collectionName, "with ID:", editingUser.id);
-    
-            const userDoc = await getDoc(userDocRef);
-            if (!userDoc.exists()) {
-                message.error("User document not found. Cannot update non-existing user.");
-                return;
-            }
-    
-            await updateDoc(userDocRef, {
             const collectionName = editingUser.source; // Determine collection based on source
 
             await updateDoc(doc(db, collectionName, editingUser.id), {
