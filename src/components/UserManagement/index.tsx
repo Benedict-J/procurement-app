@@ -14,24 +14,21 @@ const UserManagement: React.FC = () => {
 
     useEffect(() => {
         const fetchUsers = async () => {
-            // Ambil data dari registeredUsers
             const registeredUsersSnapshot = await getDocs(collection(db, 'registeredUsers'));
             const registeredUsersData = registeredUsersSnapshot.docs.map(doc => ({
                 ...doc.data(),
                 id: doc.id,
-                source: 'registeredUsers', // Tandai asal data
+                source: 'registeredUsers',
             }));
     
-            // Ambil data dari preRegisteredUsers
             const preRegisteredUsersSnapshot = await getDocs(collection(db, 'preRegisteredUsers'));
             const preRegisteredUsersData = preRegisteredUsersSnapshot.docs.map(doc => ({
                 ...doc.data(),
                 id: doc.id,
-                nik: doc.id, // Gunakan ID dokumen sebagai NIK
-                source: 'preRegisteredUsers', // Tandai asal data
+                nik: doc.id,
+                source: 'preRegisteredUsers', 
             }));
     
-            // Gabungkan data dari kedua koleksi
             setUsers([...registeredUsersData, ...preRegisteredUsersData]);
         };
     
@@ -53,12 +50,12 @@ const UserManagement: React.FC = () => {
             };
 
             await setDoc(doc(db, 'preRegisteredUsers', values.nik), userData);
-            message.success("User berhasil ditambahkan!");
+            message.success("Successfully added user!");
             form.resetFields();
             setIsModalVisible(false);
         } catch (error) {
             console.error("Error adding user:", error);
-            message.error("Gagal menambahkan user!");
+            message.error("Failed to add user!");
         }
     };
 
@@ -97,7 +94,6 @@ const UserManagement: React.FC = () => {
             setIsModalVisible(false);
             form.resetFields();
 
-            // Refresh user data
             const querySnapshot = await getDocs(collection(db, collectionName));
             const usersData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
             setUsers(usersData);
@@ -264,6 +260,7 @@ const UserManagement: React.FC = () => {
                 onOk={() => form.submit()}
                 title={editingUser ? "Update User" : "Add New User"}
                 width={1000}
+                okText="Submit"
             >
                 <Form form={form} onFinish={onFinish} layout="vertical">
                     <Form.Item name="nik" label="NIK" rules={[{ required: true }]}>
@@ -334,17 +331,15 @@ const UserManagement: React.FC = () => {
                                 </Select>
                             </Form.Item>
 
-                            {/* Tombol Hapus */}
                             <Button type="link" onClick={() => remove(name)}>
-                                Hapus
+                                Delete
                             </Button>
                         </div>
                     ))}
 
-                    {/* Tombol Tambah Profile */}
                     <Form.Item>
                         <Button type="dashed" onClick={() => add()} block>
-                            Tambah Profile
+                            Add Profile
                         </Button>
                         <Form.ErrorList errors={errors} />
                     </Form.Item>
