@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Table, Button, Modal, Form, Input, message, Select } from 'antd';
 import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { db } from '@/firebase/firebase';
-import { collection, updateDoc, deleteDoc, doc, getDocs, setDoc } from 'firebase/firestore';
+import { collection, updateDoc, deleteDoc, doc, getDocs, setDoc, getDoc } from 'firebase/firestore';
 
 const UserManagement: React.FC = () => {
     const [users, setUsers] = useState([]);
@@ -65,7 +65,10 @@ const UserManagement: React.FC = () => {
     };
 
     const handleEditUser = (user: any) => {
-        setEditingUser(user);
+        setEditingUser({
+            ...user,
+            source: user.source
+        });
         form.setFieldsValue({
             namaLengkap: user.namaLengkap,
             nik: user.nik,
@@ -74,16 +77,28 @@ const UserManagement: React.FC = () => {
         });
         setIsModalVisible(true);
     };
-
     const handleUpdateUser = async (values: any) => {
         if (!editingUser) return;
         try {
             const updatedProfiles = values.profiles || [];
+    
+            // Pastikan kondisi pemilihan koleksi benar
+            const collectionName = editingUser.source === 'registeredUsers' ? 'registeredUsers' : 'preRegisteredUsers';
+            const userDocRef = doc(db, collectionName, editingUser.id);
+    
+            console.log("Updating document in collection:", collectionName, "with ID:", editingUser.id);
+    
+            const userDoc = await getDoc(userDocRef);
+            if (!userDoc.exists()) {
+                message.error("User document not found. Cannot update non-existing user.");
+                return;
+            }
+    
+            await updateDoc(userDocRef, {
             const collectionName = editingUser.source; // Determine collection based on source
 
             await updateDoc(doc(db, collectionName, editingUser.id), {
                 namaLengkap: values.namaLengkap,
-                nik: values.nik,
                 divisi: values.divisi,
                 profile: updatedProfiles
             });
@@ -110,6 +125,7 @@ const UserManagement: React.FC = () => {
 
             setUsers([...registeredUsersData, ...preRegisteredUsersData]);
         } catch (error) {
+            console.error("Failed to update user:", error);
             message.error("Failed to update user.");
         }
     };
@@ -137,10 +153,10 @@ const UserManagement: React.FC = () => {
 
     const columns = [
         {
-            title: 'No.',
-            key: 'no',
+            title: 'NIK',
+            key: 'nik',
             align: 'center' as 'center',
-            render: (_: any, __: any, index: number) => (currentPage - 1) * pageSize + index + 1,
+            render: (user: any) => user.source === 'preRegisteredUsers' ? user.id : user.nik,
         },
         {
             title: 'NIK',
