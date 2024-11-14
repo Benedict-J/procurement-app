@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Table, Button, Pagination, Modal, Form, Input, message, Select, Space } from 'antd';
 import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { db } from '@/firebase/firebase';
-import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, setDoc } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, setDoc, getDoc } from 'firebase/firestore';
 
 const UserManagement: React.FC = () => {
     const [users, setUsers] = useState([]);
@@ -14,24 +14,23 @@ const UserManagement: React.FC = () => {
 
     useEffect(() => {
         const fetchUsers = async () => {
-            // Ambil data dari registeredUsers
             const registeredUsersSnapshot = await getDocs(collection(db, 'registeredUsers'));
             const registeredUsersData = registeredUsersSnapshot.docs.map(doc => ({
                 ...doc.data(),
                 id: doc.id,
-                source: 'registeredUsers', // Tandai asal data
+                source: 'registeredUsers',
+                registered: true,
             }));
     
-            // Ambil data dari preRegisteredUsers
             const preRegisteredUsersSnapshot = await getDocs(collection(db, 'preRegisteredUsers'));
             const preRegisteredUsersData = preRegisteredUsersSnapshot.docs.map(doc => ({
                 ...doc.data(),
                 id: doc.id,
-                nik: doc.id, // Gunakan ID dokumen sebagai NIK
-                source: 'preRegisteredUsers', // Tandai asal data
+                nik: doc.id,
+                source: 'preRegisteredUsers',
+                registered: false,
             }));
     
-            // Gabungkan data dari kedua koleksi
             setUsers([...registeredUsersData, ...preRegisteredUsersData]);
         };
     
@@ -69,7 +68,10 @@ const UserManagement: React.FC = () => {
     };
 
     const handleEditUser = (user: any) => {
-        setEditingUser(user);
+        setEditingUser({
+            ...user,
+            source: user.source
+        });
         form.setFieldsValue({
             namaLengkap: user.namaLengkap,
             nik: user.nik,
@@ -78,17 +80,25 @@ const UserManagement: React.FC = () => {
         });
         setIsModalVisible(true);
     };
-
     const handleUpdateUser = async (values: any) => {
         if (!editingUser) return;
         try {
             const updatedProfiles = values.profiles || [];
-
-            const collectionName = editingUser.registered ? 'registeredUsers' : 'preRegisteredUsers';
-
-            await updateDoc(doc(db, collectionName, editingUser.id), {
+    
+            // Pastikan kondisi pemilihan koleksi benar
+            const collectionName = editingUser.source === 'registeredUsers' ? 'registeredUsers' : 'preRegisteredUsers';
+            const userDocRef = doc(db, collectionName, editingUser.id);
+    
+            console.log("Updating document in collection:", collectionName, "with ID:", editingUser.id);
+    
+            const userDoc = await getDoc(userDocRef);
+            if (!userDoc.exists()) {
+                message.error("User document not found. Cannot update non-existing user.");
+                return;
+            }
+    
+            await updateDoc(userDocRef, {
                 namaLengkap: values.namaLengkap,
-                nik: values.nik,
                 divisi: values.divisi,
                 profile: updatedProfiles
             });
@@ -96,12 +106,13 @@ const UserManagement: React.FC = () => {
             setEditingUser(null);
             setIsModalVisible(false);
             form.resetFields();
-
+    
             // Refresh user data
             const querySnapshot = await getDocs(collection(db, collectionName));
             const usersData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
             setUsers(usersData);
         } catch (error) {
+            console.error("Failed to update user:", error);
             message.error("Failed to update user.");
         }
     };
@@ -130,10 +141,10 @@ const UserManagement: React.FC = () => {
 
     const columns = [
         {
-            title: 'No.',
-            key: 'no',
+            title: 'NIK',
+            key: 'nik',
             align: 'center' as 'center',
-            render: (_: any, __: any, index: number) => (currentPage - 1) * pageSize + index + 1,
+            render: (user: any) => user.source === 'preRegisteredUsers' ? user.id : user.nik,
         },
         {
             title: 'NIK',
