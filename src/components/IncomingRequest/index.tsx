@@ -159,10 +159,9 @@ const IncomingRequest = () => {
             await updateDoc(requestDocRef, updates);
 
             // Send Notifications
-            await handleStatusChange(id, "Approved")
-
             setDataSource(prevData => prevData.filter(item => item.id !== id));
             message.success(`Request approved successfully by ${userProfile.namaLengkap}`);
+            await handleStatusChange(id, "Approved")
         } catch (error) {
             console.error("Error approving request:", error);
             message.error("Failed to approve request.");
@@ -191,10 +190,9 @@ const IncomingRequest = () => {
             });
 
             // Notifications
-            await handleStatusChange(currentRejectId, "Rejected");
-
             setDataSource(prevData => prevData.filter(item => item.id !== currentRejectId));
             message.success(`Request rejected successfully by ${userProfile.role}`);
+            await handleStatusChange(currentRejectId, "Rejected");
         } catch (error) {
             console.error("Error rejecting request:", error);
             message.error("Failed to reject request.");
