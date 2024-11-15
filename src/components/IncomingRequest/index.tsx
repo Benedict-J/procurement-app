@@ -7,6 +7,7 @@ import { db } from "@/firebase/firebase";
 import dayjs from "dayjs";
 import { Input } from "antd";
 import { useRouter } from "next/router";
+import { handleStatusChange } from "@/utils/notifications/handleStatusUtils";
 
 const { TextArea } = Input;
 
@@ -157,6 +158,9 @@ const IncomingRequest = () => {
 
             await updateDoc(requestDocRef, updates);
 
+            // Send Notifications
+            await handleStatusChange(id, "Approved")
+
             setDataSource(prevData => prevData.filter(item => item.id !== id));
             message.success(`Request approved successfully by ${userProfile.namaLengkap}`);
         } catch (error) {
@@ -164,57 +168,6 @@ const IncomingRequest = () => {
             message.error("Failed to approve request.");
         }
     };
-
-
-    // const handleApprove = async (id: string) => {
-    //     if (!userProfile) {
-    //         console.error("User profile not found.");
-    //         return;
-    //     }
-
-    //     const role = userProfile.role;
-    //     const userId = userProfile.userId;
-    //     const userName = userProfile.namaLengkap;
-
-
-    //     let approvalField = "";
-    //     if (role === "Checker") {
-    //         approvalField = "approvalStatus.checker";
-    //     } else if (role === "Approval") {
-    //         approvalField = "approvalStatus.approval";
-    //     } else if (role === "Releaser") {
-    //         approvalField = "approvalStatus.releaser";
-    //     } else {
-    //         console.error("Role not authorized for approval.");
-    //         return;
-    //     }
-
-    //     try {
-    //         const requestDocRef = doc(db, "requests", id);
-
-    //         // Update approval status
-    //         const updates = {
-    //             [`${approvalField}.approved`]: true,
-    //             [`${approvalField}.approvedBy`]: userId,
-    //             [`${approvalField}.approvedAt`]: dayjs().format("YYYY-MM-DD HH:mm:ss"),
-    //         };
-
-    //         if (role === 'Releaser') {
-    //             updates['status'] = "Approved";
-    //         }
-
-    //         await updateDoc(requestDocRef, updates);
-
-    //         // Menghapus item yang di-approve dari dataSource
-    //         setDataSource((prevData) => prevData.filter((item) => item.id !== id));
-
-    //         console.log(`Request ${id} approved by ${role}`);
-    //         message.success(`Request approved successfully by ${userName}`);
-    //     } catch (error) {
-    //         console.error("Error approving request:", error);
-    //         message.error("Failed to approve request.");
-    //     }
-    // };
 
     // Handler untuk reject
     const handleReject = (id: string) => {
@@ -236,6 +189,9 @@ const IncomingRequest = () => {
                 [`approvalStatus.${role}.feedback`]: rejectFeedback,
                 status: "Rejected",
             });
+
+            // Notifications
+            await handleStatusChange(currentRejectId, "Rejected");
 
             setDataSource(prevData => prevData.filter(item => item.id !== currentRejectId));
             message.success(`Request rejected successfully by ${userProfile.role}`);
