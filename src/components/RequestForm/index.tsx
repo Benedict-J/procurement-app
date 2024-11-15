@@ -224,6 +224,7 @@ const deleteForm = (indexToDelete: number) => {
       const requesterName = userProfile.namaLengkap;
       const requesterDivision = userProfile.divisi;
       const requesterEntity = userProfile.entity; 
+      const requesterEmail = userProfile.email;
 
       if (requesterEntity !== userProfile.entity) {
         alert(`Your request can only be associated with your entity: ${userProfile.entity}.`);
@@ -239,6 +240,7 @@ const deleteForm = (indexToDelete: number) => {
         requesterId: requesterId,
         requesterName: requesterName,
         requesterDivision: requesterDivision,
+        requesterEmail: requesterEmail,
         requesterEntity: requesterEntity,   
         createdAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
         approvalStatus: {
