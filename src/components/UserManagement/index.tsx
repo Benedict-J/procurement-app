@@ -137,12 +137,33 @@ const UserManagement: React.FC = () => {
         });
     };
 
+    const confirmAddUser = (values: any) => {
+        Modal.confirm({
+            title: 'Confirm Submission',
+            content: 'Is the data entered correct?',
+            okText: 'Yes, Submit',
+            cancelText: 'Cancel',
+            onOk: () => handleAddUser(values),
+        });
+    };
+
+    const confirmUpdateUser = (values: any) => {
+        Modal.confirm({
+            title: 'Confirm Update',
+            content: 'Is the updated data correct?',
+            okText: 'Yes, Update',
+            cancelText: 'Cancel',
+            onOk: () => handleUpdateUser(values),
+        });
+    };
+    
+
     const columns = [
         {
-            title: 'NIK',
-            key: 'nik',
+            title: 'No',
+            key: 'no',
             align: 'center' as 'center',
-            render: (user: any) => user.source === 'preRegisteredUsers' ? user.id : user.nik,
+            render: (_: any, __: any, index: number) => (currentPage - 1) * pageSize + index + 1,
         },
         {
             title: 'NIK',
@@ -156,6 +177,14 @@ const UserManagement: React.FC = () => {
             title: 'Registered',
             key: 'registered',
             align: 'center' as 'center',
+            filters: [
+                { text: 'Yes', value: 'Yes' },
+                { text: 'No', value: 'No' },
+            ],
+            onFilter: (value: any, record: any) => {
+                const isRegistered = record.source === 'registeredUsers' ? 'Yes' : 'No';
+                return isRegistered === value;
+            },
             render: (user: any) => (user.source === 'registeredUsers' ? 'Yes' : 'No'),
         },
         {
@@ -237,9 +266,9 @@ const UserManagement: React.FC = () => {
 
     const onFinish = (values: any) => {
         if (editingUser) {
-            handleUpdateUser(values);
+            confirmUpdateUser(values);
         } else {
-            handleAddUser(values);
+            confirmAddUser(values);
         }
     };
 
