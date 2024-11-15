@@ -77,17 +77,41 @@ const UserManagement: React.FC = () => {
         });
         setIsModalVisible(true);
     };
+
     const handleUpdateUser = async (values: any) => {
         if (!editingUser) return;
         try {
             const updatedProfiles = values.profiles || [];
-            const collectionName = editingUser.source; // Determine collection based on source
+            const collectionName = editingUser.source;
+            const oldNIK = editingUser.nik;
+            const newNIK = values.nik;
 
-            await updateDoc(doc(db, collectionName, editingUser.id), {
-                namaLengkap: values.namaLengkap,
-                divisi: values.divisi,
-                profile: updatedProfiles
-            });
+            if (collectionName === 'preRegisteredUsers') {
+                // Jika berasal dari preRegisteredUsers, NIK adalah ID dokumen
+                if (oldNIK !== newNIK) {
+                    await deleteDoc(doc(db, collectionName, oldNIK));
+                    await setDoc(doc(db, collectionName, newNIK), {
+                        namaLengkap: values.namaLengkap,
+                        divisi: values.divisi,
+                        profile: updatedProfiles,
+                    });
+                } else {
+                    await updateDoc(doc(db, collectionName, oldNIK), {
+                        namaLengkap: values.namaLengkap,
+                        divisi: values.divisi,
+                        profile: updatedProfiles,
+                    });
+                }
+            } else if (collectionName === 'registeredUsers') {
+                // Jika berasal dari registeredUsers, update field NIK tanpa mengubah ID dokumen
+                await updateDoc(doc(db, collectionName, editingUser.id), {
+                    nik: newNIK,
+                    namaLengkap: values.namaLengkap,
+                    divisi: values.divisi,
+                    profile: updatedProfiles,
+                });
+            }
+
             message.success("User updated successfully!");
             setEditingUser(null);
             setIsModalVisible(false);
@@ -156,7 +180,7 @@ const UserManagement: React.FC = () => {
             onOk: () => handleUpdateUser(values),
         });
     };
-    
+
 
     const columns = [
         {
