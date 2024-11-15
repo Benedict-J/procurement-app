@@ -22,81 +22,81 @@ const HistoryTable = () => {
     const [pageSize, setPageSize] = useState(20);
     const router = useRouter(); 
 
-    useEffect(() => {
-        const fetchHistory = async () => {
-            if (!userProfile) return;
-    
-            setLoading(true);
-            const role = userProfile.role.toLowerCase();
-            let data = [];
-    
-            console.log("Fetching history for role:", role); // Debug log
-    
-            try {
-                if (role === "requester") {
-                    const historyQuery = query(
-                        collection(db, "requests"),
-                        where("requesterId", "==", userProfile.userId),
-                        where("requesterEntity", "==", userProfile.entity)
-                    );
-    
-                    const querySnapshot = await getDocs(historyQuery);
-                    data = querySnapshot.docs.map(doc => {
-                        const docData = doc.data();
-                        return {
-                            key: doc.id,
-                            id: doc.id,
-                            requestNo: docData.requestNumber || "N/A",
-                            requestDate: docData.createdAt ? dayjs(docData.createdAt).format("YYYY-MM-DD") : "N/A",
-                            status: docData.status || "N/A",
-                        };
-                    });
-    
-                } else {
-                    // Role selain requester, gabungkan `approvedBy` dan `rejectedBy`
-                    const approvedQuery = query(
-                        collection(db, "requests"),
-                        where(`approvalStatus.${role}.approvedBy`, "==", userProfile.userId),
-                        where("requesterEntity", "==", userProfile.entity)
-                    );
-    
-                    const rejectedQuery = query(
-                        collection(db, "requests"),
-                        where(`approvalStatus.${role}.rejectedBy`, "==", userProfile.userId),
-                        where("requesterEntity", "==", userProfile.entity)
-                    );
-    
-                    const approvedDocs = await getDocs(approvedQuery);
-                    const rejectedDocs = await getDocs(rejectedQuery);
-    
-                    // Gabungkan dokumen yang disetujui dan ditolak
-                    const combinedDocs = [...approvedDocs.docs, ...rejectedDocs.docs];
-                    data = combinedDocs.map(doc => {
-                        const docData = doc.data();
-                        const approvalData = docData.approvalStatus[role] || {};
-    
-                        return {
-                            key: doc.id,
-                            id: doc.id,
-                            requestNo: docData.requestNumber || "N/A",
-                            requestDate: docData.createdAt ? dayjs(docData.createdAt).format("YYYY-MM-DD") : "N/A",
-                            status: docData.status || "N/A",
-                            actionDate: approvalData.approvedAt || approvalData.rejectedAt || "N/A",
-                            action: approvalData.approved === false ? "Rejected" : approvalData.approved ? "Approved" : "Pending",
-                        };
-                    });
-                }
-    
-                setDataSource(data);
-                console.log("Fetched history data:", data); // Debug log
-            } catch (error) {
-                console.error("Error fetching history:", error);
-                message.error("Failed to load history.");
-            } finally {
-                setLoading(false);
+    const fetchHistory = async () => {
+        if (!userProfile) return;
+
+        setLoading(true);
+        const role = userProfile.role.toLowerCase();
+        let data = [];
+
+        console.log("Fetching history for role:", role); // Debug log
+
+        try {
+            if (role === "requester") {
+                const historyQuery = query(
+                    collection(db, "requests"),
+                    where("requesterId", "==", userProfile.userId),
+                    where("requesterEntity", "==", userProfile.entity)
+                );
+
+                const querySnapshot = await getDocs(historyQuery);
+                data = querySnapshot.docs.map(doc => {
+                    const docData = doc.data();
+                    return {
+                        key: doc.id,
+                        id: doc.id,
+                        requestNo: docData.requestNumber || "N/A",
+                        requestDate: docData.createdAt ? dayjs(docData.createdAt).format("YYYY-MM-DD") : "N/A",
+                        status: docData.status || "N/A",
+                    };
+                });
+
+            } else {
+                // Role selain requester, gabungkan `approvedBy` dan `rejectedBy`
+                const approvedQuery = query(
+                    collection(db, "requests"),
+                    where(`approvalStatus.${role}.approvedBy`, "==", userProfile.userId),
+                    where("requesterEntity", "==", userProfile.entity)
+                );
+
+                const rejectedQuery = query(
+                    collection(db, "requests"),
+                    where(`approvalStatus.${role}.rejectedBy`, "==", userProfile.userId),
+                    where("requesterEntity", "==", userProfile.entity)
+                );
+
+                const approvedDocs = await getDocs(approvedQuery);
+                const rejectedDocs = await getDocs(rejectedQuery);
+
+                // Gabungkan dokumen yang disetujui dan ditolak
+                const combinedDocs = [...approvedDocs.docs, ...rejectedDocs.docs];
+                data = combinedDocs.map(doc => {
+                    const docData = doc.data();
+                    const approvalData = docData.approvalStatus[role] || {};
+
+                    return {
+                        key: doc.id,
+                        id: doc.id,
+                        requestNo: docData.requestNumber || "N/A",
+                        requestDate: docData.createdAt ? dayjs(docData.createdAt).format("YYYY-MM-DD") : "N/A",
+                        status: docData.status || "N/A",
+                        actionDate: approvalData.approvedAt || approvalData.rejectedAt || "N/A",
+                        action: approvalData.approved === false ? "Rejected" : approvalData.approved ? "Approved" : "Pending",
+                    };
+                });
             }
-        };
-    
+
+            setDataSource(data);
+            console.log("Fetched history data:", data); // Debug log
+        } catch (error) {
+            console.error("Error fetching history:", error);
+            message.error("Failed to load history.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
         fetchHistory();
     }, [userProfile, statusFilter]);
 
