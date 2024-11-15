@@ -55,48 +55,48 @@ const Login: React.FC = () => {
 
     try {
       const result = await SignIn(nik, password);
-      const token = await result.user.getIdToken(); 
+      const token = await result.user.getIdToken();
 
       const userDocRef = doc(db, 'registeredUsers', result.user.uid);
       const userDocSnap = await getDoc(userDocRef);
 
       const userData = userDocSnap.data();
-      const selectedProfileIndex = userData.selectedProfileIndex; 
+      const selectedProfileIndex = userData.selectedProfileIndex;
       console.log("Selected profile index:", selectedProfileIndex);
 
       const selectedProfile = userData.profile.find(
-        
+
         (profile: Profile, index: number) => {
           console.log('Profile:', profile);
           console.log('SelectedProfileIndex:', selectedProfileIndex);
-          
+
           return index === selectedProfileIndex
-        } 
+        }
       );
-      console.log("Selected profile:", selectedProfile); 
+      console.log("Selected profile:", selectedProfile);
 
       const userRole = selectedProfile?.role || '';
       console.log("User role based on selected profile:", userRole);
 
-      document.cookie = `userRole=${userRole}; path=/`; 
+      document.cookie = `userRole=${userRole}; path=/`;
       document.cookie = `token=${token}; path=/`;
 
-      if (userRole === 'Super Admin') {
+      // Menggunakan switch untuk navigasi
+      switch (userRole) {
+        case 'Super Admin':
           router.push('/requester/user-management');
-          return;
-        }
-
-      console.log('user role:', userRole);
-      if (userRole === 'Requester') {
-        router.push('/requester/request-form');
-      } else if (userRole === 'Approval') {
-        router.push('/requester/incoming-request');
-      } else if (userRole === 'Checker') {
-        router.push('/requester/incoming-request');
-      } else if (userRole === 'Releaser') {
-        router.push('/requester/incoming-request');
-      } else {
+          break;
+        case 'Requester':
+          router.push('/requester/request-form');
+          break;
+        case 'Approval':
+        case 'Checker':
+        case 'Releaser':
+          router.push('/requester/incoming-request');
+          break;
+        default:
           router.push('/');
+          break;
       }
 
       message.success("Login successful!");
@@ -121,7 +121,7 @@ const Login: React.FC = () => {
             <Image
               src="/images/app-logo/logo-adakami-login.png"
               width={160}
-              preview= {false}
+              preview={false}
               alt="logo"
             />
           </div>

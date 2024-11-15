@@ -76,58 +76,58 @@ const IncomingRequest = () => {
         },
     ];
 
+    const fetchRequests = async () => {
+        if (!userProfile) return;
+
+        let roleQuery;
+        const division = userProfile.divisi;
+        const entity = userProfile.entity;
+        const role = userProfile.role;
+
+        // Buat query berdasarkan role pengguna
+        if (role === "Checker") {
+            roleQuery = query(
+                collection(db, "requests"),
+                where("approvalStatus.checker.approved", "==", false),
+                where("approvalStatus.checker.rejected", "==", false),
+                where("requesterDivision", "==", division),
+                where("requesterEntity", "==", entity),
+                where("status", "==", "In Progress")
+            );
+        } else if (role === "Approval") {
+            roleQuery = query(
+                collection(db, "requests"),
+                where("approvalStatus.checker.approved", "==", true),
+                where("approvalStatus.approval.approved", "==", false),
+                where("approvalStatus.approval.rejected", "==", false),
+                where("requesterEntity", "==", entity),
+                where("status", "==", "In Progress")
+            );
+        } else if (role === "Releaser") {
+            roleQuery = query(
+                collection(db, "requests"),
+                where("approvalStatus.approval.approved", "==", true),
+                where("approvalStatus.releaser.approved", "==", false),
+                where("approvalStatus.releaser.rejected", "==", false),
+                // where("requesterEntity", "==", entity),
+                where("status", "==", "In Progress")
+            );
+        }
+
+        if (roleQuery) {
+            const querySnapshot = await getDocs(roleQuery);
+            const requestData = querySnapshot.docs.map(doc => ({
+                key: doc.id,
+                id: doc.id,
+                name: doc.data().requesterName || "Unknown", 
+                requestNo: doc.data().requestNumber || "N/A",
+                detail: `Detail for request ${doc.id}`,
+            }));
+            setDataSource(requestData);
+        }
+    };
+
     useEffect(() => {
-        const fetchRequests = async () => {
-            if (!userProfile) return;
-    
-            let roleQuery;
-            const division = userProfile.divisi;
-            const entity = userProfile.entity;
-            const role = userProfile.role;
-    
-            // Buat query berdasarkan role pengguna
-            if (role === "Checker") {
-                roleQuery = query(
-                    collection(db, "requests"),
-                    where("approvalStatus.checker.approved", "==", false),
-                    where("approvalStatus.checker.rejected", "==", false),
-                    where("requesterDivision", "==", division),
-                    where("requesterEntity", "==", entity),
-                    where("status", "==", "In Progress")
-                );
-            } else if (role === "Approval") {
-                roleQuery = query(
-                    collection(db, "requests"),
-                    where("approvalStatus.checker.approved", "==", true),
-                    where("approvalStatus.approval.approved", "==", false),
-                    where("approvalStatus.approval.rejected", "==", false),
-                    where("requesterEntity", "==", entity),
-                    where("status", "==", "In Progress")
-                );
-            } else if (role === "Releaser") {
-                roleQuery = query(
-                    collection(db, "requests"),
-                    where("approvalStatus.approval.approved", "==", true),
-                    where("approvalStatus.releaser.approved", "==", false),
-                    where("approvalStatus.releaser.rejected", "==", false),
-                    // where("requesterEntity", "==", entity),
-                    where("status", "==", "In Progress")
-                );
-            }
-    
-            if (roleQuery) {
-                const querySnapshot = await getDocs(roleQuery);
-                const requestData = querySnapshot.docs.map(doc => ({
-                    key: doc.id,
-                    id: doc.id,
-                    name: doc.data().requesterName || "Unknown", 
-                    requestNo: doc.data().requestNumber || "N/A",
-                    detail: `Detail for request ${doc.id}`,
-                }));
-                setDataSource(requestData);
-            }
-        };
-    
         fetchRequests();
     }, [userProfile]);
 
@@ -136,7 +136,6 @@ const IncomingRequest = () => {
     };
 
     // Handler untuk approve
-
     const handleApprove = async (id: string) => {
         if (!userProfile) return;
 
