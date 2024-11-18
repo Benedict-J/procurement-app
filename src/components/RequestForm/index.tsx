@@ -8,6 +8,7 @@ import { addDoc, collection, doc, getDoc, setDoc, updateDoc } from "firebase/fir
 import React, { useState, useEffect, useCallback } from "react";
 import { useUserContext } from "@/contexts/UserContext";
 import { Autosave, useAutosave } from 'react-autosave';
+import { handleStatusChange } from "@/utils/notifications/handleStatusUtils";
 
 const { Option } = Select;
 
@@ -219,7 +220,7 @@ const deleteForm = (indexToDelete: number) => {
       }
 
       const entityAbbr = generateEntityAbbr(userProfile.entity);
-      const divisionAbbr = userProfile.divisi.substring(0, 3).toUpperCase(); // Ambil 3 huruf pertama dari entity
+      const divisionAbbr = userProfile.divisi.substring(0, 3).toUpperCase();
       const requestNumber = await generateRequestNumber(entityAbbr, divisionAbbr);
       const requesterName = userProfile.namaLengkap;
       const requesterDivision = userProfile.divisi;
@@ -233,7 +234,7 @@ const deleteForm = (indexToDelete: number) => {
     }
 
       // Menyimpan request ke Firestore
-      await addDoc(collection(db, "requests"), {
+      const docRef = await addDoc(collection(db, "requests"), {
         items: items,
         requestNumber: requestNumber,
         status: 'In Progress',
@@ -254,9 +255,10 @@ const deleteForm = (indexToDelete: number) => {
       setFormData({} as FormData);
       form.resetFields();
       message.success('Request submitted successfully');
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000)
+      await handleStatusChange(docRef.id);
+      // setTimeout(() => {
+      //   window.location.reload();
+      // }, 2000)
     } catch (error) {
       console.error("Error submitting request:", error);
       alert("Failed to submit request.");

@@ -161,7 +161,7 @@ const IncomingRequest = () => {
             // Send Notifications
             setDataSource(prevData => prevData.filter(item => item.id !== id));
             message.success(`Request approved successfully by ${userProfile.namaLengkap}`);
-            await handleStatusChange(id, "Approved")
+            await handleStatusChange(id)
         } catch (error) {
             console.error("Error approving request:", error);
             message.error("Failed to approve request.");
@@ -192,7 +192,7 @@ const IncomingRequest = () => {
             // Notifications
             setDataSource(prevData => prevData.filter(item => item.id !== currentRejectId));
             message.success(`Request rejected successfully by ${userProfile.role}`);
-            await handleStatusChange(currentRejectId, "Rejected");
+            await handleStatusChange(currentRejectId);
         } catch (error) {
             console.error("Error rejecting request:", error);
             message.error("Failed to reject request.");
