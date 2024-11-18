@@ -13,7 +13,6 @@ import { SortOrder } from "antd/es/table/interface";
 import { useRouter } from "next/router";
 
 const { Option } = Select;
-const { Search } = Input;
 const { RangePicker } = DatePicker;
 
 const HistoryTable = () => {
@@ -24,20 +23,23 @@ const HistoryTable = () => {
     const [statusFilter, setStatusFilter] = useState<DataType[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(20);
-    const [searchText, setSearchText] = useState(""); 
-    const [selectedDateRange, setSelectedDateRange] = useState([]); // State untuk filter tanggal
-    const [selectedStatus, setSelectedStatus] = useState(""); // State untuk filter status
+    const [searchText, setSearchText] = useState("");
+    const [selectedDateRange, setSelectedDateRange] = useState([]);
+    const [selectedStatus, setSelectedStatus] = useState("");
     const router = useRouter();
 
     const fetchHistory = async () => {
-        if (!userProfile) return;
+        if (!userProfile || !userProfile.role) {
+            setDataSource([]);
+            setLoading(false);
+            return;
+        }
 
         setLoading(true);
         const role = userProfile.role.toLowerCase();
         let data = [];
 
-        console.log("Fetching history for role:", role); // Debug log
-
+        console.log("Fetching history for role:", role);
         try {
             if (role === "requester") {
                 const historyQuery = query(
@@ -75,19 +77,19 @@ const HistoryTable = () => {
                 const approvedDocs = await getDocs(approvedQuery);
                 const rejectedDocs = await getDocs(rejectedQuery);
 
-                // Gabungkan dokumen yang disetujui dan ditolak
                 const combinedDocs = [...approvedDocs.docs, ...rejectedDocs.docs];
                 data = combinedDocs.map(doc => {
                     const docData = doc.data();
                     const approvalData = docData.approvalStatus[role] || {};
-
                     return {
                         key: doc.id,
                         id: doc.id,
                         requestNo: docData.requestNumber || "N/A",
                         requestDate: docData.createdAt ? dayjs(docData.createdAt).format("YYYY-MM-DD") : "N/A",
                         status: docData.status || "N/A",
-                        actionDate: approvalData.approvedAt || approvalData.rejectedAt || "N/A",
+                        actionDate: approvalData.approvedAt || approvalData.rejectedAt
+                            ? dayjs(approvalData.approvedAt || approvalData.rejectedAt).format("YYYY-MM-DD")
+                            : "N/A",
                         action: approvalData.approved === false ? "Rejected" : approvalData.approved ? "Approved" : "Pending",
                     };
                 });
@@ -121,11 +123,15 @@ const HistoryTable = () => {
 
     const filteredData = dataSource.filter(item => {
         const matchesRequestNo = item.requestNo.toLowerCase().includes(searchText);
-        const matchesStatus = selectedStatus ? item.status === selectedStatus : true;
-        const matchesDateRange = selectedDateRange && selectedDateRange.length === 2
-            ? dayjs(item.requestDate).isBetween(selectedDateRange[0], selectedDateRange[1], 'day', '[]')
-            : true;
 
+        //filter status pada search bar berdasarkan role
+        const sourceForFilter = userProfile.role === "Requester" ? item.status : item.action;
+        const matchesStatus = selectedStatus ? sourceForFilter === selectedStatus : true;
+
+        const matchesDateRange =
+            selectedDateRange && selectedDateRange.length === 2
+                ? dayjs(item.requestDate).isBetween(selectedDateRange[0], selectedDateRange[1], "day", "[]")
+                : true;
         return matchesRequestNo && matchesStatus && matchesDateRange;
     });
 
@@ -139,7 +145,7 @@ const HistoryTable = () => {
         action: string;
     }
 
-    // Kolom untuk peran Requester
+    // Kolom untuk Requester
     const requesterColumns: ColumnsType<DataType> = [
         {
             title: "No.",
@@ -258,27 +264,38 @@ const HistoryTable = () => {
     return (
         <div>
             <div style={{ display: "flex", gap: "16px", justifyContent: "flex-end", marginBottom: "16px" }}>
-                <Search
-                    placeholder="Search by Request No."
-                    onSearch={handleSearch}
-                    enterButton
-                    style={{ width: 250 }}
-                />
+                <Input.Group compact style={{ width: "auto" }}>
+                    <Input
+                        style={{ width: 250 }}
+                        placeholder="Search by no request"
+                        onChange={(e) => handleSearch(e.target.value)}
+                    />
+                    <Select
+                        placeholder="Status"
+                        onChange={handleStatusChange}
+                        allowClear
+                        style={{ width: 110 }}
+                    >
+                        {userProfile.role === "Requester" ? (
+                            <>
+                                <Option value="In Progress">In Progress</Option>
+                                <Option value="Approved">Approved</Option>
+                                <Option value="Rejected">Rejected</Option>
+                            </>
+                        ) : (
+                            Array.from(new Set(dataSource.map(item => item.action))).map(action => (
+                                <Option key={action} value={action}>
+                                    {action}
+                                </Option>
+                            ))
+                        )}
+                    </Select>
+                </Input.Group>
                 <RangePicker onChange={handleDateChange} style={{ width: 250 }} />
-                <Select
-                    placeholder="Select Status"
-                    onChange={handleStatusChange}
-                    allowClear
-                    style={{ width: 150 }}
-                >
-                    <Option value="In Progress">In Progress</Option>
-                    <Option value="Approved">Approved</Option>
-                    <Option value="Rejected">Rejected</Option>
-                </Select>
             </div>
 
             <Table
-                columns={userProfile.role === "Requester" ? requesterColumns : actionColumns}
+                columns={userProfile && userProfile.role === "Requester" ? requesterColumns : actionColumns}
                 dataSource={filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize)}
                 loading={loading}
                 pagination={false}
