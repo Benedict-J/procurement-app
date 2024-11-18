@@ -94,7 +94,7 @@ export const handleStatusChange = async (requestId: string) => {
         }
 
         // Alur pengiriman email
-        if (actionRole === "Requester") {
+        if (actionRole === "Requester" && status === "In Progress") {
             // Kirim email ke Checker jika Requester melakukan submit
             const checkerEmail = await getRoleEmail("Checker", requesterEntity, requesterDivision);
             if (checkerEmail) {
