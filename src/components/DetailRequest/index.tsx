@@ -20,6 +20,8 @@ interface DataType {
     uom: string;
     linkRef: string;
     budgetMax: string;
+    taxCost: string;
+    deliveryFee: string;
     feedback: string | null;
     receiver: string;
 }
@@ -92,6 +94,8 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
                     uom: item.uom || "N/A",
                     linkRef: item.linkRef || "N/A",
                     budgetMax: item.budgetMax || "N/A",
+                    taxCost: item.taxCost || "N/A",
+                    deliveryFee: item.deliveryFee || "N/A",
                     feedback: feedbackData ? feedbackData.feedback : "No feedback",
                     requestDate: requestDateFormatted,
                 }));
@@ -152,7 +156,9 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
         { title: "QTY", dataIndex: "qty", key: "qty", align: "center" },
         { title: "UoM", dataIndex: "uom", key: "uom", align: "center" },
         { title: "Link Ref", dataIndex: "linkRef", key: "linkRef", align: "center" },
-        { title: "Budget Max", dataIndex: "budgetMax", key: "budgetMax", align: "center" }
+        { title: "Budget Max", dataIndex: "budgetMax", key: "budgetMax", align: "center" },
+        { title: "Tax Cost", dataIndex: "taxCost", key: "taxCost", align: "center" },
+        { title: "Delivery Fee", dataIndex: "deliveryFee", key: "deliveryFee", align: "center" }
     ];
 
     const shouldActionsBeVisible = userProfile?.role === "Requester" && status === "Rejected";
