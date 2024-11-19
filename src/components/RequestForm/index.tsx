@@ -160,8 +160,8 @@ const RequestForm = () => {
       newValues[`receiver${newIndex + 1}`] = form.getFieldValue(`receiver${newIndex + 2}`);
       newValues[`deliveryAddress${newIndex + 1}`] = form.getFieldValue(`deliveryAddress${newIndex + 2}`);
       newValues[`customDeliveryAddress${newIndex + 1}`] = form.getFieldValue(`customDeliveryAddress${newIndex + 2}`);
-      newValues[`taxCost${newIndex + 1}`] = form.getFieldValue(`taxCost${newIndex + 2}`); // Update taxCost
-      newValues[`deliveryFee${newIndex + 1}`] = form.getFieldValue(`deliveryFee${newIndex + 2}`); // Update deliveryFee
+      newValues[`taxCost${newIndex + 1}`] = form.getFieldValue(`taxCost${newIndex + 2}`);
+      newValues[`deliveryFee${newIndex + 1}`] = form.getFieldValue(`deliveryFee${newIndex + 2}`);
     });
 
     form.setFieldsValue(newValues);
@@ -199,8 +199,8 @@ const RequestForm = () => {
       uom: values[`uom${index + 1}`] || "",
       linkRef: values[`linkRef${index + 1}`] || "",
       budgetMax: values[`budgetMax${index + 1}`] || "",
-      taxCost: values[`taxCost${index + 1}`] || "", // Include taxCost
-      deliveryFee: values[`deliveryFee${index + 1}`] || "", // Include deliveryFee
+      taxCost: values[`taxCost${index + 1}`] || "",
+      deliveryFee: values[`deliveryFee${index + 1}`] || "",
     }));
 
     function generateEntityAbbr(entityName: string): string {
@@ -394,7 +394,7 @@ const RequestForm = () => {
                 { required: true, message: "Please input the Tax Cost" },
                 {
                   validator: (_, value) => {
-                    const regex = /^[0-9.,]+$/; // Mengizinkan angka dengan karakter khusus '.' dan ','
+                    const regex = /^[0-9]+(\.[0-9]{3})*$/;
                     if (!value || regex.test(value)) {
                       return Promise.resolve();
                     } else {
@@ -404,7 +404,8 @@ const RequestForm = () => {
                 },
               ]}
             >
-              <Input placeholder="Tax Cost" />
+              <Input placeholder="Tax Cost" 
+              addonBefore="Rp"/>
             </Form.Item>
 
             <Form.Item
@@ -414,7 +415,7 @@ const RequestForm = () => {
                 { required: true, message: "Please input the Delivery Fee" },
                 {
                   validator: (_, value) => {
-                    const regex = /^[0-9.,]+$/; // Mengizinkan angka dengan karakter khusus '.' dan ','
+                    const regex = /^[0-9]+(\.[0-9]{3})*$/;
                     if (!value || regex.test(value)) {
                       return Promise.resolve();
                     } else {
@@ -424,7 +425,8 @@ const RequestForm = () => {
                 },
               ]}
             >
-              <Input placeholder="Delivery Fee" />
+              <Input placeholder="Delivery Fee" 
+              addonBefore="Rp"/>
             </Form.Item>
 
             <Row gutter={16}>

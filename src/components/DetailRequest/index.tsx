@@ -36,6 +36,7 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(20);
     const [requestNumber, setRequestNumber] = useState<string | null>(null);
+    const [grandTotal, setGrandTotal] = useState<number>(0);
     const router = useRouter();
 
     const [entity, setEntity] = useState<string | null>(null);
@@ -80,26 +81,40 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
                 const createdAt = new Date(data.createdAt);
                 const requestDateFormatted = `${createdAt.getFullYear()}-${String(createdAt.getMonth() + 1).padStart(2, '0')}-${String(createdAt.getDate()).padStart(2, '0')}`;
 
-                const requestData = (data.items || []).map((item: any, index: number) => ({
-                    key: `${firstDoc.id}-${index}`,
-                    requestNumber: data.requestNumber || "N/A",
-                    itemNumber: index + 1,
-                    estimateDeliveryDate: item.deliveryDate || "N/A",
-                    deliveryAddress: item.deliveryAddress === "other" ? item.customDeliveryAddress || "N/A" : item.deliveryAddress || "N/A",
-                    receiver: item.receiver || "N/A",
-                    merk: item.merk || "N/A",
-                    detailSpecs: item.detailSpecs || "N/A",
-                    color: item.color || "N/A",
-                    qty: item.qty || 0,
-                    uom: item.uom || "N/A",
-                    linkRef: item.linkRef || "N/A",
-                    budgetMax: item.budgetMax || "N/A",
-                    taxCost: item.taxCost || "N/A",
-                    deliveryFee: item.deliveryFee || "N/A",
-                    feedback: feedbackData ? feedbackData.feedback : "No feedback",
-                    requestDate: requestDateFormatted,
-                }));
+                let calculatedGrandTotal = 0;
 
+                const requestData = (data.items || []).map((item: any, index: number) => {
+                    const budgetMax = parseFloat(item.budgetMax?.replace(/\./g, "") || "0");
+                    const taxCost = parseFloat(item.taxCost?.replace(/\./g, "") || "0");
+                    const deliveryFee = parseFloat(item.deliveryFee?.replace(/\./g, "") || "0");
+
+                    // Kalkulasi Total Item
+                    const totalItem = budgetMax + taxCost + deliveryFee;
+
+                    calculatedGrandTotal += totalItem;
+
+                    return {
+                        key: `${firstDoc.id}-${index}`,
+                        requestNumber: data.requestNumber || "N/A",
+                        itemNumber: index + 1,
+                        estimateDeliveryDate: item.deliveryDate || "N/A",
+                        deliveryAddress: item.deliveryAddress === "other" ? item.customDeliveryAddress || "N/A" : item.deliveryAddress || "N/A",
+                        receiver: item.receiver || "N/A",
+                        merk: item.merk || "N/A",
+                        detailSpecs: item.detailSpecs || "N/A",
+                        color: item.color || "N/A",
+                        qty: item.qty || 0,
+                        uom: item.uom || "N/A",
+                        linkRef: item.linkRef || "N/A",
+                        budgetMax: budgetMax.toLocaleString("id-ID"),
+                        taxCost: taxCost.toLocaleString("id-ID"),
+                        deliveryFee: deliveryFee.toLocaleString("id-ID"),
+                        totalItem: totalItem.toLocaleString("id-ID"),
+                        feedback: feedbackData ? feedbackData.feedback : "No feedback",
+                        requestDate: requestDateFormatted,
+                    };
+                });
+                setGrandTotal(calculatedGrandTotal);
                 setDataSource(requestData);
             } else {
                 console.log("No data found for requestNo:", requestNo);
@@ -158,7 +173,8 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
         { title: "Link Ref", dataIndex: "linkRef", key: "linkRef", align: "center" },
         { title: "Budget Max", dataIndex: "budgetMax", key: "budgetMax", align: "center" },
         { title: "Tax Cost", dataIndex: "taxCost", key: "taxCost", align: "center" },
-        { title: "Delivery Fee", dataIndex: "deliveryFee", key: "deliveryFee", align: "center" }
+        { title: "Delivery Fee", dataIndex: "deliveryFee", key: "deliveryFee", align: "center" },
+        { title: "Total Item", dataIndex: "totalItem", key: "totalItem", align: "center" }
     ];
 
     const shouldActionsBeVisible = userProfile?.role === "Requester" && status === "Rejected";
@@ -207,6 +223,17 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
                 scroll={{ x: 200 }}
                 className={styles.table}
             />
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <div className={styles.totalContainer}>
+                    <div className={styles.totalLabel}>
+                        Grand Total:
+                    </div>
+                    <div className={styles.totalValue}>
+                        Rp {grandTotal.toLocaleString("id-ID")}
+                    </div>
+                </div>
+            </div>
 
             <Pagination
                 current={currentPage}
