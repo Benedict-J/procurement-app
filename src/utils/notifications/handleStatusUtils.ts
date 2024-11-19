@@ -2,7 +2,25 @@ import { collection, doc, getDoc, getDocs, query, where } from "firebase/firesto
 import { db } from "@/firebase/firebase";
 import { sendEmailNotification } from "@/utils/notifications/emailNotifications";
 
-const getRoleEmail = async (role: string, entity?: string, division?: string, selectedProfileIndex ?: number): Promise<string | null> => {
+interface Profile {
+    role: string;
+    entity: string;
+    email: string;
+}
+
+// Interface didefinisikan di file yang sama
+interface Profile {
+    role: string;
+    entity: string;
+    email: string;
+}
+
+const getRoleEmail = async (
+    role: string,
+    entity?: string,
+    division?: string,
+    selectedProfileIndex?: number
+): Promise<string | string[] | null> => {
     try {
         console.log(`Searching for role: ${role}, entity: ${entity}, division: ${division}, selectedProfileIndex: ${selectedProfileIndex}`);
 
@@ -14,22 +32,36 @@ const getRoleEmail = async (role: string, entity?: string, division?: string, se
         const querySnapshot = await getDocs(q);
         console.log("Query Snapshot Size:", querySnapshot.size);
 
+        const emails: string[] = [];
+
         for (const doc of querySnapshot.docs) {
             const userData = doc.data();
             console.log("User Data:", userData);
 
             if (Array.isArray(userData.profile)) {
-                const profileMatch = userData.profile.find(
-                    (p: any, index: number) => 
+                const profiles = userData.profile.filter(
+                    (p: Profile, index: number) =>
                         p.role === role &&
-                        (role === "Releaser" || p.entity === entity) && // Abaikan entity untuk Releaser
+                        (role === "Releaser" || p.entity === entity) &&
                         (selectedProfileIndex === undefined || selectedProfileIndex === index)
                 );
-                if (profileMatch) {
-                    console.log("Profile Match Found:", profileMatch);
-                    return profileMatch.email || null;
+
+                profiles.forEach((profile: Profile) => {
+                    if (profile.email) {
+                        emails.push(profile.email);
+                    }
+                });
+
+                if (role !== "Releaser" && profiles.length > 0) {
+                    console.log("Single Profile Match Found:", profiles[0]);
+                    return profiles[0].email || null;
                 }
             }
+        }
+
+        if (role === "Releaser" && emails.length > 0) {
+            console.log("Releaser Emails Found:", emails);
+            return emails;
         }
 
         console.error(`No user found for role: ${role}, entity: ${entity}, division: ${division}`);
@@ -107,9 +139,10 @@ export const handleStatusChange = async (requestId: string) => {
         // Alur pengiriman email
         if (actionRole === "Requester" && status === "In Progress") {
             const checkerEmail = await getRoleEmail("Checker", requesterEntity, requesterDivision);
+            const emailToSend = Array.isArray(checkerEmail) ? checkerEmail[0] : checkerEmail;
             if (checkerEmail) {
                 await sendEmailNotification(
-                    checkerEmail,
+                    emailToSend,
                     "New Request",
                     requestData.requestNumber,
                     requestData.createdAt,
@@ -133,10 +166,11 @@ export const handleStatusChange = async (requestId: string) => {
                 );
                 console.log(`Email sent to Requester (Rejected): ${requesterEmail}`);
             } else if (status === "In Progress") {
-                const approvalEmail = await getRoleEmail("Approval", requesterEntity);
+                const approvalEmail = await getRoleEmail("Approval", requesterEntity, requesterDivision);
+                const emailToSend = Array.isArray(approvalEmail) ? approvalEmail[0] : approvalEmail;
                 if (approvalEmail) {
                     await sendEmailNotification(
-                        approvalEmail,
+                        emailToSend,
                         "New Request to Approve",
                         requestData.requestNumber,
                         requestData.createdAt,
@@ -174,10 +208,23 @@ export const handleStatusChange = async (requestId: string) => {
                 );
                 console.log(`Email sent to Requester (Rejected): ${requesterEmail}`);
             } else if (status === "In Progress") {
-                const releaserEmail = await getRoleEmail("Releaser");
-                if (releaserEmail) {
+                const releaserEmails = await getRoleEmail("Releaser");
+                if (Array.isArray(releaserEmails)) {
+                    for (const email of releaserEmails) {
+                        await sendEmailNotification(
+                            email,
+                            "Final Approval Needed",
+                            requestData.requestNumber,
+                            requestData.createdAt,
+                            "Approval",
+                            `http://localhost:3000/requester/detail-request?requestNo=${requestData.requestNumber}`,
+                            false
+                        );
+                        console.log(`Email sent to Releaser: ${email}`);
+                    }
+                } else if (releaserEmails) {
                     await sendEmailNotification(
-                        releaserEmail,
+                        releaserEmails,
                         "Final Approval Needed",
                         requestData.requestNumber,
                         requestData.createdAt,
@@ -185,8 +232,20 @@ export const handleStatusChange = async (requestId: string) => {
                         `http://localhost:3000/requester/detail-request?requestNo=${requestData.requestNumber}`,
                         false
                     );
-                    console.log(`Email sent to Releaser: ${releaserEmail}`);
+                    console.log(`Email sent to Releaser: ${releaserEmails}`);
                 }
+                // if (releaserEmail) {
+                //     await sendEmailNotification(
+                //         releaserEmail,
+                //         "Final Approval Needed",
+                //         requestData.requestNumber,
+                //         requestData.createdAt,
+                //         "Approval",
+                //         `http://localhost:3000/requester/detail-request?requestNo=${requestData.requestNumber}`,
+                //         false
+                //     );
+                //     console.log(`Email sent to Releaser: ${releaserEmail}`);
+                // }
             }
             if (status === "In Progress" && requesterEmail) {
                 // Kirim email ke requester bahwa request sedang diproses
