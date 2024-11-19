@@ -2,32 +2,32 @@ import { collection, doc, getDoc, getDocs, query, where } from "firebase/firesto
 import { db } from "@/firebase/firebase";
 import { sendEmailNotification } from "@/utils/notifications/emailNotifications";
 
-const getRoleEmail = async (role: string, entity?: string, division?: string): Promise<string | null> => {
+const getRoleEmail = async (role: string, entity?: string, division?: string, selectedProfileIndex ?: number): Promise<string | null> => {
     try {
-        console.log(`Searching for role: ${role}, entity: ${entity}, division: ${division}`);
+        console.log(`Searching for role: ${role}, entity: ${entity}, division: ${division}, selectedProfileIndex: ${selectedProfileIndex}`);
         
-        // Query semua user di Firestore
         const q = query(
             collection(db, "registeredUsers"),
-            division ? where("divisi", "==", division) : undefined // Filter untuk division jika diberikan
+            division ? where("divisi", "==", division) : undefined
         );
 
         const querySnapshot = await getDocs(q);
         console.log("Query Snapshot Size:", querySnapshot.size);
 
-        // Filter berdasarkan role dan entity di array `profile`
         for (const doc of querySnapshot.docs) {
             const userData = doc.data();
             console.log("User Data:", userData);
 
-            // Pastikan ada field `profile`
             if (Array.isArray(userData.profile)) {
                 const profileMatch = userData.profile.find(
-                    (p: any) => p.role === role && p.entity === entity
+                    (p: any, index: number) => 
+                        p.role === role &&
+                        (role === "Releaser" || p.entity === entity) && // Abaikan entity untuk Releaser
+                        (selectedProfileIndex === undefined || selectedProfileIndex === index)
                 );
                 if (profileMatch) {
                     console.log("Profile Match Found:", profileMatch);
-                    return profileMatch.email || null; // Kembalikan email jika ditemukan
+                    return profileMatch.email || null;
                 }
             }
         }
@@ -44,6 +44,7 @@ export const handleStatusChange = async (requestId: string) => {
     try {
         const requestDocRef = doc(db, "requests", requestId);
         const requestDoc = await getDoc(requestDocRef);
+
         if (!requestDoc.exists()) {
             console.error("Request document not found.");
             return;
@@ -69,15 +70,25 @@ export const handleStatusChange = async (requestId: string) => {
 
         console.log("Current Status:", status);
 
+        // Cari role terakhir yang bertindak berdasarkan timestamp
         let actionRole: string | null = null;
+        let latestApprovalTime: string | null = null;
 
         if (approvalStatus) {
             for (const role in approvalStatus) {
                 const roleData = approvalStatus[role];
-                if (roleData?.approved) {
-                    actionRole = role.charAt(0).toUpperCase() + role.slice(1);
-                } else if (roleData?.rejected) {
-                    actionRole = role.charAt(0).toUpperCase() + role.slice(1);
+
+                if (roleData?.approved || roleData?.rejected) {
+                    const approvalTime = roleData.approvedAt || roleData.rejectedAt;
+
+                    // Periksa apakah ini tindakan terakhir berdasarkan waktu
+                    if (
+                        approvalTime &&
+                        (!latestApprovalTime || approvalTime > latestApprovalTime)
+                    ) {
+                        latestApprovalTime = approvalTime;
+                        actionRole = role.charAt(0).toUpperCase() + role.slice(1);
+                    }
                 }
             }
         }
@@ -95,7 +106,6 @@ export const handleStatusChange = async (requestId: string) => {
 
         // Alur pengiriman email
         if (actionRole === "Requester" && status === "In Progress") {
-            // Kirim email ke Checker jika Requester melakukan submit
             const checkerEmail = await getRoleEmail("Checker", requesterEntity, requesterDivision);
             if (checkerEmail) {
                 await sendEmailNotification(
@@ -109,8 +119,7 @@ export const handleStatusChange = async (requestId: string) => {
                 );
                 console.log(`Email sent to Checker: ${checkerEmail}`);
             }
-        } else if (actionRole === "Checker" && status === "In Progress" || "Rejected") {
-            // Kirim email ke Approval jika Checker melakukan approve
+        } else if (actionRole === "Checker" && status === "In Progress") {
             const approvalEmail = await getRoleEmail("Approval", requesterEntity);
             if (approvalEmail) {
                 await sendEmailNotification(
@@ -124,8 +133,6 @@ export const handleStatusChange = async (requestId: string) => {
                 );
                 console.log(`Email sent to Approval: ${approvalEmail}`);
             }
-
-            // Kirim email ke Requester untuk notifikasi tindakan Checker
             if (requesterEmail) {
                 await sendEmailNotification(
                     requesterEmail,
@@ -138,8 +145,7 @@ export const handleStatusChange = async (requestId: string) => {
                 );
                 console.log(`Email sent to Requester: ${requesterEmail}`);
             }
-        } else if (actionRole === "Approval" && status === "In Progress" || "Rejected") {
-            // Kirim email ke Releaser jika Approval melakukan approve
+        } else if (actionRole === "Approval" && status === "In Progress") {
             const releaserEmail = await getRoleEmail("Releaser");
             if (releaserEmail) {
                 await sendEmailNotification(
@@ -153,8 +159,6 @@ export const handleStatusChange = async (requestId: string) => {
                 );
                 console.log(`Email sent to Releaser: ${releaserEmail}`);
             }
-
-            // Kirim email ke Requester untuk notifikasi tindakan Approval
             if (requesterEmail) {
                 await sendEmailNotification(
                     requesterEmail,
@@ -167,8 +171,7 @@ export const handleStatusChange = async (requestId: string) => {
                 );
                 console.log(`Email sent to Requester: ${requesterEmail}`);
             }
-        } else if (actionRole === "Releaser" && status === "Approved" || "Rejected") {
-            // Kirim email ke Requester jika Releaser melakukan approve
+        } else if (actionRole === "Releaser" && status === "Approved") {
             if (requesterEmail) {
                 await sendEmailNotification(
                     requesterEmail,
