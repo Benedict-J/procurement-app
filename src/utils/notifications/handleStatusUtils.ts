@@ -5,7 +5,7 @@ import { sendEmailNotification } from "@/utils/notifications/emailNotifications"
 const getRoleEmail = async (role: string, entity?: string, division?: string, selectedProfileIndex ?: number): Promise<string | null> => {
     try {
         console.log(`Searching for role: ${role}, entity: ${entity}, division: ${division}, selectedProfileIndex: ${selectedProfileIndex}`);
-        
+
         const q = query(
             collection(db, "registeredUsers"),
             division ? where("divisi", "==", division) : undefined
@@ -114,7 +114,7 @@ export const handleStatusChange = async (requestId: string) => {
                     requestData.requestNumber,
                     requestData.createdAt,
                     "Requester",
-                    `http://localhost:3000/requester/flow-steps?requestNumber=${requestData.requestNumber}`,
+                    `http://localhost:3000/requester/detail-request?requestNo=${requestData.requestNumber}`,
                     false
                 );
                 console.log(`Email sent to Checker: ${checkerEmail}`);
@@ -128,7 +128,7 @@ export const handleStatusChange = async (requestId: string) => {
                     requestData.requestNumber,
                     requestData.createdAt,
                     "Checker",
-                    `http://localhost:3000/requester/flow-steps?requestNumber=${requestData.requestNumber}`,
+                    `http://localhost:3000/requester/detail-request?requestNo=${requestData.requestNumber}`,
                     false
                 );
                 console.log(`Email sent to Approval: ${approvalEmail}`);
@@ -154,7 +154,7 @@ export const handleStatusChange = async (requestId: string) => {
                     requestData.requestNumber,
                     requestData.createdAt,
                     "Approval",
-                    `http://localhost:3000/requester/flow-steps?requestNumber=${requestData.requestNumber}`,
+                    `http://localhost:3000/requester/detail-request?requestNo=${requestData.requestNumber}`,
                     false
                 );
                 console.log(`Email sent to Releaser: ${releaserEmail}`);
