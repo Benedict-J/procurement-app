@@ -119,21 +119,9 @@ export const handleStatusChange = async (requestId: string) => {
                 );
                 console.log(`Email sent to Checker: ${checkerEmail}`);
             }
-        } else if (actionRole === "Checker" && status === "In Progress") {
-            const approvalEmail = await getRoleEmail("Approval", requesterEntity);
-            if (approvalEmail) {
-                await sendEmailNotification(
-                    approvalEmail,
-                    "New Request to Approve",
-                    requestData.requestNumber,
-                    requestData.createdAt,
-                    "Checker",
-                    `http://localhost:3000/requester/detail-request?requestNo=${requestData.requestNumber}`,
-                    false
-                );
-                console.log(`Email sent to Approval: ${approvalEmail}`);
-            }
-            if (requesterEmail) {
+        } else if (actionRole === "Checker") {
+            if (status === "Rejected" && requesterEmail) {
+                // Jika status Rejected, hanya kirim email ke requester
                 await sendEmailNotification(
                     requesterEmail,
                     requestData.status,
@@ -143,23 +131,38 @@ export const handleStatusChange = async (requestId: string) => {
                     `http://localhost:3000/requester/flow-steps?requestNumber=${requestData.requestNumber}`,
                     true
                 );
-                console.log(`Email sent to Requester: ${requesterEmail}`);
+                console.log(`Email sent to Requester (Rejected): ${requesterEmail}`);
+            } else if (status === "In Progress") {
+                const approvalEmail = await getRoleEmail("Approval", requesterEntity);
+                if (approvalEmail) {
+                    await sendEmailNotification(
+                        approvalEmail,
+                        "New Request to Approve",
+                        requestData.requestNumber,
+                        requestData.createdAt,
+                        "Checker",
+                        `http://localhost:3000/requester/detail-request?requestNo=${requestData.requestNumber}`,
+                        false
+                    );
+                    console.log(`Email sent to Approval: ${approvalEmail}`);
+                }
             }
-        } else if (actionRole === "Approval" && status === "In Progress") {
-            const releaserEmail = await getRoleEmail("Releaser");
-            if (releaserEmail) {
+            if (status === "In Progress" && requesterEmail) {
+                // Kirim email ke requester bahwa request sedang diproses
                 await sendEmailNotification(
-                    releaserEmail,
-                    "Final Approval Needed",
+                    requesterEmail,
+                    "Request Approved by Checker",
                     requestData.requestNumber,
                     requestData.createdAt,
-                    "Approval",
-                    `http://localhost:3000/requester/detail-request?requestNo=${requestData.requestNumber}`,
-                    false
+                    "Checker",
+                    `http://localhost:3000/requester/flow-steps?requestNumber=${requestData.requestNumber}`,
+                    true
                 );
-                console.log(`Email sent to Releaser: ${releaserEmail}`);
+                console.log(`Email sent to Requester (In Progress by Checker): ${requesterEmail}`);
             }
-            if (requesterEmail) {
+        } else if (actionRole === "Approval") {
+            if (status === "Rejected" && requesterEmail) {
+                // Jika status Rejected, hanya kirim email ke requester
                 await sendEmailNotification(
                     requesterEmail,
                     requestData.status,
@@ -169,10 +172,38 @@ export const handleStatusChange = async (requestId: string) => {
                     `http://localhost:3000/requester/flow-steps?requestNumber=${requestData.requestNumber}`,
                     true
                 );
-                console.log(`Email sent to Requester: ${requesterEmail}`);
+                console.log(`Email sent to Requester (Rejected): ${requesterEmail}`);
+            } else if (status === "In Progress") {
+                const releaserEmail = await getRoleEmail("Releaser");
+                if (releaserEmail) {
+                    await sendEmailNotification(
+                        releaserEmail,
+                        "Final Approval Needed",
+                        requestData.requestNumber,
+                        requestData.createdAt,
+                        "Approval",
+                        `http://localhost:3000/requester/detail-request?requestNo=${requestData.requestNumber}`,
+                        false
+                    );
+                    console.log(`Email sent to Releaser: ${releaserEmail}`);
+                }
             }
-        } else if (actionRole === "Releaser" && status === "Approved") {
-            if (requesterEmail) {
+            if (status === "In Progress" && requesterEmail) {
+                // Kirim email ke requester bahwa request sedang diproses
+                await sendEmailNotification(
+                    requesterEmail,
+                    "Request Approved by Approval",
+                    requestData.requestNumber,
+                    requestData.createdAt,
+                    "Approval",
+                    `http://localhost:3000/requester/flow-steps?requestNumber=${requestData.requestNumber}`,
+                    true
+                );
+                console.log(`Email sent to Requester (In Progress by Approval): ${requesterEmail}`);
+            }
+        } else if (actionRole === "Releaser") {
+            if (status === "Rejected" && requesterEmail) {
+                // Jika status Rejected, hanya kirim email ke requester
                 await sendEmailNotification(
                     requesterEmail,
                     requestData.status,
@@ -182,7 +213,20 @@ export const handleStatusChange = async (requestId: string) => {
                     `http://localhost:3000/requester/flow-steps?requestNumber=${requestData.requestNumber}`,
                     true
                 );
-                console.log(`Email sent to Requester: ${requesterEmail}`);
+                console.log(`Email sent to Requester (Rejected): ${requesterEmail}`);
+            } else if (status === "Approved") {
+                if (requesterEmail) {
+                    await sendEmailNotification(
+                        requesterEmail,
+                        requestData.status,
+                        requestData.requestNumber,
+                        requestData.createdAt,
+                        "Releaser",
+                        `http://localhost:3000/requester/flow-steps?requestNumber=${requestData.requestNumber}`,
+                        true
+                    );
+                    console.log(`Email sent to Requester: ${requesterEmail}`);
+                }
             }
         }
     } catch (error) {
