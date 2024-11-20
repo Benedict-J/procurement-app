@@ -5,6 +5,7 @@ import dayjs, { Dayjs } from "dayjs";
 import { db } from "@/firebase/firebase";
 import { collection, getDocs, query, where, updateDoc, doc } from "firebase/firestore";
 import "dayjs/locale/en";
+import { handleStatusChange } from "@/utils/notifications/handleStatusUtils";
 
 const { Option } = Select;
 const { Panel } = Collapse;
@@ -104,6 +105,7 @@ const EditRequestForm: React.FC<EditRequestFormProps> = ({ requestNo }) => {
             });
 
             message.success("Request updated and sent back for Checker.");
+            await handleStatusChange(docId);
             router.push(`/requester/detail-request?requestNo=${requestNo}`);
         } catch (error) {
             console.error("Error updating data:", error);

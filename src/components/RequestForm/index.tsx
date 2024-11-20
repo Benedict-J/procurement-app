@@ -8,6 +8,7 @@ import { addDoc, collection, doc, getDoc, setDoc, updateDoc } from "firebase/fir
 import React, { useState, useEffect, useCallback } from "react";
 import { useUserContext } from "@/contexts/UserContext";
 import { Autosave, useAutosave } from 'react-autosave';
+import { handleStatusChange } from "@/utils/notifications/handleStatusUtils";
 
 const { Option } = Select;
 
@@ -219,11 +220,12 @@ const deleteForm = (indexToDelete: number) => {
       }
 
       const entityAbbr = generateEntityAbbr(userProfile.entity);
-      const divisionAbbr = userProfile.divisi.substring(0, 3).toUpperCase(); // Ambil 3 huruf pertama dari entity
+      const divisionAbbr = userProfile.divisi.substring(0, 3).toUpperCase();
       const requestNumber = await generateRequestNumber(entityAbbr, divisionAbbr);
       const requesterName = userProfile.namaLengkap;
       const requesterDivision = userProfile.divisi;
       const requesterEntity = userProfile.entity; 
+      const requesterEmail = userProfile.email;
 
       if (requesterEntity !== userProfile.entity) {
         alert(`Your request can only be associated with your entity: ${userProfile.entity}.`);
@@ -232,13 +234,14 @@ const deleteForm = (indexToDelete: number) => {
     }
 
       // Menyimpan request ke Firestore
-      await addDoc(collection(db, "requests"), {
+      const docRef = await addDoc(collection(db, "requests"), {
         items: items,
         requestNumber: requestNumber,
         status: 'In Progress',
         requesterId: requesterId,
         requesterName: requesterName,
         requesterDivision: requesterDivision,
+        requesterEmail: requesterEmail,
         requesterEntity: requesterEntity,   
         createdAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
         approvalStatus: {
@@ -252,6 +255,7 @@ const deleteForm = (indexToDelete: number) => {
       setFormData({} as FormData);
       form.resetFields();
       message.success('Request submitted successfully');
+      await handleStatusChange(docRef.id);
       setTimeout(() => {
         window.location.reload();
       }, 2000)

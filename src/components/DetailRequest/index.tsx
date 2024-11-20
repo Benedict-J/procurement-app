@@ -141,18 +141,29 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
     };
 
     const columns: TableColumnsType<DataType> = [
-        { title: "Nomor Item", dataIndex: "itemNumber", key: "itemNumber", align: "center" },
-        { title: "Request Date", dataIndex: "requestDate", key: "requestDate", align: "center" },
-        { title: "Estimate Delivery Date", dataIndex: "estimateDeliveryDate", key: "estimateDeliveryDate", align: "center" },
-        { title: "Delivery Address", dataIndex: "deliveryAddress", key: "deliveryAddress", align: "center" },
-        { title: "Receiver", dataIndex: "receiver", key: "receiver", align: "center" },
-        { title: "Merk", dataIndex: "merk", key: "merk", align: "center" },
-        { title: "Detail Specs", dataIndex: "detailSpecs", key: "detailSpecs", align: "center" },
-        { title: "Color", dataIndex: "color", key: "color", align: "center" },
-        { title: "QTY", dataIndex: "qty", key: "qty", align: "center" },
-        { title: "UoM", dataIndex: "uom", key: "uom", align: "center" },
-        { title: "Link Ref", dataIndex: "linkRef", key: "linkRef", align: "center" },
-        { title: "Budget Max", dataIndex: "budgetMax", key: "budgetMax", align: "center" }
+        { title: "Nomor Item", dataIndex: "itemNumber", key: "itemNumber", align: "center", width: 100 },
+        { title: "Request Date", dataIndex: "requestDate", key: "requestDate", align: "center", width: 150 },
+        { title: "Estimate Delivery Date", dataIndex: "estimateDeliveryDate", key: "estimateDeliveryDate", align: "center", width: 200 },
+        { title: "Delivery Address", dataIndex: "deliveryAddress", key: "deliveryAddress", align: "center", width: 300 },
+        { title: "Receiver", dataIndex: "receiver", key: "receiver", align: "center", width: 150 },
+        { title: "Merk", dataIndex: "merk", key: "merk", align: "center", width: 100 },
+        { title: "Detail Specs", dataIndex: "detailSpecs", key: "detailSpecs", align: "center", width: 300 },
+        { title: "Color", dataIndex: "color", key: "color", align: "center", width: 100 },
+        { title: "QTY", dataIndex: "qty", key: "qty", align: "center", width: 80 },
+        { title: "UoM", dataIndex: "uom", key: "uom", align: "center", width: 100 },
+        {
+            title: "Link Ref",
+            dataIndex: "linkRef",
+            key: "linkRef",
+            align: "center",
+            width: 150,
+            render: (text: string) => (
+                <a href={text} target="_blank" rel="noopener noreferrer">
+                    Click Here
+                </a>
+            ),
+        },
+        { title: "Budget Max", dataIndex: "budgetMax", key: "budgetMax", align: "center", width: 150 }
     ];
 
     const shouldActionsBeVisible = userProfile?.role === "Requester" && status === "Rejected";
@@ -198,7 +209,7 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
                 dataSource={currentData}
                 pagination={false}
                 bordered
-                scroll={{ x: 200 }}
+                scroll={{ x: 2000 }}
                 className={styles.table}
             />
 
