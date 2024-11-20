@@ -147,7 +147,7 @@ export const handleStatusChange = async (requestId: string) => {
                     requestData.requestNumber,
                     requestData.createdAt,
                     "Requester",
-                    `http://localhost:3000/requester/detail-request?requestNo=${requestData.requestNumber}`,
+                    `https://procurement-web-app.vercel.app/requester/detail-request?requestNo=${requestData.requestNumber}`,
                     false
                 );
                 console.log(`Email sent to Checker: ${checkerEmail}`);
@@ -161,7 +161,7 @@ export const handleStatusChange = async (requestId: string) => {
                     requestData.requestNumber,
                     requestData.createdAt,
                     "Checker",
-                    `http://localhost:3000/requester/flow-steps?requestNumber=${requestData.requestNumber}`,
+                    `https://procurement-web-app.vercel.app/requester/flow-steps?requestNumber=${requestData.requestNumber}`,
                     true
                 );
                 console.log(`Email sent to Requester (Rejected): ${requesterEmail}`);
@@ -175,7 +175,7 @@ export const handleStatusChange = async (requestId: string) => {
                         requestData.requestNumber,
                         requestData.createdAt,
                         "Checker",
-                        `http://localhost:3000/requester/detail-request?requestNo=${requestData.requestNumber}`,
+                        `https://procurement-web-app.vercel.app/requester/detail-request?requestNo=${requestData.requestNumber}`,
                         false
                     );
                     console.log(`Email sent to Approval: ${approvalEmail}`);
@@ -189,7 +189,7 @@ export const handleStatusChange = async (requestId: string) => {
                     requestData.requestNumber,
                     requestData.createdAt,
                     "Checker",
-                    `http://localhost:3000/requester/flow-steps?requestNumber=${requestData.requestNumber}`,
+                    `https://procurement-web-app.vercel.app/requester/flow-steps?requestNumber=${requestData.requestNumber}`,
                     true
                 );
                 console.log(`Email sent to Requester (In Progress by Checker): ${requesterEmail}`);
@@ -203,7 +203,7 @@ export const handleStatusChange = async (requestId: string) => {
                     requestData.requestNumber,
                     requestData.createdAt,
                     "Approval",
-                    `http://localhost:3000/requester/flow-steps?requestNumber=${requestData.requestNumber}`,
+                    `https://procurement-web-app.vercel.app/requester/flow-steps?requestNumber=${requestData.requestNumber}`,
                     true
                 );
                 console.log(`Email sent to Requester (Rejected): ${requesterEmail}`);
@@ -217,7 +217,7 @@ export const handleStatusChange = async (requestId: string) => {
                             requestData.requestNumber,
                             requestData.createdAt,
                             "Approval",
-                            `http://localhost:3000/requester/detail-request?requestNo=${requestData.requestNumber}`,
+                            `https://procurement-web-app.vercel.app/requester/detail-request?requestNo=${requestData.requestNumber}`,
                             false
                         );
                         console.log(`Email sent to Releaser: ${email}`);
@@ -229,23 +229,11 @@ export const handleStatusChange = async (requestId: string) => {
                         requestData.requestNumber,
                         requestData.createdAt,
                         "Approval",
-                        `http://localhost:3000/requester/detail-request?requestNo=${requestData.requestNumber}`,
+                        `https://procurement-web-app.vercel.app/detail-request?requestNo=${requestData.requestNumber}`,
                         false
                     );
                     console.log(`Email sent to Releaser: ${releaserEmails}`);
                 }
-                // if (releaserEmail) {
-                //     await sendEmailNotification(
-                //         releaserEmail,
-                //         "Final Approval Needed",
-                //         requestData.requestNumber,
-                //         requestData.createdAt,
-                //         "Approval",
-                //         `http://localhost:3000/requester/detail-request?requestNo=${requestData.requestNumber}`,
-                //         false
-                //     );
-                //     console.log(`Email sent to Releaser: ${releaserEmail}`);
-                // }
             }
             if (status === "In Progress" && requesterEmail) {
                 // Kirim email ke requester bahwa request sedang diproses
@@ -255,7 +243,7 @@ export const handleStatusChange = async (requestId: string) => {
                     requestData.requestNumber,
                     requestData.createdAt,
                     "Approval",
-                    `http://localhost:3000/requester/flow-steps?requestNumber=${requestData.requestNumber}`,
+                    `https://procurement-web-app.vercel.app/requester/flow-steps?requestNumber=${requestData.requestNumber}`,
                     true
                 );
                 console.log(`Email sent to Requester (In Progress by Approval): ${requesterEmail}`);
@@ -269,7 +257,7 @@ export const handleStatusChange = async (requestId: string) => {
                     requestData.requestNumber,
                     requestData.createdAt,
                     "Releaser",
-                    `http://localhost:3000/requester/flow-steps?requestNumber=${requestData.requestNumber}`,
+                    `https://procurement-web-app.vercel.app/requester/flow-steps?requestNumber=${requestData.requestNumber}`,
                     true
                 );
                 console.log(`Email sent to Requester (Rejected): ${requesterEmail}`);
@@ -281,7 +269,7 @@ export const handleStatusChange = async (requestId: string) => {
                         requestData.requestNumber,
                         requestData.createdAt,
                         "Releaser",
-                        `http://localhost:3000/requester/flow-steps?requestNumber=${requestData.requestNumber}`,
+                        `https://procurement-web-app.vercel.app/requester/flow-steps?requestNumber=${requestData.requestNumber}`,
                         true
                     );
                     console.log(`Email sent to Requester: ${requesterEmail}`);
