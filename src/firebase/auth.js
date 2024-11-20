@@ -12,6 +12,7 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 export const SignIn = async (nik, password) => {
     try {
         console.log("Checking NIK:", nik);
+
         const usersRef = collection(db, 'registeredUsers');
         const q = query(usersRef, where("nik", "==", nik.trim()));
         const querySnapshot = await getDocs(q);
@@ -29,17 +30,19 @@ export const SignIn = async (nik, password) => {
         querySnapshot.forEach((doc) => {
             const userData = doc.data();
 
-            // Loop melalui setiap profil untuk menemukan email yang sesuai
-            userData.profile.forEach((profile, index) => {
-                if (profile.email) {
-                    // Simpan email pertama yang ditemukan
-                    if (!email) {
-                        email = profile.email;
-                        selectedProfileIndex = index;
+            // Periksa apakah profile ada dan merupakan array
+            if (Array.isArray(userData.profile)) {
+                userData.profile.forEach((profile, index) => {
+                    if (profile.email) {
+                        // Simpan email pertama yang ditemukan
+                        if (!email) {
+                            email = profile.email;
+                            selectedProfileIndex = index;
+                        }
+                        console.log(`Email found in profile ${index}:`, profile.email);
                     }
-                    console.log(`Email found in profile ${index}:`, profile.email);
-                }
-            });
+                });
+            }
 
             isEmailVerifiedInDB = userData.isEmailVerified || false;
         });
@@ -56,17 +59,21 @@ export const SignIn = async (nik, password) => {
             throw new Error("Login failed! Unable to retrieve user data.");
         }
 
-        // Validasi apakah email sudah diverifikasi
+        // Reload user untuk memastikan status email terkini
         await user.reload();
+
+        // Validasi apakah email sudah diverifikasi
         if (!user.emailVerified || !isEmailVerifiedInDB) {
             await sendEmailVerification(user);
             throw new Error("Email not verified. A verification email has been sent to your inbox.");
         }
 
-        return { user, email, selectedProfileIndex };
+        console.log("Login successful for:", user.email);
+        return { success: true, user, email, selectedProfileIndex };
+
     } catch (error) {
-        console.error("Error signing in:", error);
-        throw new Error("Login failed! Please check your NIK or password again.");
+        console.error("Error signing in:", error.message || error);
+        throw new Error(error.message || "Login failed! Please check your NIK or password again.");
     }
 };
 
