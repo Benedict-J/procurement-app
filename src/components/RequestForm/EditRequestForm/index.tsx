@@ -224,6 +224,46 @@ const EditRequestForm: React.FC<EditRequestFormProps> = ({ requestNo }) => {
                             <Input placeholder="Maximum Budget" addonBefore="Rp" />
                         </Form.Item>
 
+                        <Form.Item
+                            label="Tax Cost"
+                            name={['items', index, 'taxCost']}
+                            rules={[
+                                { required: true, message: "Please enter the tax cost" },
+                                {
+                                    validator: (_, value) => {
+                                        const regex = /^[0-9]+(\.[0-9]{3})*$/; // Only allow numbers with thousand separators
+                                        if (!value || regex.test(value)) {
+                                            return Promise.resolve();
+                                        } else {
+                                            return Promise.reject("Only numbers are allowed with '.' as thousand separators");
+                                        }
+                                    },
+                                },
+                            ]}
+                        >
+                            <Input placeholder="Tax Cost" addonBefore="Rp" />
+                        </Form.Item>
+
+                        <Form.Item
+                            label="Delivery Fee"
+                            name={['items', index, 'deliveryFee']}
+                            rules={[
+                                { required: true, message: "Please enter the delivery fee" },
+                                {
+                                    validator: (_, value) => {
+                                        const regex = /^[0-9]+(\.[0-9]{3})*$/; // Only allow numbers with thousand separators
+                                        if (!value || regex.test(value)) {
+                                            return Promise.resolve();
+                                        } else {
+                                            return Promise.reject("Only numbers are allowed with '.' as thousand separators");
+                                        }
+                                    },
+                                },
+                            ]}
+                        >
+                            <Input placeholder="Delivery Fee" addonBefore="Rp" />
+                        </Form.Item>
+
                         <Row gutter={16}>
                             <Col span={12}>
                                 <Form.Item

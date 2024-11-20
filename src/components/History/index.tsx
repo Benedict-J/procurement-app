@@ -122,6 +122,8 @@ const HistoryTable = () => {
     };
 
     const filteredData = dataSource.filter(item => {
+        if (!userProfile?.role) return false;
+
         const matchesRequestNo = item.requestNo.toLowerCase().includes(searchText);
 
         //filter status pada search bar berdasarkan role
@@ -276,7 +278,7 @@ const HistoryTable = () => {
                         allowClear
                         style={{ width: 110 }}
                     >
-                        {userProfile.role === "Requester" ? (
+                        {userProfile?.role === "Requester" ? (
                             <>
                                 <Option value="In Progress">In Progress</Option>
                                 <Option value="Approved">Approved</Option>
