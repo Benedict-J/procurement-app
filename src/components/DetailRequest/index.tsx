@@ -185,7 +185,7 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
         { title: "Budget Max", dataIndex: "budgetMax", key: "budgetMax", align: "center" },
         { title: "Tax Cost", dataIndex: "taxCost", key: "taxCost", align: "center" },
         { title: "Delivery Fee", dataIndex: "deliveryFee", key: "deliveryFee", align: "center" },
-        { title: "Total Item", dataIndex: "totalItem", key: "totalItem", align: "center", width: 150 }
+        { title: "Total Price", dataIndex: "totalItem", key: "totalItem", align: "center", width: 150 }
     ];
 
     const shouldActionsBeVisible = userProfile?.role === "Requester" && status === "Rejected";
@@ -235,13 +235,28 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
                 className={styles.table}
             />
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <div className={styles.totalContainer}>
-                    <div className={styles.totalLabel}>
-                        Grand Total:
-                    </div>
-                    <div className={styles.totalValue}>
-                        Rp {grandTotal.toLocaleString("id-ID")}
+            <div className={styles.feedbackGrandTotal}>
+                <div className={styles.feedbackSection}>
+                    {userProfile?.role === "Requester" && status === "Rejected" && feedbackData ? (
+                        <Card
+                            title={`Feedback from: ${feedbackData.role}`}
+                            className={styles.feedbackCard}
+                            headStyle={{
+                                backgroundColor: '#FAFAFA',
+                                fontSize: '14px',
+                                fontWeight: 600,
+                            }}
+                        >
+                            <p style={{ fontSize: '14px', color: '#333' }}>{feedbackData.feedback}</p>
+                        </Card>
+                    ) : (
+                        <div className={styles.emptyFeedback}></div>
+                    )}
+                </div>
+                <div className={styles.grandTotalSection}>
+                    <div className={styles.totalContainer}>
+                        <span className={styles.totalLabel}>Grand Total:</span>
+                        <span className={styles.totalValue}> Rp {grandTotal.toLocaleString("id-ID")}</span>
                     </div>
                 </div>
             </div>
@@ -255,23 +270,6 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
                 showSizeChanger={true}
                 pageSizeOptions={['10', '20', '50', '100']}
             />
-
-            {userProfile?.role === "Requester" && status === "Rejected" && feedbackData && (
-                <Card
-                    // role name belum jadi, sementara belum dipakai
-                    // title={`Feedback from: ${name} | ${feedbackData.role}`}
-                    title={`Feedback from: ${feedbackData.role}`}
-                    className={styles.feedbackCard}
-                    headStyle={{
-                        textAlign: 'center',
-                        backgroundColor: '#FAFAFA',
-                        fontSize: '14px',
-                        fontWeight: 600,
-                    }}
-                >
-                    <p style={{ fontSize: '14px', color: '#333' }}>{feedbackData.feedback}</p>
-                </Card>
-            )}
 
             <Modal
                 title="Confirm Cancel Request"
