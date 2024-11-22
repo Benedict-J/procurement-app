@@ -87,8 +87,61 @@
         background-color: #fff;
     }
 
+    .feedbackGrandTotal {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-top: 24px;
+
+        .feedbackSection {
+            flex: 0 1 25%;
+            max-width: 50%;
+            margin-right: 16px;
+            text-align: center;
+
+            .feedbackCard {
+                width: 100%;
+            }
+
+            .emptyFeedback {
+                height: 1px;
+                visibility: hidden;
+            }
+        }
+
+        .grandTotalSection {
+            flex: 0 1 20%;
+            max-width: 50%;
+            min-width: 150px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        
+            .totalContainer {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                padding: 8px;
+                border: 1px solid #e8e8e8;
+                border-radius: 4px;
+                font-size: 14px;
+                text-align: center;
+                width: 100%;
+        
+                .totalLabel {
+                    font-weight: 600;
+                }
+        
+                .totalValue {
+                    font-weight: "regular";
+                    margin-left: 4px;
+                }
+            }
+        }             
+    }
+
     .pagination {
-        margin-top: 20px;
+        margin-top: 24px;
         text-align: right;
     }
 }
@@ -104,12 +157,3 @@
 .statusInProgress {
     color: orange;
 }
-
-.feedbackCard {
-    width: 25%;
-    margin-top: 20px;
-    margin-left: 0;
-    max-height: 200px;
-    overflow-y: auto;
-}
-

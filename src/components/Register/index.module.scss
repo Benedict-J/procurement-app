@@ -1,41 +1,40 @@
 .registerContainer::before {
-    content: " ";
-    background: url(/images/login-background.png) no-repeat;
-    background-size: cover;
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0.4;
-  }
-  .registerContainer {
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  .cardRegister {
-    min-width: 360px;
-    max-width: 20vw;
-    margin: 0vh auto 0 auto;
-    box-shadow: 0 5px 15px rgba(137, 140, 141, 0.1);
-  }
+  content: " ";
+  background: url(/images/login-background.png) no-repeat;
+  background-size: cover;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.4;
+}
+.registerContainer {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.cardRegister {
+  min-width: 360px;
+  max-width: 20vw;
+  margin: 0vh auto 0 auto;
+  box-shadow: 0 5px 15px rgba(137, 140, 141, 0.1);
+}
 
-  .loginText {
-    text-align: center;
-    color: black;
-    font-weight: normal;
+.loginText {
+  text-align: center;
+  color: black;
+  font-weight: normal;
 
-  strong {
-    font-weight: bold;
-    color: black;
-    cursor: pointer;
-    transition: all 0.3s ease;
+strong {
+  font-weight: bold;
+  color: black;
+  cursor: pointer;
+  transition: all 0.3s ease;
 
-    &:hover {
-      color: green;
-    }
+  &:hover {
+    color: green;
   }
-  }
-  
+}
+}

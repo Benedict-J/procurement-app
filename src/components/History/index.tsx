@@ -1,36 +1,45 @@
 import { useEffect, useState } from "react";
-import { Table, Button, Select, message, Spin, Pagination } from "antd";
+import { Table, Button, Select, message, Spin, Pagination, Input, DatePicker } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { db } from "@/firebase/firebase"; 
+import { db } from "@/firebase/firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
-import { useUserContext } from "@/contexts/UserContext"; 
+import { useUserContext } from "@/contexts/UserContext";
 import dayjs from "dayjs";
 import "dayjs/locale/id";
-dayjs.locale("id"); 
+dayjs.locale("id");
+import isBetween from "dayjs/plugin/isBetween";
+dayjs.extend(isBetween);
 import { SortOrder } from "antd/es/table/interface";
-import { useRouter } from "next/router"; 
+import { useRouter } from "next/router";
 
 const { Option } = Select;
+const { RangePicker } = DatePicker;
 
 const HistoryTable = () => {
-    const { userProfile } = useUserContext(); 
+    const { userProfile } = useUserContext();
     const [dataSource, setDataSource] = useState([]);
     const [loading, setLoading] = useState(true);
     const [sortOrder, setSortOrder] = useState<SortOrder>("ascend");
     const [statusFilter, setStatusFilter] = useState<DataType[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(20);
-    const router = useRouter(); 
+    const [searchText, setSearchText] = useState("");
+    const [selectedDateRange, setSelectedDateRange] = useState([]);
+    const [selectedStatus, setSelectedStatus] = useState("");
+    const router = useRouter();
 
     const fetchHistory = async () => {
-        if (!userProfile) return;
+        if (!userProfile || !userProfile.role) {
+            setDataSource([]);
+            setLoading(false);
+            return;
+        }
 
         setLoading(true);
         const role = userProfile.role.toLowerCase();
         let data = [];
 
-        console.log("Fetching history for role:", role); // Debug log
-
+        console.log("Fetching history for role:", role);
         try {
             if (role === "requester") {
                 const historyQuery = query(
@@ -68,19 +77,19 @@ const HistoryTable = () => {
                 const approvedDocs = await getDocs(approvedQuery);
                 const rejectedDocs = await getDocs(rejectedQuery);
 
-                // Gabungkan dokumen yang disetujui dan ditolak
                 const combinedDocs = [...approvedDocs.docs, ...rejectedDocs.docs];
                 data = combinedDocs.map(doc => {
                     const docData = doc.data();
                     const approvalData = docData.approvalStatus[role] || {};
-
                     return {
                         key: doc.id,
                         id: doc.id,
                         requestNo: docData.requestNumber || "N/A",
                         requestDate: docData.createdAt ? dayjs(docData.createdAt).format("YYYY-MM-DD") : "N/A",
                         status: docData.status || "N/A",
-                        actionDate: approvalData.approvedAt || approvalData.rejectedAt || "N/A",
+                        actionDate: approvalData.approvedAt || approvalData.rejectedAt
+                            ? dayjs(approvalData.approvedAt || approvalData.rejectedAt).format("YYYY-MM-DD")
+                            : "N/A",
                         action: approvalData.approved === false ? "Rejected" : approvalData.approved ? "Approved" : "Pending",
                     };
                 });
@@ -98,7 +107,35 @@ const HistoryTable = () => {
 
     useEffect(() => {
         fetchHistory();
-    }, [userProfile, statusFilter]);
+    }, [userProfile]);
+
+    const handleSearch = (value: string) => {
+        setSearchText(value.toLowerCase());
+    };
+
+    const handleDateChange = (dates: any) => {
+        setSelectedDateRange(dates || []);
+    };
+
+    const handleStatusChange = (value: string) => {
+        setSelectedStatus(value);
+    };
+
+    const filteredData = dataSource.filter(item => {
+        if (!userProfile?.role) return false;
+
+        const matchesRequestNo = item.requestNo.toLowerCase().includes(searchText);
+
+        //filter status pada search bar berdasarkan role
+        const sourceForFilter = userProfile.role === "Requester" ? item.status : item.action;
+        const matchesStatus = selectedStatus ? sourceForFilter === selectedStatus : true;
+
+        const matchesDateRange =
+            selectedDateRange && selectedDateRange.length === 2
+                ? dayjs(item.requestDate).isBetween(selectedDateRange[0], selectedDateRange[1], "day", "[]")
+                : true;
+        return matchesRequestNo && matchesStatus && matchesDateRange;
+    });
 
     interface DataType {
         key: React.Key;
@@ -108,24 +145,24 @@ const HistoryTable = () => {
         status: string;
         actionDate: string;
         action: string;
-    }    
+    }
 
-    // Kolom untuk peran Requester
+    // Kolom untuk Requester
     const requesterColumns: ColumnsType<DataType> = [
-        { 
-            title: "No.", 
-            key: "no", 
+        {
+            title: "No.",
+            key: "no",
             align: "center" as const,
-            render: (_: any, __: any, index: number) => index + 1 + (currentPage - 1) * pageSize // Menyesuaikan nomor berdasarkan halaman
+            render: (_: any, __: any, index: number) => index + 1 + (currentPage - 1) * pageSize
         },
-        { 
-            title: "No. Request", 
-            dataIndex: "requestNo", 
-            key: "requestNo", 
+        {
+            title: "No. Request",
+            dataIndex: "requestNo",
+            key: "requestNo",
             align: "center" as const,
             sorter: (a, b) => {
-                const numberA = parseInt(a.requestNo.replace(/\D/g, ''), 10); 
-                const numberB = parseInt(b.requestNo.replace(/\D/g, ''), 10); 
+                const numberA = parseInt(a.requestNo.replace(/\D/g, ''), 10);
+                const numberB = parseInt(b.requestNo.replace(/\D/g, ''), 10);
                 return numberA - numberB;
             },
         },
@@ -145,18 +182,12 @@ const HistoryTable = () => {
             key: "requestDate",
             align: "center",
             sorter: (a, b) => dayjs(a.requestDate).unix() - dayjs(b.requestDate).unix(),
-        },        
+        },
         {
             title: "Status",
             dataIndex: "status",
             key: "status",
             align: "center" as const,
-            filters: [
-                { text: "In Progress", value: "In Progress" },
-                { text: "Rejected", value: "Rejected" },
-                { text: "Approved", value: "Approved" },
-            ],
-            onFilter: (value, record) => record.status === value,
             render: (status: string, record: { requestNo: string }) => (
                 <Button type="link" onClick={() => showFlowStep(record.requestNo)}>
                     {status}
@@ -167,20 +198,20 @@ const HistoryTable = () => {
 
     // Kolom untuk Checker, Approval, Releaser
     const actionColumns: ColumnsType<DataType> = [
-        { 
-            title: "No.", 
-            key: "no", 
+        {
+            title: "No.",
+            key: "no",
             align: "center" as const,
             render: (_: any, __: any, index: number) => index + 1 + (currentPage - 1) * pageSize
         },
-        { 
-            title: "No. Request", 
-            dataIndex: "requestNo", 
-            key: "requestNo", 
+        {
+            title: "No. Request",
+            dataIndex: "requestNo",
+            key: "requestNo",
             align: "center" as const,
             sorter: (a, b) => {
-                const numberA = parseInt(a.requestNo.replace(/\D/g, ''), 10); 
-                const numberB = parseInt(b.requestNo.replace(/\D/g, ''), 10); 
+                const numberA = parseInt(a.requestNo.replace(/\D/g, ''), 10);
+                const numberB = parseInt(b.requestNo.replace(/\D/g, ''), 10);
                 return numberA - numberB;
             },
         },
@@ -193,7 +224,7 @@ const HistoryTable = () => {
                     Check
                 </Button>
             ),
-        },        
+        },
         {
             title: "Action Date",
             dataIndex: "actionDate",
@@ -213,12 +244,11 @@ const HistoryTable = () => {
                 { text: "Rejected", value: "Rejected" },
             ],
             onFilter: (value, record) => record.action === value,
-            render: (text: string) => text || "N/A", 
+            render: (text: string) => text || "N/A",
         },
     ];
 
     const handleDetail = (requestNo: string) => {
-        // Navigasi ke halaman detail request menggunakan nomor request
         router.push(`/requester/detail-request?requestNo=${requestNo}`);
     };
 
@@ -233,21 +263,42 @@ const HistoryTable = () => {
         }
     };
 
-    const currentData = dataSource.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-
-    if (loading) {
-        return <Spin />;
-    }
-    
-    if (!userProfile) {
-        return <p>Error: User profile not found</p>;
-    }
-
     return (
         <div>
+            <div style={{ display: "flex", gap: "16px", justifyContent: "flex-end", marginBottom: "16px" }}>
+                <Input.Group compact style={{ width: "auto" }}>
+                    <Input
+                        style={{ width: 250 }}
+                        placeholder="Search by no request"
+                        onChange={(e) => handleSearch(e.target.value)}
+                    />
+                    <Select
+                        placeholder="Status"
+                        onChange={handleStatusChange}
+                        allowClear
+                        style={{ width: 110 }}
+                    >
+                        {userProfile?.role === "Requester" ? (
+                            <>
+                                <Option value="In Progress">In Progress</Option>
+                                <Option value="Approved">Approved</Option>
+                                <Option value="Rejected">Rejected</Option>
+                            </>
+                        ) : (
+                            Array.from(new Set(dataSource.map(item => item.action))).map(action => (
+                                <Option key={action} value={action}>
+                                    {action}
+                                </Option>
+                            ))
+                        )}
+                    </Select>
+                </Input.Group>
+                <RangePicker onChange={handleDateChange} style={{ width: 250 }} />
+            </div>
+
             <Table
-                columns={userProfile.role === "Requester" ? requesterColumns : actionColumns}
-                dataSource={currentData}
+                columns={userProfile && userProfile.role === "Requester" ? requesterColumns : actionColumns}
+                dataSource={filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize)}
                 loading={loading}
                 pagination={false}
                 bordered
@@ -259,7 +310,7 @@ const HistoryTable = () => {
             <Pagination
                 current={currentPage}
                 pageSize={pageSize}
-                total={dataSource.length}
+                total={filteredData.length}
                 onChange={handleTableChange}
                 showSizeChanger={true}
                 pageSizeOptions={['10', '20', '50', '100']}

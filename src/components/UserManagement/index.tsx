@@ -288,13 +288,54 @@ const UserManagement: React.FC = () => {
         { label: "Super Admin", value: "Super Admin" },
     ];
 
+    const validateProfiles = (profiles: any[]) => {
+        const emails = new Set();
+        // const entities = new Set();
+        const combinations = new Set();
+        const roles = new Set();
+    
+        for (const profile of profiles) {
+            const { email, entity, role } = profile;
+            const combination = `${email}-${entity}`;
+    
+            if (combinations.has(combination)) {
+                return { isValid: false, message: 'Duplicate email and entity combination is not allowed.' };
+            }
+    
+            if (emails.has(email)) {
+                return { isValid: false, message: 'Duplicate email is not allowed.' };
+            }
+    
+            // if (entities.has(entity)) {
+            //     return { isValid: false, message: 'Duplicate entity is not allowed.' };
+            // }
+
+            if (roles.has(role)) {
+                return { isValid: false, message: 'Duplicate role is not allowed.' };
+            }
+    
+            combinations.add(combination);
+            emails.add(email);
+            // entities.add(entity);
+            roles.add(role)
+        }
+    
+        return { isValid: true, message: '' };
+    };    
+
     const onFinish = (values: any) => {
+        const validation = validateProfiles(values.profiles);
+        if (!validation.isValid) {
+            message.error(validation.message);
+            return;
+        }
+    
         if (editingUser) {
             confirmUpdateUser(values);
         } else {
             confirmAddUser(values);
         }
-    };
+    };    
 
     const handleTableChange = (pagination: any) => {
         setCurrentPage(pagination.current);
@@ -329,7 +370,17 @@ const UserManagement: React.FC = () => {
                 okText="Submit"
             >
                 <Form form={form} onFinish={onFinish} layout="vertical">
-                    <Form.Item name="nik" label="NIK" rules={[{ required: true }]}>
+                    <Form.Item
+                        name="nik"
+                        label="NIK"
+                        rules={[
+                            { required: true, message: 'NIK is required.' },
+                            {
+                                pattern: /^[0-9]+$/,
+                                message: 'NIK must contain only numbers.',
+                            },
+                        ]}
+                    >
                         <Input />
                     </Form.Item>
                     <Form.Item name="namaLengkap" label="Name" rules={[{ required: true }]}>

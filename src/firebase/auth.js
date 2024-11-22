@@ -96,7 +96,7 @@ export const SignOut = async () => {
 // Fungsi reset password
 export const resetPassword = async (email) => {
     const actionCodeSettings = {
-        url: 'http://localhost:3000/auth/forgot-password/reset-password',
+        url: 'https://procurement-web-app.vercel.app/auth/forgot-password/reset-password',
         handleCodeInApp: true,
     };
 

@@ -42,7 +42,7 @@ const registerUserWithNik = async (nik) => {
 const registerUser = async (nik, namaLengkap, divisi, profile, selectedProfileIndex, password) => {
 
   const actionCodeSettings = {
-    url: 'http://localhost:3000/auth/login',
+    url: 'https://procurement-web-app.vercel.app/auth/login',
     handleCodeInApp: false,
   };
 

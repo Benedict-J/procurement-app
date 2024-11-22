@@ -20,6 +20,8 @@ interface DataType {
     uom: string;
     linkRef: string;
     budgetMax: string;
+    taxCost: string;
+    deliveryFee: string;
     feedback: string | null;
     receiver: string;
 }
@@ -34,6 +36,7 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(20);
     const [requestNumber, setRequestNumber] = useState<string | null>(null);
+    const [grandTotal, setGrandTotal] = useState<number>(0);
     const router = useRouter();
 
     const [entity, setEntity] = useState<string | null>(null);
@@ -78,24 +81,40 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
                 const createdAt = new Date(data.createdAt);
                 const requestDateFormatted = `${createdAt.getFullYear()}-${String(createdAt.getMonth() + 1).padStart(2, '0')}-${String(createdAt.getDate()).padStart(2, '0')}`;
 
-                const requestData = (data.items || []).map((item: any, index: number) => ({
-                    key: `${firstDoc.id}-${index}`,
-                    requestNumber: data.requestNumber || "N/A",
-                    itemNumber: index + 1,
-                    estimateDeliveryDate: item.deliveryDate || "N/A",
-                    deliveryAddress: item.deliveryAddress === "other" ? item.customDeliveryAddress || "N/A" : item.deliveryAddress || "N/A",
-                    receiver: item.receiver || "N/A",
-                    merk: item.merk || "N/A",
-                    detailSpecs: item.detailSpecs || "N/A",
-                    color: item.color || "N/A",
-                    qty: item.qty || 0,
-                    uom: item.uom || "N/A",
-                    linkRef: item.linkRef || "N/A",
-                    budgetMax: item.budgetMax || "N/A",
-                    feedback: feedbackData ? feedbackData.feedback : "No feedback",
-                    requestDate: requestDateFormatted,
-                }));
+                let calculatedGrandTotal = 0;
 
+                const requestData = (data.items || []).map((item: any, index: number) => {
+                    const budgetMax = parseFloat(item.budgetMax?.replace(/\./g, "") || "0");
+                    const taxCost = parseFloat(item.taxCost?.replace(/\./g, "") || "0");
+                    const deliveryFee = parseFloat(item.deliveryFee?.replace(/\./g, "") || "0");
+
+                    // Kalkulasi Total Item
+                    const totalItem = budgetMax + taxCost + deliveryFee;
+
+                    calculatedGrandTotal += totalItem;
+
+                    return {
+                        key: `${firstDoc.id}-${index}`,
+                        requestNumber: data.requestNumber || "N/A",
+                        itemNumber: index + 1,
+                        estimateDeliveryDate: item.deliveryDate || "N/A",
+                        deliveryAddress: item.deliveryAddress === "other" ? item.customDeliveryAddress || "N/A" : item.deliveryAddress || "N/A",
+                        receiver: item.receiver || "N/A",
+                        merk: item.merk || "N/A",
+                        detailSpecs: item.detailSpecs || "N/A",
+                        color: item.color || "N/A",
+                        qty: item.qty || 0,
+                        uom: item.uom || "N/A",
+                        linkRef: item.linkRef || "N/A",
+                        budgetMax: budgetMax.toLocaleString("id-ID"),
+                        taxCost: taxCost.toLocaleString("id-ID"),
+                        deliveryFee: deliveryFee.toLocaleString("id-ID"),
+                        totalItem: totalItem.toLocaleString("id-ID"),
+                        feedback: feedbackData ? feedbackData.feedback : "No feedback",
+                        requestDate: requestDateFormatted,
+                    };
+                });
+                setGrandTotal(calculatedGrandTotal);
                 setDataSource(requestData);
             } else {
                 console.log("No data found for requestNo:", requestNo);
@@ -141,18 +160,32 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
     };
 
     const columns: TableColumnsType<DataType> = [
-        { title: "Nomor Item", dataIndex: "itemNumber", key: "itemNumber", align: "center" },
-        { title: "Request Date", dataIndex: "requestDate", key: "requestDate", align: "center" },
-        { title: "Estimate Delivery Date", dataIndex: "estimateDeliveryDate", key: "estimateDeliveryDate", align: "center" },
-        { title: "Delivery Address", dataIndex: "deliveryAddress", key: "deliveryAddress", align: "center" },
-        { title: "Receiver", dataIndex: "receiver", key: "receiver", align: "center" },
-        { title: "Merk", dataIndex: "merk", key: "merk", align: "center" },
-        { title: "Detail Specs", dataIndex: "detailSpecs", key: "detailSpecs", align: "center" },
-        { title: "Color", dataIndex: "color", key: "color", align: "center" },
-        { title: "QTY", dataIndex: "qty", key: "qty", align: "center" },
-        { title: "UoM", dataIndex: "uom", key: "uom", align: "center" },
-        { title: "Link Ref", dataIndex: "linkRef", key: "linkRef", align: "center" },
-        { title: "Budget Max", dataIndex: "budgetMax", key: "budgetMax", align: "center" }
+        { title: "Nomor Item", dataIndex: "itemNumber", key: "itemNumber", align: "center", width: 100 },
+        { title: "Request Date", dataIndex: "requestDate", key: "requestDate", align: "center", width: 150 },
+        { title: "Estimate Delivery Date", dataIndex: "estimateDeliveryDate", key: "estimateDeliveryDate", align: "center", width: 200 },
+        { title: "Delivery Address", dataIndex: "deliveryAddress", key: "deliveryAddress", align: "center", width: 300 },
+        { title: "Receiver", dataIndex: "receiver", key: "receiver", align: "center", width: 150 },
+        { title: "Merk", dataIndex: "merk", key: "merk", align: "center", width: 100 },
+        { title: "Detail Specs", dataIndex: "detailSpecs", key: "detailSpecs", align: "center", width: 300 },
+        { title: "Color", dataIndex: "color", key: "color", align: "center", width: 100 },
+        { title: "QTY", dataIndex: "qty", key: "qty", align: "center", width: 80 },
+        { title: "UoM", dataIndex: "uom", key: "uom", align: "center", width: 100 },
+        {
+            title: "Link Ref",
+            dataIndex: "linkRef",
+            key: "linkRef",
+            align: "center",
+            width: 150,
+            render: (text: string) => (
+                <a href={text} target="_blank" rel="noopener noreferrer">
+                    Click Here
+                </a>
+            ),
+        },
+        { title: "Budget Max", dataIndex: "budgetMax", key: "budgetMax", align: "center" },
+        { title: "Tax Cost", dataIndex: "taxCost", key: "taxCost", align: "center" },
+        { title: "Delivery Fee", dataIndex: "deliveryFee", key: "deliveryFee", align: "center" },
+        { title: "Total Price", dataIndex: "totalItem", key: "totalItem", align: "center", width: 150 }
     ];
 
     const shouldActionsBeVisible = userProfile?.role === "Requester" && status === "Rejected";
@@ -198,9 +231,35 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
                 dataSource={currentData}
                 pagination={false}
                 bordered
-                scroll={{ x: 200 }}
+                scroll={{ x: 2000 }}
                 className={styles.table}
             />
+
+            <div className={styles.feedbackGrandTotal}>
+                <div className={styles.feedbackSection}>
+                    {userProfile?.role === "Requester" && status === "Rejected" && feedbackData ? (
+                        <Card
+                            title={`Feedback from: ${feedbackData.role}`}
+                            className={styles.feedbackCard}
+                            headStyle={{
+                                backgroundColor: '#FAFAFA',
+                                fontSize: '14px',
+                                fontWeight: 600,
+                            }}
+                        >
+                            <p style={{ fontSize: '14px', color: '#333' }}>{feedbackData.feedback}</p>
+                        </Card>
+                    ) : (
+                        <div className={styles.emptyFeedback}></div>
+                    )}
+                </div>
+                <div className={styles.grandTotalSection}>
+                    <div className={styles.totalContainer}>
+                        <span className={styles.totalLabel}>Grand Total:</span>
+                        <span className={styles.totalValue}> Rp {grandTotal.toLocaleString("id-ID")}</span>
+                    </div>
+                </div>
+            </div>
 
             <Pagination
                 current={currentPage}
@@ -211,23 +270,6 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({ requestNo }) =>
                 showSizeChanger={true}
                 pageSizeOptions={['10', '20', '50', '100']}
             />
-
-            {userProfile?.role === "Requester" && status === "Rejected" && feedbackData && (
-                <Card
-                    // role name belum jadi, sementara belum dipakai
-                    // title={`Feedback from: ${name} | ${feedbackData.role}`}
-                    title={`Feedback from: ${feedbackData.role}`}
-                    className={styles.feedbackCard}
-                    headStyle={{
-                        textAlign: 'center',
-                        backgroundColor: '#FAFAFA',
-                        fontSize: '14px',
-                        fontWeight: 600,
-                    }}
-                >
-                    <p style={{ fontSize: '14px', color: '#333' }}>{feedbackData.feedback}</p>
-                </Card>
-            )}
 
             <Modal
                 title="Confirm Cancel Request"

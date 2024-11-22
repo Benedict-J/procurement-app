@@ -5,6 +5,7 @@ import dayjs, { Dayjs } from "dayjs";
 import { db } from "@/firebase/firebase";
 import { collection, getDocs, query, where, updateDoc, doc } from "firebase/firestore";
 import "dayjs/locale/en";
+import { handleStatusChange } from "@/utils/notifications/handleStatusUtils";
 
 const { Option } = Select;
 const { Panel } = Collapse;
@@ -104,6 +105,7 @@ const EditRequestForm: React.FC<EditRequestFormProps> = ({ requestNo }) => {
             });
 
             message.success("Request updated and sent back for Checker.");
+            await handleStatusChange(docId);
             router.push(`/requester/detail-request?requestNo=${requestNo}`);
         } catch (error) {
             console.error("Error updating data:", error);
@@ -220,6 +222,46 @@ const EditRequestForm: React.FC<EditRequestFormProps> = ({ requestNo }) => {
                             ]}
                         >
                             <Input placeholder="Maximum Budget" addonBefore="Rp" />
+                        </Form.Item>
+
+                        <Form.Item
+                            label="Tax Cost"
+                            name={['items', index, 'taxCost']}
+                            rules={[
+                                { required: true, message: "Please enter the tax cost" },
+                                {
+                                    validator: (_, value) => {
+                                        const regex = /^[0-9]+(\.[0-9]{3})*$/; // Only allow numbers with thousand separators
+                                        if (!value || regex.test(value)) {
+                                            return Promise.resolve();
+                                        } else {
+                                            return Promise.reject("Only numbers are allowed with '.' as thousand separators");
+                                        }
+                                    },
+                                },
+                            ]}
+                        >
+                            <Input placeholder="Tax Cost" addonBefore="Rp" />
+                        </Form.Item>
+
+                        <Form.Item
+                            label="Delivery Fee"
+                            name={['items', index, 'deliveryFee']}
+                            rules={[
+                                { required: true, message: "Please enter the delivery fee" },
+                                {
+                                    validator: (_, value) => {
+                                        const regex = /^[0-9]+(\.[0-9]{3})*$/; // Only allow numbers with thousand separators
+                                        if (!value || regex.test(value)) {
+                                            return Promise.resolve();
+                                        } else {
+                                            return Promise.reject("Only numbers are allowed with '.' as thousand separators");
+                                        }
+                                    },
+                                },
+                            ]}
+                        >
+                            <Input placeholder="Delivery Fee" addonBefore="Rp" />
                         </Form.Item>
 
                         <Row gutter={16}>
