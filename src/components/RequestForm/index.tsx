@@ -260,9 +260,9 @@ const RequestForm = () => {
       form.resetFields();
       message.success('Request submitted successfully');
       await handleStatusChange(docRef.id);
-      // setTimeout(() => {
-      //   window.location.reload();
-      // }, 2000)
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000)
     } catch (error) {
       console.error("Error submitting request:", error);
       alert("Failed to submit request.");
