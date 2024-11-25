@@ -288,43 +288,73 @@ const UserManagement: React.FC = () => {
         { label: "Super Admin", value: "Super Admin" },
     ];
 
-    const validateProfiles = (profiles: any[]) => {
-        const emails = new Set();
-        // const entities = new Set();
-        const combinations = new Set();
-        const roles = new Set();
+    const validateProfiles = (profiles: any[], division: string) => {
+        console.log('Received Division:', division);
     
-        for (const profile of profiles) {
-            const { email, entity, role } = profile;
-            const combination = `${email}-${entity}`;
+        const normalizedDivision = division ? division.trim().toLowerCase() : 'undefined';
+        console.log('Normalized Division:', normalizedDivision);
     
-            if (combinations.has(combination)) {
-                return { isValid: false, message: 'Duplicate email and entity combination is not allowed.' };
+        // Validasi untuk divisi Finance
+        if (normalizedDivision === 'finance') {
+            const entityEmailMap = new Map();
+            const emailEntityMap = new Map();
+    
+            for (const profile of profiles) {
+                const { email, entity, role } = profile;
+    
+                // Cek Entity Sama - Email Berbeda
+                if (entityEmailMap.has(entity)) {
+                    const existingEmail = entityEmailMap.get(entity);
+                    if (existingEmail !== email) {
+                        return { isValid: false, message: `Entity ${entity} cannot be associated with multiple emails in Finance division.` };
+                    }
+                }
+    
+                // Cek Email Sama - Entity Berbeda
+                if (emailEntityMap.has(email)) {
+                    const existingEntity = emailEntityMap.get(email);
+                    if (existingEntity !== entity) {
+                        return { isValid: false, message: `Email ${email} cannot be associated with multiple entities in Finance division.` };
+                    }
+                }
+    
+                entityEmailMap.set(entity, email);
+                emailEntityMap.set(email, entity);
+    
+                // Validasi role
+                if (role !== 'Approval' && role !== 'Checker') {
+                    return { isValid: false, message: 'Role must be Approval or Checker for Finance division.' };
+                }
             }
+        }
     
-            if (emails.has(email)) {
-                return { isValid: false, message: 'Duplicate email is not allowed.' };
+        // Validasi untuk divisi selain Finance
+        if (normalizedDivision !== 'finance') {
+            const emailSet = new Set();
+            const entitySet = new Set();
+    
+            for (const profile of profiles) {
+                // Cek apakah email berbeda
+                if (emailSet.has(profile.email)) {
+                    return { isValid: false, message: 'Emails must be unique for non-Finance divisions.' };
+                }
+                // Cek apakah entity berbeda
+                if (entitySet.has(profile.entity)) {
+                    return { isValid: false, message: 'Entities must be unique for non-Finance divisions.' };
+                }
+    
+                emailSet.add(profile.email);
+                entitySet.add(profile.entity);
             }
-    
-            // if (entities.has(entity)) {
-            //     return { isValid: false, message: 'Duplicate entity is not allowed.' };
-            // }
-
-            if (roles.has(role)) {
-                return { isValid: false, message: 'Duplicate role is not allowed.' };
-            }
-    
-            combinations.add(combination);
-            emails.add(email);
-            // entities.add(entity);
-            roles.add(role)
         }
     
         return { isValid: true, message: '' };
-    };    
-
+    };                
+    
     const onFinish = (values: any) => {
-        const validation = validateProfiles(values.profiles);
+        const division = values.divisi;
+        const validation = validateProfiles(values.profiles, division);
+    
         if (!validation.isValid) {
             message.error(validation.message);
             return;
