@@ -1,25 +1,39 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Button, Modal, Form, Input, message, Select } from 'antd';
 import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
-import { db } from '@/firebase/firebase';
+import { db, auth } from '@/firebase/firebase';
 import { collection, updateDoc, deleteDoc, doc, getDocs, setDoc } from 'firebase/firestore';
+import { useUserContext } from '@/contexts/UserContext';
+
+const { Search } = Input;
 
 const UserManagement: React.FC = () => {
     const [users, setUsers] = useState([]);
+    const [filteredUsers, setFilteredUsers] = useState([]);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
     const [form] = Form.useForm();
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
+    const { userProfile } = useUserContext();
+    const [searchKeyword, setSearchKeyword] = useState('');
+
+    const { currentUser } = auth;
+        if (currentUser) {
+        const uid = currentUser.uid;
+    }
 
     useEffect(() => {
         const fetchUsers = async () => {
+            if (!userProfile) return;
+            
             const registeredUsersSnapshot = await getDocs(collection(db, 'registeredUsers'));
             const registeredUsersData = registeredUsersSnapshot.docs.map(doc => ({
                 ...doc.data(),
                 id: doc.id,
                 source: 'registeredUsers',
-            }));
+            }))
+            .filter(user => user.id !== userProfile.userId); 
 
             const preRegisteredUsersSnapshot = await getDocs(collection(db, 'preRegisteredUsers'));
             const preRegisteredUsersData = preRegisteredUsersSnapshot.docs.map(doc => ({
@@ -27,13 +41,16 @@ const UserManagement: React.FC = () => {
                 id: doc.id,
                 nik: doc.id,
                 source: 'preRegisteredUsers',
-            }));
+            }))
+            .filter(user => user.nik !== userProfile?.nik);
 
-            setUsers([...registeredUsersData, ...preRegisteredUsersData]);
+            const allUsers = [...registeredUsersData, ...preRegisteredUsersData];
+            setUsers(allUsers);
+            setFilteredUsers(allUsers);
         };
 
         fetchUsers();
-    }, []);
+    }, [userProfile]);
 
     const handleAddUser = async (values: any) => {
         try {
@@ -65,6 +82,10 @@ const UserManagement: React.FC = () => {
     };
 
     const handleEditUser = (user: any) => {
+        if (user.userId === userProfile?.userId || user.nik === userProfile?.nik) {
+            message.error("You cannot edit your own account.");
+            return;
+        }
         setEditingUser({
             ...user,
             source: user.source
@@ -111,7 +132,6 @@ const UserManagement: React.FC = () => {
                     profile: updatedProfiles,
                 });
             }
-
             message.success("User updated successfully!");
             setEditingUser(null);
             setIsModalVisible(false);
@@ -140,7 +160,11 @@ const UserManagement: React.FC = () => {
         }
     };
 
-    const handleDeleteUser = async (userId: string, source: string) => {
+    const handleDeleteUser = async (userId: string, source: string, userNik?: string) => {
+        if (userId === userProfile?.userId || userNik === userProfile?.nik) {
+            message.error("You cannot delete your own account.");
+            return;
+        }
         try {
             await deleteDoc(doc(db, source, userId));
             message.success("User deleted successfully!");
@@ -148,6 +172,20 @@ const UserManagement: React.FC = () => {
         } catch (error) {
             message.error("Failed to delete user.");
         }
+    };
+
+    const handleSearch = (keyword: string) => {
+        setSearchKeyword(keyword);
+        const filteredData = users.filter(user => {
+            const { namaLengkap, nik, profile } = user;
+            const email = profile.map((p: any) => p.email).join(' ');
+            return (
+                namaLengkap?.toLowerCase().includes(keyword.toLowerCase()) ||
+                nik?.toString().includes(keyword) ||
+                email?.toLowerCase().includes(keyword.toLowerCase())
+            );
+        });
+        setFilteredUsers(filteredData);
     };
 
     const confirmDeleteUser = (userId: string, source: string) => {
@@ -288,43 +326,73 @@ const UserManagement: React.FC = () => {
         { label: "Super Admin", value: "Super Admin" },
     ];
 
-    const validateProfiles = (profiles: any[]) => {
-        const emails = new Set();
-        // const entities = new Set();
-        const combinations = new Set();
-        const roles = new Set();
+    const validateProfiles = (profiles: any[], division: string) => {
+        console.log('Received Division:', division);
     
-        for (const profile of profiles) {
-            const { email, entity, role } = profile;
-            const combination = `${email}-${entity}`;
+        const normalizedDivision = division ? division.trim().toLowerCase() : 'undefined';
+        console.log('Normalized Division:', normalizedDivision);
     
-            if (combinations.has(combination)) {
-                return { isValid: false, message: 'Duplicate email and entity combination is not allowed.' };
+        // Validasi untuk divisi Finance
+        if (normalizedDivision === 'finance') {
+            const entityEmailMap = new Map();
+            const emailEntityMap = new Map();
+    
+            for (const profile of profiles) {
+                const { email, entity, role } = profile;
+    
+                // Cek Entity Sama - Email Berbeda
+                if (entityEmailMap.has(entity)) {
+                    const existingEmail = entityEmailMap.get(entity);
+                    if (existingEmail !== email) {
+                        return { isValid: false, message: `Entity ${entity} cannot be associated with multiple emails in Finance division.` };
+                    }
+                }
+    
+                // Cek Email Sama - Entity Berbeda
+                if (emailEntityMap.has(email)) {
+                    const existingEntity = emailEntityMap.get(email);
+                    if (existingEntity !== entity) {
+                        return { isValid: false, message: `Email ${email} cannot be associated with multiple entities in Finance division.` };
+                    }
+                }
+    
+                entityEmailMap.set(entity, email);
+                emailEntityMap.set(email, entity);
+    
+                // Validasi role
+                if (role !== 'Approval' && role !== 'Checker') {
+                    return { isValid: false, message: 'Role must be Approval or Checker for Finance division.' };
+                }
             }
+        }
     
-            if (emails.has(email)) {
-                return { isValid: false, message: 'Duplicate email is not allowed.' };
+        // Validasi untuk divisi selain Finance
+        if (normalizedDivision !== 'finance') {
+            const emailSet = new Set();
+            const entitySet = new Set();
+    
+            for (const profile of profiles) {
+                // Cek apakah email berbeda
+                if (emailSet.has(profile.email)) {
+                    return { isValid: false, message: 'Emails must be unique for non-Finance divisions.' };
+                }
+                // Cek apakah entity berbeda
+                if (entitySet.has(profile.entity)) {
+                    return { isValid: false, message: 'Entities must be unique for non-Finance divisions.' };
+                }
+    
+                emailSet.add(profile.email);
+                entitySet.add(profile.entity);
             }
-    
-            // if (entities.has(entity)) {
-            //     return { isValid: false, message: 'Duplicate entity is not allowed.' };
-            // }
-
-            if (roles.has(role)) {
-                return { isValid: false, message: 'Duplicate role is not allowed.' };
-            }
-    
-            combinations.add(combination);
-            emails.add(email);
-            // entities.add(entity);
-            roles.add(role)
         }
     
         return { isValid: true, message: '' };
-    };    
-
+    };                
+    
     const onFinish = (values: any) => {
-        const validation = validateProfiles(values.profiles);
+        const division = values.divisi;
+        const validation = validateProfiles(values.profiles, division);
+    
         if (!validation.isValid) {
             message.error(validation.message);
             return;
@@ -337,28 +405,35 @@ const UserManagement: React.FC = () => {
         }
     };    
 
-    const handleTableChange = (pagination: any) => {
-        setCurrentPage(pagination.current);
-        setPageSize(pagination.pageSize);
-    };
-
     return (
         <div style={{ padding: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '30px' }}>
-                <Button type="primary" onClick={openAddUserModal}>Add New</Button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+                <Search
+                    placeholder="Search by Name, NIK, or Email"
+                    allowClear
+                    onSearch={handleSearch}
+                    onChange={(e) => handleSearch(e.target.value)}
+                    style={{ maxWidth: '300px' }}
+                />
+                <Button type="primary" onClick={openAddUserModal}>
+                    Add New
+                </Button>
             </div>
             <Table
-                dataSource={users}
+                dataSource={filteredUsers}
                 columns={columns}
                 rowKey="id"
                 pagination={{
                     current: currentPage,
                     pageSize: pageSize,
-                    total: users.length,
+                    total: filteredUsers.length,
                     showSizeChanger: true,
                     pageSizeOptions: [10, 20, 50, 100],
                 }}
-                onChange={handleTableChange}
+                onChange={(pagination: any) => {
+                    setCurrentPage(pagination.current);
+                    setPageSize(pagination.pageSize);
+                }}
                 style={{ textAlign: 'center' }}
             />
             <Modal

@@ -19,7 +19,8 @@ interface UserProfile {
   entity: string;
   role: string;
   userId: string;
-  profile: Profile[]; // Menambahkan array profile
+  profile: Profile[];
+  nik: string; // Menambahkan array profile
 }
 
 interface UserContextType {
@@ -82,6 +83,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 role: selectedProfile.role,
                 profile: userData.profile,
                 userId: userData.uid,
+                nik: userData.nik
               });
               setSelectedProfileIndex(selectedIndex);
             }
