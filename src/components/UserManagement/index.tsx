@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Button, Modal, Form, Input, message, Select } from 'antd';
 import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
-import { db } from '@/firebase/firebase';
+import { db, auth } from '@/firebase/firebase';
 import { collection, updateDoc, deleteDoc, doc, getDocs, setDoc } from 'firebase/firestore';
+import { useUserContext } from '@/contexts/UserContext';
 
 const UserManagement: React.FC = () => {
     const [users, setUsers] = useState([]);
@@ -11,15 +12,24 @@ const UserManagement: React.FC = () => {
     const [form] = Form.useForm();
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
+    const { userProfile } = useUserContext();
+
+    const { currentUser } = auth;
+        if (currentUser) {
+        const uid = currentUser.uid;
+    }
 
     useEffect(() => {
         const fetchUsers = async () => {
+            if (!userProfile) return;
+            
             const registeredUsersSnapshot = await getDocs(collection(db, 'registeredUsers'));
             const registeredUsersData = registeredUsersSnapshot.docs.map(doc => ({
                 ...doc.data(),
                 id: doc.id,
                 source: 'registeredUsers',
-            }));
+            }))
+            .filter(user => user.id !== userProfile.userId); 
 
             const preRegisteredUsersSnapshot = await getDocs(collection(db, 'preRegisteredUsers'));
             const preRegisteredUsersData = preRegisteredUsersSnapshot.docs.map(doc => ({
@@ -27,13 +37,14 @@ const UserManagement: React.FC = () => {
                 id: doc.id,
                 nik: doc.id,
                 source: 'preRegisteredUsers',
-            }));
+            }))
+            .filter(user => user.nik !== userProfile?.nik);
 
             setUsers([...registeredUsersData, ...preRegisteredUsersData]);
         };
 
         fetchUsers();
-    }, []);
+    }, [userProfile]);
 
     const handleAddUser = async (values: any) => {
         try {
@@ -65,6 +76,10 @@ const UserManagement: React.FC = () => {
     };
 
     const handleEditUser = (user: any) => {
+        if (user.userId === userProfile?.userId || user.nik === userProfile?.nik) {
+            message.error("You cannot edit your own account.");
+            return;
+        }
         setEditingUser({
             ...user,
             source: user.source
@@ -111,7 +126,6 @@ const UserManagement: React.FC = () => {
                     profile: updatedProfiles,
                 });
             }
-
             message.success("User updated successfully!");
             setEditingUser(null);
             setIsModalVisible(false);
@@ -140,7 +154,11 @@ const UserManagement: React.FC = () => {
         }
     };
 
-    const handleDeleteUser = async (userId: string, source: string) => {
+    const handleDeleteUser = async (userId: string, source: string, userNik?: string) => {
+        if (userId === userProfile?.userId || userNik === userProfile?.nik) {
+            message.error("You cannot delete your own account.");
+            return;
+        }
         try {
             await deleteDoc(doc(db, source, userId));
             message.success("User deleted successfully!");
