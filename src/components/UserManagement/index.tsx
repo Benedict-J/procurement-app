@@ -269,6 +269,16 @@ const UserManagement: React.FC = () => {
             title: 'Role',
             key: 'role',
             align: 'center' as 'center',
+            filters: [
+                { text: 'Requester', value: 'Requester' },
+                { text: 'Checker', value: 'Checker' },
+                { text: 'Approval', value: 'Approval' },
+                { text: 'Releaser', value: 'Releaser' },
+                { text: 'Super Admin', value: 'Super Admin' },
+            ],
+            onFilter: (value: any, record: any) => {
+                return record.profile.some((profile: any) => profile.role === value);
+            },
             render: (_: any, user: any) => (
                 <div>
                     {user.profile.map((profile: any, index: number) => (
