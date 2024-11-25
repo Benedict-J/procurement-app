@@ -402,7 +402,7 @@ const RequestForm = () => {
                     if (!value || regex.test(value)) {
                       return Promise.resolve();
                     } else {
-                      return Promise.reject("Only numbers and characters '.' or ',' are allowed");
+                      return Promise.reject("Only numbers are allowed with '.' as thousand separators");
                     }
                   },
                 },
@@ -423,7 +423,7 @@ const RequestForm = () => {
                     if (!value || regex.test(value)) {
                       return Promise.resolve();
                     } else {
-                      return Promise.reject("Only numbers and characters '.' or ',' are allowed");
+                      return Promise.reject("Only numbers are allowed with '.' as thousand separators");
                     }
                   },
                 },
