@@ -5,14 +5,18 @@ import { db, auth } from '@/firebase/firebase';
 import { collection, updateDoc, deleteDoc, doc, getDocs, setDoc } from 'firebase/firestore';
 import { useUserContext } from '@/contexts/UserContext';
 
+const { Search } = Input;
+
 const UserManagement: React.FC = () => {
     const [users, setUsers] = useState([]);
+    const [filteredUsers, setFilteredUsers] = useState([]);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
     const [form] = Form.useForm();
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const { userProfile } = useUserContext();
+    const [searchKeyword, setSearchKeyword] = useState('');
 
     const { currentUser } = auth;
         if (currentUser) {
@@ -40,7 +44,9 @@ const UserManagement: React.FC = () => {
             }))
             .filter(user => user.nik !== userProfile?.nik);
 
-            setUsers([...registeredUsersData, ...preRegisteredUsersData]);
+            const allUsers = [...registeredUsersData, ...preRegisteredUsersData];
+            setUsers(allUsers);
+            setFilteredUsers(allUsers);
         };
 
         fetchUsers();
@@ -166,6 +172,20 @@ const UserManagement: React.FC = () => {
         } catch (error) {
             message.error("Failed to delete user.");
         }
+    };
+
+    const handleSearch = (keyword: string) => {
+        setSearchKeyword(keyword);
+        const filteredData = users.filter(user => {
+            const { namaLengkap, nik, profile } = user;
+            const email = profile.map((p: any) => p.email).join(' ');
+            return (
+                namaLengkap?.toLowerCase().includes(keyword.toLowerCase()) ||
+                nik?.toString().includes(keyword) ||
+                email?.toLowerCase().includes(keyword.toLowerCase())
+            );
+        });
+        setFilteredUsers(filteredData);
     };
 
     const confirmDeleteUser = (userId: string, source: string) => {
@@ -385,28 +405,35 @@ const UserManagement: React.FC = () => {
         }
     };    
 
-    const handleTableChange = (pagination: any) => {
-        setCurrentPage(pagination.current);
-        setPageSize(pagination.pageSize);
-    };
-
     return (
         <div style={{ padding: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '30px' }}>
-                <Button type="primary" onClick={openAddUserModal}>Add New</Button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+                <Search
+                    placeholder="Search by Name, NIK, or Email"
+                    allowClear
+                    onSearch={handleSearch}
+                    onChange={(e) => handleSearch(e.target.value)}
+                    style={{ maxWidth: '300px' }}
+                />
+                <Button type="primary" onClick={openAddUserModal}>
+                    Add New
+                </Button>
             </div>
             <Table
-                dataSource={users}
+                dataSource={filteredUsers}
                 columns={columns}
                 rowKey="id"
                 pagination={{
                     current: currentPage,
                     pageSize: pageSize,
-                    total: users.length,
+                    total: filteredUsers.length,
                     showSizeChanger: true,
                     pageSizeOptions: [10, 20, 50, 100],
                 }}
-                onChange={handleTableChange}
+                onChange={(pagination: any) => {
+                    setCurrentPage(pagination.current);
+                    setPageSize(pagination.pageSize);
+                }}
                 style={{ textAlign: 'center' }}
             />
             <Modal
