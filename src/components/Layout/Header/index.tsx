@@ -103,6 +103,7 @@ const Header: React.FC = () => {
     <Layout.Header className={styles.header}>
       <Row justify="space-between">
         <Col>
+          {/* Use classNames and remove inline css */}
           <span style={{ color: '#fff', fontSize: '18px', fontWeight: 'bold' }}>
             {userProfile.role} - {userProfile.entity}
           </span>
