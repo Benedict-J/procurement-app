@@ -85,16 +85,16 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({
         // Bisa belajar tentang object properties disini ya:
         // https://dev.to/quratulaiinn/javascript-object-properties-dot-notation-or-bracket-notation-3gk0#:~:text=Bracket%20notation%20allows%20dynamic%20access,property%20you%20want%20to%20access.
         if (data.status === 'Rejected') {
-          const roleList = ['Checker', 'Approval', 'Releaser']
-
+          const roleList = ['Checker', 'Approval', 'Releaser'];
+      
           roleList.forEach((role: string) => {
-            const feedback = data.approvalStatus[role]?.feedback
-
-            if (feedback) {
-              setFeedbackData({ role, feedback })
-            }
-          })
-        }
+              const feedback = data.approvalStatus?.[role.toLowerCase()]?.feedback;
+      
+              if (feedback) {
+                  setFeedbackData({ role, feedback });
+              }
+          });
+      }
 
         //   if (data.approvalStatus?.checker?.feedback) {
         //     setFeedbackData({

@@ -11,6 +11,7 @@ import isBetween from "dayjs/plugin/isBetween";
 dayjs.extend(isBetween);
 import { SortOrder } from "antd/es/table/interface";
 import { useRouter } from "next/router";
+import { formatDate } from "@/utils/format";
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
@@ -55,7 +56,7 @@ const HistoryTable = () => {
                         key: doc.id,
                         id: doc.id,
                         requestNo: docData.requestNumber || "N/A",
-                        requestDate: docData.createdAt ? dayjs(docData.createdAt).format("YYYY-MM-DD") : "N/A",
+                        requestDate: formatDate(docData.createdAt),
                         status: docData.status || "N/A",
                     };
                 });
@@ -85,11 +86,9 @@ const HistoryTable = () => {
                         key: doc.id,
                         id: doc.id,
                         requestNo: docData.requestNumber || "N/A",
-                        requestDate: docData.createdAt ? dayjs(docData.createdAt).format("YYYY-MM-DD") : "N/A",
+                        requestDate: formatDate(docData.createdAt),
                         status: docData.status || "N/A",
-                        actionDate: approvalData.approvedAt || approvalData.rejectedAt
-                            ? dayjs(approvalData.approvedAt || approvalData.rejectedAt).format("YYYY-MM-DD")
-                            : "N/A",
+                        actionDate: formatDate(approvalData.approvedAt || approvalData.rejectedAt),
                         action: approvalData.approved === false ? "Rejected" : approvalData.approved ? "Approved" : "Pending",
                     };
                 });

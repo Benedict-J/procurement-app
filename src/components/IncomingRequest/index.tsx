@@ -8,6 +8,7 @@ import dayjs from "dayjs";
 import { Input } from "antd";
 import { useRouter } from "next/router";
 import { handleStatusChange } from "@/utils/notifications/handleStatusUtils";
+import { formatDate } from "@/utils/format";
 
 const { TextArea } = Input;
 
@@ -28,9 +29,10 @@ const IncomingRequest = () => {
     const [rejectFeedback, setRejectFeedback] = useState("");
     const [currentRejectId, setCurrentRejectId] = useState<string | null>(null);
 
-    const router = useRouter(); // Inisialisasi router
-    const role = userProfile?.role;
+    // router initialization
+    const router = useRouter(); 
 
+    // set table columns
     const columns: TableColumnsType<DataType> = [
         {
             title: "Name",
@@ -85,34 +87,43 @@ const IncomingRequest = () => {
         const entity = userProfile.entity;
         const role = userProfile.role;
 
-        // Buat query berdasarkan role pengguna
-        if (role === "Checker") {
-            roleQuery = query(
-                collection(db, "requests"),
-                where("approvalStatus.checker.approved", "==", false),
-                where("approvalStatus.checker.rejected", "==", false),
-                where("requesterDivision", "==", division),
-                where("requesterEntity", "==", entity),
-                where("status", "==", "In Progress")
-            );
-        } else if (role === "Approval") {
-            roleQuery = query(
-                collection(db, "requests"),
-                where("approvalStatus.checker.approved", "==", true),
-                where("approvalStatus.approval.approved", "==", false),
-                where("approvalStatus.approval.rejected", "==", false),
-                where("requesterEntity", "==", entity),
-                where("status", "==", "In Progress")
-            );
-        } else if (role === "Releaser") {
-            roleQuery = query(
-                collection(db, "requests"),
-                where("approvalStatus.approval.approved", "==", true),
-                where("approvalStatus.releaser.approved", "==", false),
-                where("approvalStatus.releaser.rejected", "==", false),
-                // where("requesterEntity", "==", entity),
-                where("status", "==", "In Progress")
-            );
+        // Query for each role
+        switch (role) {
+            case "Checker":
+                roleQuery = query(
+                    collection(db, "requests"),
+                    where("approvalStatus.checker.approved", "==", false),
+                    where("approvalStatus.checker.rejected", "==", false),
+                    where("requesterDivision", "==", division),
+                    where("requesterEntity", "==", entity),
+                    where("status", "==", "In Progress")
+                );
+                break;
+    
+            case "Approval":
+                roleQuery = query(
+                    collection(db, "requests"),
+                    where("approvalStatus.checker.approved", "==", true),
+                    where("approvalStatus.approval.approved", "==", false),
+                    where("approvalStatus.approval.rejected", "==", false),
+                    where("requesterEntity", "==", entity),
+                    where("status", "==", "In Progress")
+                );
+                break;
+    
+            case "Releaser":
+                roleQuery = query(
+                    collection(db, "requests"),
+                    where("approvalStatus.approval.approved", "==", true),
+                    where("approvalStatus.releaser.approved", "==", false),
+                    where("approvalStatus.releaser.rejected", "==", false),
+                    where("status", "==", "In Progress")
+                );
+                break;
+    
+            default:
+                console.warn(`Role ${role} tidak memiliki query yang sesuai.`);
+                return;
         }
 
         if (roleQuery) {
@@ -136,7 +147,7 @@ const IncomingRequest = () => {
         router.push(`/requester/detail-request?requestNo=${requestNo}`);
     };
 
-    // Handler untuk approve
+    // Handler for approving
     const handleApprove = async (id: string) => {
         if (!userProfile) return;
 
@@ -148,7 +159,7 @@ const IncomingRequest = () => {
             const updates: any = {
                 [`approvalStatus.${role}.approved`]: true,
                 [`approvalStatus.${role}.approvedBy`]: userId,
-                [`approvalStatus.${role}.approvedAt`]: dayjs().format("YYYY-MM-DD HH:mm:ss"),
+                [`approvalStatus.${role}.approvedAt`]: formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss'),
             };
 
             if (role === 'releaser') {
@@ -167,12 +178,13 @@ const IncomingRequest = () => {
         }
     };
 
-    // Handler untuk reject
+    // Handler for rejecting
     const handleReject = (id: string) => {
         setCurrentRejectId(id);
         setIsRejectModalVisible(true);
     };
 
+    // Handler for submit rejecting
     const submitReject = async () => {
         if (!userProfile || !currentRejectId) return;
 
@@ -188,7 +200,7 @@ const IncomingRequest = () => {
                 status: "Rejected",
             });
 
-            // Notifications
+            // Send Notifications
             setDataSource(prevData => prevData.filter(item => item.id !== currentRejectId));
             message.success(`Request rejected successfully by ${userProfile.role}`);
             await handleStatusChange(currentRejectId);
@@ -203,7 +215,7 @@ const IncomingRequest = () => {
     };
 
 
-    // Handler untuk pagination
+    // Handler for pagination
     const handleTableChange = (pagination: any) => {
         setCurrentPage(pagination.current);
         setPageSize(pagination.pageSize);

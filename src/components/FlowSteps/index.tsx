@@ -1,14 +1,14 @@
 import { db } from "@/firebase/firebase";
 import { Steps } from "antd";
-import { LoadingOutlined, SmileOutlined, SolutionOutlined, UserOutlined } from '@ant-design/icons';
+import { LoadingOutlined } from '@ant-design/icons';
 import { collection, getDocs, query, where } from "firebase/firestore";
-import { useRouter } from "next/router"
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import { useUserContext } from "@/contexts/UserContext";
-import styles from "./index.module.scss";
+import { formatDate } from "@/utils/format";
 
 type StepStatus = "wait" | "process" | "finish" | "error";
+
 
 interface FlowStepsProps {
     requestNumber: string;
@@ -16,6 +16,7 @@ interface FlowStepsProps {
 
 const FlowSteps: React.FC<FlowStepsProps> = ({ requestNumber }) => {
     const { userProfile } = useUserContext();
+    // Set Step Status 
     const [stepStatus, setStepStatus] = useState<{
         purchaseRequest: StepStatus;
         pendingApproval: StepStatus;
@@ -29,20 +30,12 @@ const FlowSteps: React.FC<FlowStepsProps> = ({ requestNumber }) => {
         processProcurement: 'wait',
         purchaseOrderRelease: 'wait',
     });
-
+    // Set Step Description
     const [descriptions, setDescriptions] = useState({
         purchaseRequest: "Waiting for request submission",
         pendingApproval: "Waiting for Head Actions",
         approvalFinance: "Waiting for Finance Actions",
         processProcurement: "Waiting for Procurement Actions",
-        purchaseOrderRelease: ""
-    });
-
-    const [subtitles, setSubtitles] = useState({
-        purchaseRequest: "",
-        pendingApproval: "",
-        approvalFinance: "",
-        processProcurement: "",
         purchaseOrderRelease: ""
     });
 
@@ -52,7 +45,7 @@ const FlowSteps: React.FC<FlowStepsProps> = ({ requestNumber }) => {
             if (!userProfile || !userProfile.userId) return;
             console.log("fetchStatus dipanggil untuk requestNumber:", requestNumber);
             try {
-
+                // Query to get Requests
                 const requestQuery = query(
                     collection(db, "requests"),
                     where("requesterId", "==", userProfile.userId),
@@ -60,66 +53,93 @@ const FlowSteps: React.FC<FlowStepsProps> = ({ requestNumber }) => {
                 );
                 const querySnapshot = await getDocs(requestQuery);
 
+                // Set Status of each action if query not empty
                 if (!querySnapshot.empty) {
                     const docSnap = querySnapshot.docs[0];
                     const data = docSnap.data();
 
-                    const formatDate = (dateTime: string) => dayjs(dateTime).format("YYYY-MM-DD");
-
                     console.log("Data fetched from Firestore:", data);
 
+                    const determineStatus = (status: 'process' | 'wait', approved: boolean | undefined, rejected: boolean | undefined): 'finish' | 'error' | 'process' | 'wait' => {
+                        if (approved) return 'finish';
+                        if (rejected) return 'error';
+                        return status;
+                    };
+                    
+                    const checkerStatus = determineStatus('process', data.approvalStatus?.checker?.approved, data.approvalStatus?.checker?.rejected);
+                    const approvalStatus = checkerStatus === 'finish'
+                        ? determineStatus('process', data.approvalStatus?.approval?.approved, data.approvalStatus?.approval?.rejected)
+                        : 'wait';
+                    const releaserStatus = approvalStatus === 'finish'
+                        ? determineStatus('process', data.approvalStatus?.releaser?.approved, data.approvalStatus?.releaser?.rejected)
+                        : 'wait';
+                    const purchaseOrderStatus = data.approvalStatus?.releaser?.approved ? 'finish' : 'wait';
+                    
                     setStepStatus({
-                        purchaseRequest: data.status == 'In Progress' ? 'finish' : 'finish',
-                        pendingApproval: data.approvalStatus?.checker?.approved
-                            ? 'finish'
-                            : data.approvalStatus?.checker?.rejected
-                                ? 'error'
-                                : 'process',
-                        approvalFinance: data.approvalStatus?.checker?.approved
-                            ? data.approvalStatus?.approval?.approved
-                                ? 'finish'
-                                : data.approvalStatus?.approval?.rejected
-                                    ? 'error'
-                                    : 'process' // Jika Checker sudah approve, Approval sedang menunggu tindakan
-                            : 'wait', // Approval menunggu Checker selesai
-                        processProcurement: data.approvalStatus?.approval?.approved
-                            ? data.approvalStatus?.releaser?.approved
-                                ? 'finish'
-                                : data.approvalStatus?.releaser?.rejected
-                                    ? 'error'
-                                    : 'process' // Jika Approval sudah approve, Releaser sedang menunggu tindakan
-                            : 'wait', // Releaser menunggu Approval selesai
-                        purchaseOrderRelease: data.approvalStatus?.releaser?.approved ? 'finish' : 'wait',
+                        purchaseRequest: 'finish', // Always 'finish'
+                        pendingApproval: checkerStatus,
+                        approvalFinance: approvalStatus,
+                        processProcurement: releaserStatus,
+                        purchaseOrderRelease: purchaseOrderStatus,
                     });
 
+                    // Set Description of each action if query not empty
+                    const createDescription = (
+                        approvedText: string,
+                        rejectedText: string,
+                        waitingText: string,
+                        status?: { approved?: boolean; rejected?: boolean },
+                        actionAt?: string,
+                        actionBy?: string
+                    ): string => {
+                        if (status?.approved) {
+                            return `${approvedText}${actionAt ? `<br /> <span style="font-size:12px; color:#616161; font-family:'Roboto Mono',monospace; display:block;">${formatDate(actionAt)}</span>` : ''}`;
+                        } else if (status?.rejected) {
+                            return `${rejectedText}${actionBy ? `<br /> <span style="font-size:12px; color:#616161; font-family:'Roboto Mono',monospace; display:block;">${formatDate(actionBy)}</span>` : ''}`;
+                        }
+                        return waitingText || "No description available";
+                    };
+                    
                     setDescriptions({
-                        purchaseRequest: `Request Form Submitted` + 
-                         (data.createdAt ? `<br /> <span style="font-size:12px; color:#616161; font-family:'Roboto Mono',monospace; display:block;">${formatDate(data.createdAt)}</span>` : ''),
-                            
-                        pendingApproval: data.approvalStatus?.checker?.approved
-                            ? `Head has agreed to your request${data.approvalStatus?.checker?.approvedAt ? `<br /> <span style="font-size:12px; color:#616161; display:block; font-family:'Roboto Mono', monospace;">${formatDate(data.approvalStatus.checker.approvedAt)}</span>` : ''}`
-                            : data.approvalStatus?.checker?.rejected
-                                ? `Head rejects your request${data.approvalStatus?.checker?.rejectedAt ? ` <br /> <span style="font-size:12px; color:#616161; display:block; font-family:'Roboto Mono', monospace;">${formatDate(data.approvalStatus.checker.rejectedAt)}</span>` : ''}`
-                                : "Waiting for Head Actions",
-                        
+                        purchaseRequest: `Request Form Submitted${data.createdAt ? `<br /> <span style="font-size:12px; color:#616161; font-family:'Roboto Mono',monospace; display:block;">${formatDate(data.createdAt)}</span>` : ''}`,
+                    
+                        pendingApproval: createDescription(
+                            "Head has agreed to your request",
+                            "Head rejects your request",
+                            "Waiting for Head Actions",
+                            data.approvalStatus?.checker || {},
+                            data.approvalStatus?.checker?.approvedAt,
+                            data.approvalStatus?.checker?.rejectedAt
+                        ),
+                    
                         approvalFinance: data.approvalStatus?.checker?.approved
-                            ? data.approvalStatus?.approval?.approved
-                                ? `Finance has agreed to your request${data.approvalStatus?.approval?.approvedAt ? ` <br /> <span style="font-size:12px; color:#616161; display:block; font-family:'Roboto Mono', monospace;">${formatDate(data.approvalStatus.approval.approvedAt)}</span>` : ''}`
-                                : data.approvalStatus?.approval?.rejected
-                                    ? `Finance rejects your request${data.approvalStatus?.approval?.rejectedAt ? ` <br /> <span style="font-size:12px; color:#616161; display:block; font-family:'Roboto Mono', monospace;">${formatDate(data.approvalStatus.approval.rejectedAt)}</span>` : ''}`
-                                    : "Waiting for Finance Actions"
+                            ? createDescription(
+                                  "Finance has agreed to your request",
+                                  "Finance rejects your request",
+                                  "Waiting for Finance Actions",
+                                  data.approvalStatus?.approval || {},
+                                  data.approvalStatus?.approval?.approvedAt,
+                                  data.approvalStatus?.approval?.rejectedAt
+                              )
                             : "",
-                        
+                    
                         processProcurement: data.approvalStatus?.approval?.approved
-                            ? data.approvalStatus?.releaser?.approved
-                                ? `Procurement has agreed to your request${data.approvalStatus?.releaser?.approvedAt ? `<span style="font-size:12px; color:#616161; display:block; font-family:'Roboto Mono', monospace;">${formatDate(data.approvalStatus.releaser.approvedAt)}</span>` : ''}`
-                                : data.approvalStatus?.releaser?.rejected
-                                    ? `Procurement rejects your request${data.approvalStatus?.releaser?.rejectedAt ? ` <br /> <span style="font-size:12px; color:#616161; display:block; font-family:'Roboto Mono', monospace;">${formatDate(data.approvalStatus.releaser.rejectedAt)}</span>` : ''}`
-                                    : "Waiting for Procurement Actions"
+                            ? createDescription(
+                                  "Procurement has agreed to your request",
+                                  "Procurement rejects your request",
+                                  "Waiting for Procurement Actions",
+                                  data.approvalStatus?.releaser || {},
+                                  data.approvalStatus?.releaser?.approvedAt,
+                                  data.approvalStatus?.releaser?.rejectedAt
+                              )
                             : "",
-                        
+                    
                         purchaseOrderRelease: data.approvalStatus?.releaser?.approved
-                            ? `Your request has been successfully approved, please wait for your item to arrive.${data.approvalStatus?.releaser?.approvedAt ? ` <br /> <span style="font-size:12px; color:#616161; display:block; font-family:'Roboto Mono', monospace;">${formatDate(data.approvalStatus.releaser.approvedAt)}</span>` : ''}`
+                            ? `Your request has been successfully approved, please wait for your item to arrive.${
+                                  data.approvalStatus?.releaser?.approvedAt
+                                      ? ` <br /> <span style="font-size:12px; color:#616161; display:block; font-family:'Roboto Mono', monospace;">${formatDate(data.approvalStatus.releaser.approvedAt)}</span>`
+                                      : ""
+                              }`
                             : ""
                     });
                 }
@@ -137,8 +157,7 @@ const FlowSteps: React.FC<FlowStepsProps> = ({ requestNumber }) => {
                 title="Purchase Request" 
                 status={stepStatus.purchaseRequest} 
                 description={<span dangerouslySetInnerHTML={{ __html: descriptions.purchaseRequest }} />}
-                icon={stepStatus.purchaseRequest === "process" ? <LoadingOutlined /> : null}  
-                
+                icon={stepStatus.purchaseRequest === "process" ? <LoadingOutlined /> : null}      
             />
             <Steps.Step 
                 title="Pending Approval" 
