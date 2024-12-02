@@ -84,6 +84,7 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({
         // Kita bisa akses object punya value menggunakan data.status atau data['status']. Kalo untuk dynamic access ke object properties bisa pake yang bracket notation
         // Bisa belajar tentang object properties disini ya:
         // https://dev.to/quratulaiinn/javascript-object-properties-dot-notation-or-bracket-notation-3gk0#:~:text=Bracket%20notation%20allows%20dynamic%20access,property%20you%20want%20to%20access.
+        // Display feedback when request is rejected
         if (data.status === 'Rejected') {
           const roleList = ['Checker', 'Approval', 'Releaser'];
       
