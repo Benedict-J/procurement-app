@@ -13,6 +13,7 @@ import {
 import { db } from '@/firebase/firebase'
 import styles from './index.module.scss'
 import { useRouter } from 'next/router'
+import { parseAmount, formatDate } from '@/utils/format'
 
 interface DataType {
   key: React.Key
@@ -59,6 +60,7 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({
   const [docId, setDocId] = useState<string | null>(null)
   const [isModalVisible, setIsModalVisible] = useState(false)
 
+  // Fetch request data based on the request number
   const fetchRequest = async () => {
     if (!userProfile || !requestNo) return
 
@@ -87,15 +89,15 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({
         // Display feedback when request is rejected
         if (data.status === 'Rejected') {
           const roleList = ['Checker', 'Approval', 'Releaser'];
-      
+
           roleList.forEach((role: string) => {
-              const feedback = data.approvalStatus?.[role.toLowerCase()]?.feedback;
-      
-              if (feedback) {
-                  setFeedbackData({ role, feedback });
-              }
+            const feedback = data.approvalStatus?.[role.toLowerCase()]?.feedback;
+
+            if (feedback) {
+              setFeedbackData({ role, feedback });
+            }
           });
-      }
+        }
 
         //   if (data.approvalStatus?.checker?.feedback) {
         //     setFeedbackData({
@@ -115,52 +117,46 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({
         //   }
         // }
 
-        const createdAt = new Date(data.createdAt)
-        const requestDateFormatted = `${createdAt.getFullYear()}-${String(createdAt.getMonth() + 1).padStart(2, '0')}-${String(createdAt.getDate()).padStart(2, '0')}`
-
         let calculatedGrandTotal = 0
 
-        // Refactor by creating another function
-        const requestData = (data.items || []).map(
-          (item: any, index: number) => {
-            // Create a format function in format.ts and call it here
-            const budgetMax = parseFloat(
-              item.budgetMax?.replace(/\./g, '') || '0',
-            )
-            const taxCost = parseFloat(item.taxCost?.replace(/\./g, '') || '0')
-            const deliveryFee = parseFloat(
-              item.deliveryFee?.replace(/\./g, '') || '0',
-            )
+        const requestData = (data.items || []).map((item: any, index: number) => {
+          // Using format function to format date
+          const requestDateFormatted = formatDate(data.createdAt);
+          const estimateDeliveryDateFormatted = formatDate(item.deliveryDate) || 'N/A';
+          // Using format function to convert money value
+          const budgetMax = parseAmount(item.budgetMax);
+          const taxCost = parseAmount(item.taxCost);
+          const deliveryFee = parseAmount(item.deliveryFee);
 
-            // Kalkulasi Total Item
-            const totalItem = budgetMax + taxCost + deliveryFee
+          // Calculate total item cost
+          const totalItem = budgetMax + taxCost + deliveryFee
 
-            calculatedGrandTotal += totalItem
+          calculatedGrandTotal += totalItem
 
-            return {
-              key: `${firstDoc.id}-${index}`,
-              requestNumber: data.requestNumber || 'N/A',
-              itemNumber: index + 1,
-              estimateDeliveryDate: item.deliveryDate || 'N/A',
-              deliveryAddress:
-                item.deliveryAddress === 'other'
-                  ? item.customDeliveryAddress || 'N/A'
-                  : item.deliveryAddress || 'N/A',
-              receiver: item.receiver || 'N/A',
-              merk: item.merk || 'N/A',
-              detailSpecs: item.detailSpecs || 'N/A',
-              color: item.color || 'N/A',
-              qty: item.qty || 0,
-              uom: item.uom || 'N/A',
-              linkRef: item.linkRef || 'N/A',
-              budgetMax: budgetMax.toLocaleString('id-ID'),
-              taxCost: taxCost.toLocaleString('id-ID'),
-              deliveryFee: deliveryFee.toLocaleString('id-ID'),
-              totalItem: totalItem.toLocaleString('id-ID'),
-              feedback: feedbackData ? feedbackData.feedback : 'No feedback',
-              requestDate: requestDateFormatted,
-            }
-          },
+          return {
+            key: `${firstDoc.id}-${index}`,
+            requestNumber: data.requestNumber || 'N/A',
+            itemNumber: index + 1,
+            estimateDeliveryDate: estimateDeliveryDateFormatted,
+            deliveryAddress:
+              item.deliveryAddress === 'other'
+                ? item.customDeliveryAddress || 'N/A'
+                : item.deliveryAddress || 'N/A',
+            receiver: item.receiver || 'N/A',
+            merk: item.merk || 'N/A',
+            detailSpecs: item.detailSpecs || 'N/A',
+            color: item.color || 'N/A',
+            qty: item.qty || 0,
+            uom: item.uom || 'N/A',
+            linkRef: item.linkRef || 'N/A',
+            budgetMax: budgetMax.toLocaleString('id-ID'),
+            taxCost: taxCost.toLocaleString('id-ID'),
+            deliveryFee: deliveryFee.toLocaleString('id-ID'),
+            totalItem: totalItem.toLocaleString('id-ID'),
+            feedback: feedbackData ? feedbackData.feedback : 'No feedback',
+            requestDate: requestDateFormatted,
+          }
+        },
         )
         setGrandTotal(calculatedGrandTotal)
         setDataSource(requestData)
@@ -187,6 +183,7 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({
     setIsModalVisible(true)
   }
 
+  // Handle confirmation to cancel the request
   const handleConfirmCancelRequest = async () => {
     if (!docId) return
 
@@ -380,8 +377,8 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({
       <div className={styles.feedbackGrandTotal}>
         <div className={styles.feedbackSection}>
           {userProfile?.role === 'Requester' &&
-          status === 'Rejected' &&
-          feedbackData ? (
+            status === 'Rejected' &&
+            feedbackData ? (
             <Card
               title={`Feedback from: ${feedbackData.role}`}
               className={styles.feedbackCard}

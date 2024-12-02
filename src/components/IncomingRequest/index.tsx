@@ -79,6 +79,7 @@ const IncomingRequest = () => {
         },
     ];
 
+    // Fetch requests based on user role (Checker, Approval, Releaser)
     const fetchRequests = async () => {
         if (!userProfile) return;
 
@@ -127,6 +128,7 @@ const IncomingRequest = () => {
         }
 
         if (roleQuery) {
+            // Fetch requests based on constructed query
             const querySnapshot = await getDocs(roleQuery);
             const requestData = querySnapshot.docs.map(doc => ({
                 key: doc.id,
@@ -143,6 +145,7 @@ const IncomingRequest = () => {
         fetchRequests();
     }, [userProfile]);
 
+    // Navigates to detail request page
     const handleDetailClick = (requestNo: string) => {
         router.push(`/requester/detail-request?requestNo=${requestNo}`);
     };
@@ -215,7 +218,7 @@ const IncomingRequest = () => {
     };
 
 
-    // Handler for pagination
+    // Handler for the pagination
     const handleTableChange = (pagination: any) => {
         setCurrentPage(pagination.current);
         setPageSize(pagination.pageSize);

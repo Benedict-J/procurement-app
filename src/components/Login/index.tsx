@@ -22,7 +22,7 @@ const { Content } = Layout;
 
 const Login: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [captchaValue, setCaptchaValue] = useState<string | null>(null); // State untuk reCAPTCHA
+  const [captchaValue, setCaptchaValue] = useState<string | null>(null);
   const router = useRouter();
 
   const onForgotPassword = () => {
@@ -33,10 +33,12 @@ const Login: React.FC = () => {
     router.push('/auth/register');
   };
 
+  // Update captchaValue when the reCAPTCHA changes
   const onCaptchaChange = (value: string | null) => {
     setCaptchaValue(value);
   };
 
+  // Handle the login process, including authentication and redirection based on user role
   const onLogin = async (values: { nik: string; password: string }) => {
     setIsLoading(true);
     if (!captchaValue) {
@@ -54,9 +56,11 @@ const Login: React.FC = () => {
     }
 
     try {
+      // Attempt to sign in using the provided NIK and password
       const result = await SignIn(nik, password);
       const token = await result.user.getIdToken();
 
+      // Fetch user data from the Firestore database
       const userDocRef = doc(db, 'registeredUsers', result.user.uid);
       const userDocSnap = await getDoc(userDocRef);
 
@@ -64,8 +68,8 @@ const Login: React.FC = () => {
       const selectedProfileIndex = userData.selectedProfileIndex;
       console.log("Selected profile index:", selectedProfileIndex);
 
+      // Find the selected profile based on the index
       const selectedProfile = userData.profile.find(
-
         (profile: Profile, index: number) => {
           console.log('Profile:', profile);
           console.log('SelectedProfileIndex:', selectedProfileIndex);
@@ -81,7 +85,7 @@ const Login: React.FC = () => {
       document.cookie = `userRole=${userRole}; path=/`;
       document.cookie = `token=${token}; path=/`;
 
-      // Menggunakan switch untuk navigasi
+      // Redirect user based on their role
       switch (userRole) {
         case 'Super Admin':
           router.push('/requester/user-management');

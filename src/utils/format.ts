@@ -19,6 +19,15 @@ export const formatDate = (
 };
 
 /**
+* Function to format and convert money value (remove thousands separator)
+* and convert it into float number.
+*/
+export const parseAmount = (value: string | undefined): number => {
+  // Remove dots (.) and convert string to number (float)
+  return parseFloat((value || '0').replace(/\./g, ''));
+};
+
+/**
  * Generates a unique request number in the specified format:
  * PR<EntityAbbreviation><Year><Index><RomanMonth><DivisionAbbreviation>
  * 

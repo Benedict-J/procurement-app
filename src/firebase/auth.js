@@ -79,68 +79,68 @@ export const SignIn = async (nik, password) => {
 
 export const registerUserWithNik = async (nik) => {
     try {
-  
-      const registeredUsersRef = collection(db, 'registeredUsers');
-      const qRegisteredUsers = query(registeredUsersRef, where('nik', '==', nik));
-      const registeredUsersSnapshot = await getDocs(qRegisteredUsers);
-  
-      // Jika ditemukan dokumen dengan NIK tersebut, return error
-      if (!registeredUsersSnapshot.empty) {
-        throw new Error('NIK already registered');
-      }
-  
-      const q = query(collection(db, 'preRegisteredUsers'), nik);
-      const querySnapshot = await getDocs(q);
-  
-      console.log("NIK yang dikirim:", nik);
-  
-      if (querySnapshot.empty) {
-        throw new Error('NIK not registered! Please Contact Super Admin');
-      }
-      
-      const preRegisteredDocRef = doc(db, 'preRegisteredUsers', nik);
-      const preRegisteredDoc = await getDoc(preRegisteredDocRef);
-  
-      // Ambil profil dari data yang ada di Firestore
-      const userData = preRegisteredDoc.data(); 
-      console.log("Data user ditemukan di Firestore:", userData);
-      const profile = userData.profile || [];
-      console.log("Data user ditemukan:", userData);
-  
-      return { success: true, userData: { namaLengkap: userData.namaLengkap, divisi: userData.divisi, profile} };
+
+        const registeredUsersRef = collection(db, 'registeredUsers');
+        const qRegisteredUsers = query(registeredUsersRef, where('nik', '==', nik));
+        const registeredUsersSnapshot = await getDocs(qRegisteredUsers);
+
+        // Jika ditemukan dokumen dengan NIK tersebut, return error
+        if (!registeredUsersSnapshot.empty) {
+            throw new Error('NIK already registered');
+        }
+
+        const q = query(collection(db, 'preRegisteredUsers'), nik);
+        const querySnapshot = await getDocs(q);
+
+        console.log("NIK yang dikirim:", nik);
+
+        if (querySnapshot.empty) {
+            throw new Error('NIK not registered! Please Contact Super Admin');
+        }
+
+        const preRegisteredDocRef = doc(db, 'preRegisteredUsers', nik);
+        const preRegisteredDoc = await getDoc(preRegisteredDocRef);
+
+        // Ambil profil dari data yang ada di Firestore
+        const userData = preRegisteredDoc.data();
+        console.log("Data user ditemukan di Firestore:", userData);
+        const profile = userData.profile || [];
+        console.log("Data user ditemukan:", userData);
+
+        return { success: true, userData: { namaLengkap: userData.namaLengkap, divisi: userData.divisi, profile } };
     } catch (error) {
-      return { success: false, message: error.message };
+        return { success: false, message: error.message };
     }
-  };
-  
+};
+
 export const registerUser = async (nik, namaLengkap, divisi, profile, selectedProfileIndex, password) => {
-  
+
     const actionCodeSettings = {
-      url: 'https://procurement-web-app.vercel.app/auth/login',
-      handleCodeInApp: false,
+        url: 'https://procurement-web-app.vercel.app/auth/login',
+        handleCodeInApp: false,
     };
-  
+
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, profile[selectedProfileIndex].email, password);
-      const user = userCredential.user;
-  
-      await setDoc(doc(db, 'registeredUsers', user.uid), {
-        uid: user.uid,
-        nik: nik,
-        namaLengkap: namaLengkap,
-        divisi: divisi,
-        profile: profile,
-        selectedProfileIndex: selectedProfileIndex,
-        isEmailVerified: false
-      });
-  
-      await sendEmailVerification(user, actionCodeSettings);
-      return { success: true, message: "Registration success, Email verification has been sent" };
+        const userCredential = await createUserWithEmailAndPassword(auth, profile[selectedProfileIndex].email, password);
+        const user = userCredential.user;
+
+        await setDoc(doc(db, 'registeredUsers', user.uid), {
+            uid: user.uid,
+            nik: nik,
+            namaLengkap: namaLengkap,
+            divisi: divisi,
+            profile: profile,
+            selectedProfileIndex: selectedProfileIndex,
+            isEmailVerified: false
+        });
+
+        await sendEmailVerification(user, actionCodeSettings);
+        return { success: true, message: "Registration success, Email verification has been sent" };
     } catch (error) {
-      console.error("Firebase error: ", error);
-      return { success: false, message: error.message };
+        console.error("Firebase error: ", error);
+        return { success: false, message: error.message };
     }
-  }
+}
 
 // Fungsi sign out
 export const SignOut = async () => {
@@ -152,7 +152,6 @@ export const SignOut = async () => {
     }
 };
 
-// Fungsi reset password
 // Fungsi reset password
 export const resetPassword = async (email) => {
     const actionCodeSettings = {
@@ -210,17 +209,17 @@ export const resetPasswordConfirm = async (oobCode, newPassword) => {
 
 export const updateEmailVerificationStatus = async (uid) => {
     try {
-      const usersRef = collection(db, 'registeredUsers');
-      const q = query(usersRef, where("uid", "==", uid));
-      const querySnapshot = await getDocs(q);
-  
-      if (!querySnapshot.empty) {
-        querySnapshot.forEach(async (doc) => {
-          const docRef = doc.ref;
-          await updateDoc(docRef, { isEmailVerified: true });
-        });
-      }
+        const usersRef = collection(db, 'registeredUsers');
+        const q = query(usersRef, where("uid", "==", uid));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+            querySnapshot.forEach(async (doc) => {
+                const docRef = doc.ref;
+                await updateDoc(docRef, { isEmailVerified: true });
+            });
+        }
     } catch (error) {
-      console.error("Error updating verification status: ", error);
+        console.error("Error updating verification status: ", error);
     }
-  };
+};

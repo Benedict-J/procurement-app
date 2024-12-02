@@ -29,6 +29,7 @@ const HistoryTable = () => {
     const [selectedStatus, setSelectedStatus] = useState("");
     const router = useRouter();
 
+    // Fetches the history data based on the user role
     const fetchHistory = async () => {
         if (!userProfile || !userProfile.role) {
             setDataSource([]);
@@ -42,6 +43,7 @@ const HistoryTable = () => {
 
         console.log("Fetching history for role:", role);
         try {
+            // Fetch data for requester role
             if (role === "requester") {
                 const historyQuery = query(
                     collection(db, "requests"),
@@ -62,7 +64,7 @@ const HistoryTable = () => {
                 });
 
             } else {
-                // Role selain requester, gabungkan `approvedBy` dan `rejectedBy`
+                // Fetch data for roles other than requester
                 const approvedQuery = query(
                     collection(db, "requests"),
                     where(`approvalStatus.${role}.approvedBy`, "==", userProfile.userId),
@@ -108,24 +110,28 @@ const HistoryTable = () => {
         fetchHistory();
     }, [userProfile]);
 
+    // Handles search input for request numbers
     const handleSearch = (value: string) => {
         setSearchText(value.toLowerCase());
     };
 
+    // Handles the date range filter changes
     const handleDateChange = (dates: any) => {
         setSelectedDateRange(dates || []);
     };
 
+    // Handles the status filter changes
     const handleStatusChange = (value: string) => {
         setSelectedStatus(value);
     };
 
+    // Filters the table data based on search, date range, and status
     const filteredData = dataSource.filter(item => {
         if (!userProfile?.role) return false;
 
         const matchesRequestNo = item.requestNo.toLowerCase().includes(searchText);
 
-        //filter status pada search bar berdasarkan role
+        // Filter status based on role
         const sourceForFilter = userProfile.role === "Requester" ? item.status : item.action;
         const matchesStatus = selectedStatus ? sourceForFilter === selectedStatus : true;
 
@@ -146,7 +152,7 @@ const HistoryTable = () => {
         action: string;
     }
 
-    // Kolom untuk Requester
+    // Columns for Requester role
     const requesterColumns: ColumnsType<DataType> = [
         {
             title: "No.",
@@ -195,7 +201,7 @@ const HistoryTable = () => {
         },
     ];
 
-    // Kolom untuk Checker, Approval, Releaser
+    // Columns for other roles (Checker, Approval, Releaser)
     const actionColumns: ColumnsType<DataType> = [
         {
             title: "No.",
@@ -247,14 +253,17 @@ const HistoryTable = () => {
         },
     ];
 
+    // Handles redirect to the request detail page
     const handleDetail = (requestNo: string) => {
         router.push(`/requester/detail-request?requestNo=${requestNo}`);
     };
 
+    // Handles redirect to the flow steps page
     const showFlowStep = (requestNumber: string) => {
         router.push(`/requester/flow-steps?requestNumber=${requestNumber}`);
     };
 
+    // Handles table pagination changes
     const handleTableChange = (page: number, size?: number) => {
         setCurrentPage(page);
         if (size) {
