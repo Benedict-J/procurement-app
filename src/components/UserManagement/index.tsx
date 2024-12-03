@@ -27,6 +27,7 @@ const UserManagement: React.FC = () => {
         const fetchUsers = async () => {
             if (!userProfile) return;
             
+            // Fetch registered users from the database
             const registeredUsersSnapshot = await getDocs(collection(db, 'registeredUsers'));
             const registeredUsersData = registeredUsersSnapshot.docs.map(doc => ({
                 ...doc.data(),
@@ -35,6 +36,7 @@ const UserManagement: React.FC = () => {
             }))
             .filter(user => user.id !== userProfile.userId); 
 
+            // Fetch pre-registered users from the database
             const preRegisteredUsersSnapshot = await getDocs(collection(db, 'preRegisteredUsers'));
             const preRegisteredUsersData = preRegisteredUsersSnapshot.docs.map(doc => ({
                 ...doc.data(),
@@ -44,6 +46,7 @@ const UserManagement: React.FC = () => {
             }))
             .filter(user => user.nik !== userProfile?.nik);
 
+            // Combine both lists of users
             const allUsers = [...registeredUsersData, ...preRegisteredUsersData];
             setUsers(allUsers);
             setFilteredUsers(allUsers);
@@ -52,6 +55,7 @@ const UserManagement: React.FC = () => {
         fetchUsers();
     }, [userProfile]);
 
+    // Handle adding a new user
     const handleAddUser = async (values: any) => {
         try {
             if (!values.profiles || values.profiles.length === 0) {
@@ -81,6 +85,7 @@ const UserManagement: React.FC = () => {
         setIsModalVisible(true);
     };
 
+    // Handle editing an existing user
     const handleEditUser = (user: any) => {
         if (user.userId === userProfile?.userId || user.nik === userProfile?.nik) {
             message.error("You cannot edit your own account.");
@@ -99,6 +104,7 @@ const UserManagement: React.FC = () => {
         setIsModalVisible(true);
     };
 
+    // Handle updating an existing user
     const handleUpdateUser = async (values: any) => {
         if (!editingUser) return;
         try {
@@ -108,7 +114,7 @@ const UserManagement: React.FC = () => {
             const newNIK = values.nik;
 
             if (collectionName === 'preRegisteredUsers') {
-                // Jika berasal dari preRegisteredUsers, NIK adalah ID dokumen
+                // If the user is from preRegisteredUsers, NIK is the document ID
                 if (oldNIK !== newNIK) {
                     await deleteDoc(doc(db, collectionName, oldNIK));
                     await setDoc(doc(db, collectionName, newNIK), {
@@ -124,7 +130,7 @@ const UserManagement: React.FC = () => {
                     });
                 }
             } else if (collectionName === 'registeredUsers') {
-                // Jika berasal dari registeredUsers, update field NIK tanpa mengubah ID dokumen
+                // If the user is from registeredUsers, update the document by its ID
                 await updateDoc(doc(db, collectionName, editingUser.id), {
                     nik: newNIK,
                     namaLengkap: values.namaLengkap,
@@ -160,6 +166,7 @@ const UserManagement: React.FC = () => {
         }
     };
 
+    // Handle deleting a user
     const handleDeleteUser = async (userId: string, source: string, userNik?: string) => {
         if (userId === userProfile?.userId || userNik === userProfile?.nik) {
             message.error("You cannot delete your own account.");
@@ -174,6 +181,7 @@ const UserManagement: React.FC = () => {
         }
     };
 
+    // Handle searching users by name, NIK, or email
     const handleSearch = (keyword: string) => {
         setSearchKeyword(keyword);
         const filteredData = users.filter(user => {
@@ -188,6 +196,7 @@ const UserManagement: React.FC = () => {
         setFilteredUsers(filteredData);
     };
 
+    // Confirm the deletion of a user
     const confirmDeleteUser = (userId: string, source: string) => {
         Modal.confirm({
             title: 'Delete user',
@@ -199,6 +208,7 @@ const UserManagement: React.FC = () => {
         });
     };
 
+    // Confirm the addition of a new user
     const confirmAddUser = (values: any) => {
         Modal.confirm({
             title: 'Confirm Submission',
@@ -209,6 +219,7 @@ const UserManagement: React.FC = () => {
         });
     };
 
+    // Confirm the update user
     const confirmUpdateUser = (values: any) => {
         Modal.confirm({
             title: 'Confirm Update',
@@ -336,13 +347,14 @@ const UserManagement: React.FC = () => {
         { label: "Super Admin", value: "Super Admin" },
     ];
 
+    // Validate the profiles on add profile
     const validateProfiles = (profiles: any[], division: string) => {
         console.log('Received Division:', division);
     
         const normalizedDivision = division ? division.trim().toLowerCase() : 'undefined';
         console.log('Normalized Division:', normalizedDivision);
     
-        // Validasi untuk divisi Finance
+        // Validation for finance division
         if (normalizedDivision === 'finance') {
             const entityEmailMap = new Map();
             const emailEntityMap = new Map();
@@ -350,7 +362,7 @@ const UserManagement: React.FC = () => {
             for (const profile of profiles) {
                 const { email, entity, role } = profile;
     
-                // Cek Entity Sama - Email Berbeda
+                // Check same entity - different email
                 if (entityEmailMap.has(entity)) {
                     const existingEmail = entityEmailMap.get(entity);
                     if (existingEmail !== email) {
@@ -358,7 +370,7 @@ const UserManagement: React.FC = () => {
                     }
                 }
     
-                // Cek Email Sama - Entity Berbeda
+                // Cek same email - different entity
                 if (emailEntityMap.has(email)) {
                     const existingEntity = emailEntityMap.get(email);
                     if (existingEntity !== entity) {
@@ -369,24 +381,24 @@ const UserManagement: React.FC = () => {
                 entityEmailMap.set(entity, email);
                 emailEntityMap.set(email, entity);
     
-                // Validasi role
+                // Validate the role for Finance division (must be Approval or Checker)
                 if (role !== 'Approval' && role !== 'Checker') {
                     return { isValid: false, message: 'Role must be Approval or Checker for Finance division.' };
                 }
             }
         }
     
-        // Validasi untuk divisi selain Finance
+        // Validation for divisions other than Finance
         if (normalizedDivision !== 'finance') {
             const emailSet = new Set();
             const entitySet = new Set();
     
             for (const profile of profiles) {
-                // Cek apakah email berbeda
+                // Check if email is different
                 if (emailSet.has(profile.email)) {
                     return { isValid: false, message: 'Emails must be unique for non-Finance divisions.' };
                 }
-                // Cek apakah entity berbeda
+                // Check if entity is different
                 if (entitySet.has(profile.entity)) {
                     return { isValid: false, message: 'Entities must be unique for non-Finance divisions.' };
                 }

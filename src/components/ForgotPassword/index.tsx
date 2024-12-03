@@ -21,6 +21,7 @@ const ForgotPassword: React.FC | any = () => {
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
 
+    // Handles the password reset process by sending a reset link to the provided email
     const onResetPassword = async (values: { email: string }) => {
         setIsLoading(true);
         try {

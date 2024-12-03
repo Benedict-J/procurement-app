@@ -1,6 +1,24 @@
+/**
+ * UserContext: Provides the user's authentication and profile data throughout the application.
+ *
+ * Interfaces:
+ * - Profile: Defines the structure for each user profile with email, entity, and role.
+ * - UserProfile: Extends user profile details with division, NIK, and multiple profiles.
+ * - UserContextType: Defines the types and methods provided by the UserContext.
+ *
+ * Features:
+ * - Tracks the logged-in user's data and selected profile index.
+ * - Provides methods for handling profile switching and draft data loading.
+ * - Redirects users based on their roles after login or profile change.
+ *
+ * Usage:
+ * - Wrap the application with `<UserProvider>` to enable user context.
+ * - Use the custom `useUserContext` hook to access context values and methods.
+ */
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { doc, getDoc, updateDoc } from "firebase/firestore"; // Firebase Firestore
-import { auth, db } from "@/firebase/firebase";  // Konfigurasi Firebase
+import { auth, db } from "@/firebase/firebase";  // Firebase Config
 import { useRouter } from "next/router"; // Router
 import { Spin } from "antd";
 
@@ -40,7 +58,7 @@ interface UserContextType {
 // Buat Context untuk user
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
-// Provider untuk UserContext
+// Provider for UserContext
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const router = useRouter();
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -50,7 +68,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isProfileChanging, setIsProfileChanging] = useState(false);
 
-  // Definisikan mapping role ke path dashboard
+  // Mapping of roles to default dashboard paths
   const defaultPathsForRoles: Record<string, string> = {
     "Requester": "/requester/request-form",
     "Checker": "/requester/incoming-request",
@@ -60,12 +78,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    // Listener untuk autentikasi Firebase
+    // Listener for Firebase Authentication
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       setLoading(true);
       if (user) {
-        setUser(user);
+        setUser(user); // Set user data
+
         try {
+          // Fetch user profile data from Firestore
           const docRef = doc(db, "registeredUsers", user.uid);
           const docSnap = await getDoc(docRef);
 
@@ -73,6 +93,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const userData = docSnap.data();
             const selectedIndex = userData.selectedProfileIndex || 0;
 
+            // Set user profile data to state
             if (Array.isArray(userData.profile) && userData.profile.length > 0) {
               const selectedProfile = userData.profile[selectedIndex];
               setUserProfile({
@@ -92,13 +113,13 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.error("Error fetching user data:", error);
         }
       } else {
-        setUser(null);
+        setUser(null); // Reset user data
         setUserProfile(null);
       }
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => unsubscribe(); // Cleanup the listener
   }, []);
 
   useEffect(() => {
@@ -106,11 +127,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const currentRole = userProfile.profile[selectedProfileIndex]?.role;
       const defaultPath = defaultPathsForRoles[currentRole];
   
-      // Tambahkan log untuk memastikan `defaultPath` sudah benar
-      console.log("Redirecting role:", currentRole);
-      console.log("Expected defaultPath:", defaultPath);
-  
-      // Pengecualian redirect
+      // Exception paths for redirect
       const nonRedirectPaths = [
         "/auth/login",
         "/auth/register",
@@ -130,7 +147,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
   
-      // Redirect jika path saat ini berbeda dengan defaultPath yang sesuai role
+      // Redirect to default path if current path is different
       if (router.pathname !== defaultPath) {
         console.log("Redirecting to:", defaultPath);
         router.replace(defaultPath);
@@ -147,15 +164,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (draftDoc.exists()) {
         const draftData = draftDoc.data();
-        // Gunakan draftData, misalnya setFormData(draftData);
-      } else {
-        // Kosongkan form jika tidak ada draft
+        // Use the draftData as needed, e.g., to populate a form
       }
     } catch (error) {
       console.error("Error loading draft data:", error);
     }
   };
 
+  // Function to set the selected profile
   const setSelectedProfile = (index: number) => {
     if (user) {
       const docRef = doc(db, "registeredUsers", user.uid);
@@ -172,7 +188,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
               email: profile.email,
             }));
 
-            // Redirect hanya saat profile diganti
+            // Redirect to the default path based on the new profile
             const defaultPath = defaultPathsForRoles[profile.role];
             if (router.pathname !== defaultPath) {
               router.replace(defaultPath);
@@ -196,8 +212,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
          width: "100vw",
        }}
      >
-       <Spin size="large" /> {/* Tampilan loading berada di tengah */}
-     </div>// Tampilan loading sementara data sedang di-fetch
+       <Spin size="large" /> 
+     </div>
       ) : (
         children
       )}
@@ -205,7 +221,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-// Custom hook untuk menggunakan context
+// Custom hook to use the context
 export const useUserContext = () => {
   const context = useContext(UserContext);
   if (context === undefined) {
