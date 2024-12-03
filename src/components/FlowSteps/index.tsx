@@ -191,14 +191,14 @@ const FlowSteps: React.FC<FlowStepsProps> = ({ requestNumber }) => {
 
   return (
     <Steps size="default">
-      {/* There are a lot of duplicate <Step.Step /> code and this can refactored to a smaller component called FlowStep */}
-      {/* After creating the child component, you can use a HOF called map (https://www.w3schools.com/jsref/jsref_map.asp) */}
-      {/* to display the FlowStep component */}
-      {/* First you need to find all the variables in Steps.Step and the only difference is in the title prop, status prop and description prop */}
-      {/* Next you should define the parameters for FlowStep component which are the title and currentProcess (status and description has same name) */}
-      {/* Create an array of objects and put all the variables in that array such as [{ title: "Purchse Request", currentProcess: "purchaseRequest" }] */}
-      {/* Don't forget about the dynamic access for object values as it is used for the status and description */}
-      {/* Reference: https://www.freecodecamp.org/news/how-to-render-lists-in-react/ or https://react.dev/learn/rendering-lists */}
+      {/* There are a lot of duplicate <Step.Step /> code and this can refactored to a smaller component called FlowStep
+      After creating the child component, you can use a HOF called map (https://www.w3schools.com/jsref/jsref_map.asp)
+      to display the FlowStep component
+      First you need to find all the variables in Steps.Step and the only difference is in the title prop, status prop and description prop
+      Next you should define the parameters for FlowStep component which are the title and currentProcess (status and description has same name)
+      Create an array of objects and put all the variables in that array such as [{ title: "Purchse Request", currentProcess: "purchaseRequest" }]
+      Don't forget about the dynamic access for object values as it is used for the status and description
+      Reference: https://www.freecodecamp.org/news/how-to-render-lists-in-react/ or https://react.dev/learn/rendering-lists */}
       <Steps.Step
         title="Purchase Request"
         status={stepStatus.purchaseRequest}
