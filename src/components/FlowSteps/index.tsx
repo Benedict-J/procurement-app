@@ -130,6 +130,7 @@ const FlowSteps: React.FC<FlowStepsProps> = ({ requestNumber }) => {
             actionBy?: string,
           ): string => {
             if (status?.approved) {
+              // There is duplicate code for the html string and it can be set as variable or function
               return `${approvedText}${actionAt ? `<br /> <span style="font-size:12px; color:#616161; font-family:'Roboto Mono',monospace; display:block;">${formatDate(actionAt)}</span>` : ''}`
             } else if (status?.rejected) {
               return `${rejectedText}${actionBy ? `<br /> <span style="font-size:12px; color:#616161; font-family:'Roboto Mono',monospace; display:block;">${formatDate(actionBy)}</span>` : ''}`
@@ -190,6 +191,14 @@ const FlowSteps: React.FC<FlowStepsProps> = ({ requestNumber }) => {
 
   return (
     <Steps size="default">
+      {/* There are a lot of duplicate <Step.Step /> code and this can refactored to a smaller component called FlowStep */}
+      {/* After creating the child component, you can use a HOF called map (https://www.w3schools.com/jsref/jsref_map.asp) */}
+      {/* to display the FlowStep component */}
+      {/* First you need to find all the variables in Steps.Step and the only difference is in the title prop and status prop */}
+      {/* Next you should define the parameters for FlowStep component which are the title and status props */}
+      {/* Create an array of objects and put all the variables in that array such as [{ title: "Purchse Request", status: "purchaseRequest" }] */}
+      {/* Don't forget about the dynamic access for object values as it is used for the status */}
+      {/* Reference: https://www.freecodecamp.org/news/how-to-render-lists-in-react/ or https://react.dev/learn/rendering-lists */}
       <Steps.Step
         title="Purchase Request"
         status={stepStatus.purchaseRequest}
