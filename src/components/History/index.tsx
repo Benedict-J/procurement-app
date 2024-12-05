@@ -204,7 +204,7 @@ const HistoryTable = () => {
         <Button
           type="primary"
           size="small"
-          onClick={() => handleDetail(record.requestNo)}
+          onClick={() => navigateToPage(record.requestNo, 'detail')}
         >
           Check
         </Button>
@@ -224,7 +224,7 @@ const HistoryTable = () => {
       key: 'status',
       align: 'center' as const,
       render: (status: string, record: { requestNo: string }) => (
-        <Button type="link" onClick={() => showFlowStep(record.requestNo)}>
+        <Button type="link" onClick={() => navigateToPage(record.requestNo, 'flow')}>
           {status}
         </Button>
       ),
@@ -259,7 +259,7 @@ const HistoryTable = () => {
         <Button
           type="primary"
           size="small"
-          onClick={() => handleDetail(record.requestNo)}
+          onClick={() => navigateToPage(record.requestNo, 'detail')}
         >
           Check
         </Button>
@@ -288,18 +288,14 @@ const HistoryTable = () => {
     },
   ]
 
-  // handleDetail and showFlowStep function have the same functionality and you can refactor to use one common function
-  // The only difference between both of these functions are the path and you can set it as a parameter
-
-  // Handles redirect to the request detail page
-  const handleDetail = (requestNo: string) => {
-    router.push(`/requester/detail-request?requestNo=${requestNo}`)
-  }
-
-  // Handles redirect to the flow steps page
-  const showFlowStep = (requestNumber: string) => {
-    router.push(`/requester/flow-steps?requestNumber=${requestNumber}`)
-  }
+  // Function for handle detail req and flow flow step
+  const navigateToPage = (id: string, page: 'detail' | 'flow') => {
+    if (page === 'detail') {
+      router.push(`/requester/detail-request?requestNo=${id}`);
+    } else if (page === 'flow') {
+      router.push(`/requester/flow-steps?requestNumber=${id}`);
+    }
+  };
 
   // Handles table pagination changes
   const handleTableChange = (page: number, size?: number) => {
