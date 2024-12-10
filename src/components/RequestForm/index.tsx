@@ -5,44 +5,14 @@ import "dayjs/locale/id"
 dayjs.locale("id")
 
 import { addDoc, collection, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useUserContext } from "@/contexts/UserContext";
 import { Autosave, useAutosave } from 'react-autosave';
 import { handleStatusChange } from "@/utils/notifications/handleStatusUtils";
+import { convertMonthToRoman, generateRequestNumber } from "@/utils/format";
+import { formatDate } from "@/utils/format";
 
 const { Option } = Select;
-
-const convertMonthToRoman = (month: number) => {
-  const romanNumerals = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
-  return romanNumerals[month - 1];
-};
-
-const generateRequestNumber = async (entityAbbr: string, division: string) => {
-  const currentYear = dayjs().year();
-  const currentMonth = dayjs().month() + 1;
-  const romanMonth = convertMonthToRoman(currentMonth);
-
-  // Ambil counter dari Firebase
-  const counterDocRef = doc(db, "counters", "requestCounter");
-  const counterSnapshot = await getDoc(counterDocRef);
-  let currentIndex = 1;
-
-  if (counterSnapshot.exists()) {
-    currentIndex = counterSnapshot.data().currentIndex + 1;
-  } else {
-    await setDoc(counterDocRef, { currentIndex: 1 });
-  }
-
-  // Update counter di Firebase
-  await updateDoc(counterDocRef, {
-    currentIndex: currentIndex,
-  });
-
-  const requestIndex = currentIndex.toString().padStart(5, "0");
-
-  // Format final nomor request
-  return `PR${entityAbbr}${currentYear}${requestIndex}${romanMonth}${division}`;
-};
 
 
 const RequestForm = () => {
@@ -57,31 +27,35 @@ const RequestForm = () => {
   const [formData, setFormData] = useState<FormData>({} as FormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Cleans and formats the input data object.
   const cleanData = (data: any) => {
     return Object.fromEntries(
       Object.entries(data).map(([key, value]) => {
+        // If the value is a Day.js instance, format it as 'YYYY-MM-DD'
         if (dayjs.isDayjs(value)) {
           return [key, value.format("YYYY-MM-DD")];
         }
+        // Replace undefined values with null, retain all other values
         return [key, value === undefined ? null : value];
       })
     );
   };
 
+  // Saves the current draft form data to Firebase Firestore.
   const saveDraftToFirebase = async (data: any) => {
     if (!user || selectedProfileIndex === null || Object.keys(data).length === 0 || isSubmitting) return;
 
     try {
-      const cleanedData = cleanData(data);
+      const cleanedData = cleanData(data); // Cleans and formats the data
       const draftDocRef = doc(db, "draftRequests", `${user.uid}_${selectedProfileIndex}`);
-      await setDoc(draftDocRef, cleanedData);
+      await setDoc(draftDocRef, cleanedData);  // Saves the data to Firestore
       console.log("Data form sementara disimpan ke Firebase:", cleanedData);
     } catch (error) {
       console.error("Gagal menyimpan data sementara ke Firebase:", error);
     }
   };
 
-
+  // Loads saved draft form data from Firebase Firestore.
   const loadDraftData = async () => {
     if (!user || selectedProfileIndex === null) return;
 
@@ -91,11 +65,11 @@ const RequestForm = () => {
 
       if (draftDoc.exists()) {
         const draftData = draftDoc.data();
-        setFormData(draftData as FormData);
-        form.setFieldsValue(draftData);
+        setFormData(draftData as FormData); // Update state with draft data
+        form.setFieldsValue(draftData); // Populate form fields with draft data
       } else {
-        setFormData({} as FormData);
-        form.resetFields();
+        setFormData({} as FormData); // Clear state if no draft exists
+        form.resetFields(); // Reset form fields to default
       }
     } catch (error) {
       console.error("Error loading draft data:", error);
@@ -108,25 +82,28 @@ const RequestForm = () => {
     }
   }, [user, selectedProfileIndex, form]);
 
-
+  // Updates the form data state whenever there are changes in the form fields.
   const handleFormChange = (changedValues: FormData, allValues: FormData) => {
     setFormData(allValues);
   };
 
+  // Handles changes in the delivery address dropdown field.
   const handleAddressChange = (value: string, index: number) => {
     setIsOtherSelected((prev) => ({ ...prev, [index]: value === "other" }));
   };
 
+  // Updates the custom delivery address state based on user input.
   const handleCustomAddressChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const value = e.target.value;
     setCustomAddress((prev) => ({ ...prev, [index]: value }));
   };
 
-
+  // Disables dates in the date picker that are in the past or within 7 days from the current date.
   const disabledDate = (current: Dayjs) => {
     return current && (current < dayjs().endOf('day') || current < dayjs().add(7, 'days'));
   };
 
+  // Handles changes to the budget field and ensures only valid numeric values are entered.
   const handleBudgetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     const formattedValue = value.replace(/[^0-9.]/g, "");
@@ -134,17 +111,19 @@ const RequestForm = () => {
     setBudgetMax(formattedValue);
   };
 
+  // Formats a string as currency with thousands separators.
   const formatCurrency = (value: string) => {
     return value.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   };
 
   const [formList, setFormList] = useState([1]);
 
+  // Adds a new item to the form list.
   const addNewForm = () => {
     setFormList([...formList, formList.length + 1]);
   };
 
-
+  // Deletes an item from the form list and updates the remaining fields accordingly.
   const deleteForm = (indexToDelete: number) => {
     const updatedFormList = formList.filter((_, i) => i !== indexToDelete);
 
@@ -175,17 +154,20 @@ const RequestForm = () => {
     console.log("Data yang akan dikirim ke Firestore:", values);
     console.log("User Profile Data:", userProfile);
 
+    // Validate user profile
     if (!userProfile || !userProfile.email || !userProfile.entity || !userProfile.role) {
       alert("User profile data is missing or incomplete. Please log in again.");
       setLoading(false);
       return;
     }
 
+    // Validate user login
     if (!requesterId) {
       alert("User not logged in.");
       return;
     }
 
+    // Prepare the list of items from the form
     const items = formList.map((item, index) => ({
       deliveryDate: values[`deliveryDate${index + 1}`]
         ? dayjs(values[`deliveryDate${index + 1}`]).format("YYYY-MM-DD")
@@ -204,40 +186,43 @@ const RequestForm = () => {
       deliveryFee: values[`deliveryFee${index + 1}`] || "",
     }));
 
+    // Generates an abbreviation for the entity name.
     function generateEntityAbbr(entityName: string): string {
-      // Daftar kata yang harus diabaikan (seperti "PT")
-      const skipWords = ["PT"];
-
+      const skipWords = ["PT"];  // Words to exclude
       return entityName
-        .split(" ") // 
-        .filter(word => !skipWords.includes(word))
-        .map(word => word.charAt(0))
-        .join("")
-        .toUpperCase();
+        .split(" ") // Split the entity name into words
+        .filter(word => !skipWords.includes(word)) // Exclude skipped words
+        .map(word => word.charAt(0)) // Take the first letter of each remaining word
+        .join("") // Combine into a single string
+        .toUpperCase(); // Convert to uppercase
     }
 
     try {
-
+      // Ensure user profile is available
       if (!userProfile) {
         alert("User profile data is missing. Please log in.");
         return;
       }
 
+      // Generate request number
       const entityAbbr = generateEntityAbbr(userProfile.entity);
       const divisionAbbr = userProfile.divisi.substring(0, 3).toUpperCase();
       const requestNumber = await generateRequestNumber(entityAbbr, divisionAbbr);
+
+      // Extract request metadata
       const requesterName = userProfile.namaLengkap;
       const requesterDivision = userProfile.divisi;
       const requesterEmail = userProfile.email;
       const requesterEntity = userProfile.entity;
 
+      // Validate entity association
       if (requesterEntity !== userProfile.entity) {
         alert(`Your request can only be associated with your entity: ${userProfile.entity}.`);
         setLoading(false);
         return;
       }
 
-      // Menyimpan request ke Firestore
+      // Save the request to Firestore
       const docRef = await addDoc(collection(db, "requests"), {
         items: items,
         requestNumber: requestNumber,
@@ -247,19 +232,25 @@ const RequestForm = () => {
         requesterDivision: requesterDivision,
         requesterEmail: requesterEmail,
         requesterEntity: requesterEntity,
-        createdAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+        createdAt: formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss'),
         approvalStatus: {
           checker: { approved: false, rejected: false, approvedBy: null, approvedAt: null, feedback: null },
           approval: { approved: false, rejected: false, approvedBy: null, approvedAt: null, feedback: null },
           releaser: { approved: false, rejected: false, approvedBy: null, approvedAt: null, feedback: null },
         }, // Menyimpan waktu request dibuat
       });
+
+      // Clear the draft data for the user
       await setDoc(doc(db, "draftRequests", `${requesterId}_${selectedProfileIndex}`), {});
-      // Kosongkan data form di UI
+      
+      // Reset the form and notify the user
       setFormData({} as FormData);
       form.resetFields();
       message.success('Request submitted successfully');
+      // Trigger status change notifications
       await handleStatusChange(docRef.id);
+
+      
       setTimeout(() => {
         window.location.reload();
       }, 1000)

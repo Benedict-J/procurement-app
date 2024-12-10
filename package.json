@@ -42,6 +42,7 @@
   "devDependencies": {
     "@types/nodemailer": "^6.4.16",
     "@types/react-google-recaptcha": "^2.1.9",
+    "prettier": "^3.4.1",
     "sass": "^1.63.6"
   }
 }

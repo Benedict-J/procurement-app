@@ -14,7 +14,7 @@ import {
   } from "antd";
   import classes from "./index.module.scss";
   import { useRouter } from "next/router";
-  import { registerUser } from "@/firebase/register";
+  import { registerUser } from "@/firebase/auth";
   import { useState } from "react";
   
   const { Text } = Typography;
@@ -24,6 +24,7 @@ import {
     const router = useRouter();
     const { nik, namaLengkap, divisi, profile } = router.query; 
 
+    // Parsing JSON object value from profile type in firestore 
     const parsedProfiles = typeof profile === 'string' ? JSON.parse(profile) : [];
     console.log("Profiles from query:", parsedProfiles);
 
@@ -31,16 +32,16 @@ import {
     const [form] = Form.useForm();
     
     const onFinish = async (values: any) => {
-
       const { password, confirmPassword } = values;
 
       if (password !== confirmPassword) {
           message.error("Password not match!");
           return;
-        }
-
+      }
+      // selected profile by user
       const selectedProfileIndexValue = selectedProfileIndex;
 
+      // register user
       try {
         const result = await registerUser(nik, namaLengkap, divisi, parsedProfiles, selectedProfileIndexValue, password);
      

@@ -13,7 +13,7 @@ import {
 import classes from "./index.module.scss";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
-import { registerUserWithNik } from "@/firebase/register";
+import { registerUserWithNik } from "@/firebase/auth";
 
 const { Text } = Typography;
 const { Content } = Layout;
@@ -39,8 +39,10 @@ const Register: React.FC | any = () => {
     }
   
     try {
+      // Processing register using registerUserWithNik from firebase.js
       const result = await registerUserWithNik(nik);
-  
+      
+      // push data to route if success
       if (result.success && result.userData && result.userData.profile && result.userData.profile.length > 0) {
         message.success("NIK Registered!");
         router.push({
@@ -91,10 +93,6 @@ const Register: React.FC | any = () => {
             layout="vertical"
             initialValues={{ remember: false }}
             onFinish={onFinish}
-            // onFinishFailed={onFinishFailed}
-            // onChange={() => {
-            //   setIsDisableButton(false);
-            // }}
             autoComplete="off"
           >
             <Form.Item
@@ -106,27 +104,12 @@ const Register: React.FC | any = () => {
             >
               <Input />
             </Form.Item>
-            {/* <Form.Item
-                label="Password"
-                name="password"
-                rules={[
-                  { required: true, message: "Tolong Masukan Password Anda!" },
-                ]}
-              >
-                <Input.Password />
-              </Form.Item> */}
-            {/* <Form.Item name="remember" valuePropName="checked">
-                <Checkbox>Remember me</Checkbox>
-              </Form.Item> */}
             <Form.Item>
               <Button
                 htmlType="submit"
                 size="middle"
                 block
                 style={{ backgroundColor: "#1F9245", color: "#ffffff", marginTop: "10px"}}
-                
-              // loading={isLoading}
-              // disabled={isDisableButton}
               >
                 Submit
               </Button>
