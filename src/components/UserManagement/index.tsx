@@ -24,13 +24,13 @@ const UserManagement: React.FC = () => {
         const uid = currentUser.uid;
     }
 
-    useEffect(() => {
-        const getUsers = async () => {
-            const allUsers = await fetchAllUsers(userProfile);
-            setUsers(allUsers);
-            setFilteredUsers(allUsers);
-        };
+    const getUsers = async () => {
+        const allUsers = await fetchAllUsers(userProfile);
+        setUsers(allUsers);
+        setFilteredUsers(allUsers);
+    };
 
+    useEffect(() => {
         getUsers()
     }, [userProfile]);
 
