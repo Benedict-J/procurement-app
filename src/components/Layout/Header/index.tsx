@@ -29,9 +29,6 @@ const Header: React.FC = () => {
     loadDraftData,
   } = useUserContext()
 
-  if (loading) return <Spin />
-  if (!userProfile) return <p>Profil pengguna tidak tersedia</p>
-
   const checkAuthStatus = () => {
     const user = auth.currentUser
     if (user) {
@@ -125,6 +122,9 @@ const Header: React.FC = () => {
       onClick: handleLogout, // Menambahkan trigger logout pada area hover secara keseluruhan
     },
   ]
+
+  if (loading) return <Spin />
+  if (!userProfile) return <p>Profil pengguna tidak tersedia</p>
 
   return (
     <Layout.Header className={styles.header}>
