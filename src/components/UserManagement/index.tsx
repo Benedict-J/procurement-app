@@ -4,6 +4,7 @@ import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { db, auth } from '@/firebase/firebase';
 import { collection, updateDoc, deleteDoc, doc, getDocs, setDoc } from 'firebase/firestore';
 import { useUserContext } from '@/contexts/UserContext';
+import { fetchAllUsers } from '@/firebase/userService';
 
 const { Search } = Input;
 
@@ -23,36 +24,14 @@ const UserManagement: React.FC = () => {
         const uid = currentUser.uid;
     }
 
+    const getUsers = async () => {
+        const allUsers = await fetchAllUsers(userProfile);
+        setUsers(allUsers);
+        setFilteredUsers(allUsers);
+    };
+
     useEffect(() => {
-        const fetchUsers = async () => {
-            if (!userProfile) return;
-            
-            // Fetch registered users from the database
-            const registeredUsersSnapshot = await getDocs(collection(db, 'registeredUsers'));
-            const registeredUsersData = registeredUsersSnapshot.docs.map(doc => ({
-                ...doc.data(),
-                id: doc.id,
-                source: 'registeredUsers',
-            }))
-            .filter(user => user.id !== userProfile.userId); 
-
-            // Fetch pre-registered users from the database
-            const preRegisteredUsersSnapshot = await getDocs(collection(db, 'preRegisteredUsers'));
-            const preRegisteredUsersData = preRegisteredUsersSnapshot.docs.map(doc => ({
-                ...doc.data(),
-                id: doc.id,
-                nik: doc.id,
-                source: 'preRegisteredUsers',
-            }))
-            .filter(user => user.nik !== userProfile?.nik);
-
-            // Combine both lists of users
-            const allUsers = [...registeredUsersData, ...preRegisteredUsersData];
-            setUsers(allUsers);
-            setFilteredUsers(allUsers);
-        };
-
-        fetchUsers();
+        getUsers()
     }, [userProfile]);
 
     // Handle adding a new user
