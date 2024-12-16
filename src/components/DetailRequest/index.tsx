@@ -14,6 +14,7 @@ import { db } from '@/firebase/firebase'
 import styles from './index.module.scss'
 import { useRouter } from 'next/router'
 import { parseAmount, formatDate } from '@/utils/format'
+import Feedback from '@/components/DetailRequest/Feedback'
 
 interface DataType {
   key: React.Key
@@ -376,22 +377,8 @@ const DetailRequestTable: React.FC<DetailRequestTableProps> = ({
 
       <div className={styles.feedbackGrandTotal}>
         <div className={styles.feedbackSection}>
-          {userProfile?.role === 'Requester' &&
-            status === 'Rejected' &&
-            feedbackData ? (
-            <Card
-              title={`Feedback from: ${feedbackData.role}`}
-              className={styles.feedbackCard}
-              headStyle={{
-                backgroundColor: '#FAFAFA',
-                fontSize: '14px',
-                fontWeight: 600,
-              }}
-            >
-              <p style={{ fontSize: '14px', color: '#333' }}>
-                {feedbackData.feedback}
-              </p>
-            </Card>
+          {userProfile?.role === 'Requester' && status === 'Rejected' && feedbackData ? (
+            <Feedback role={feedbackData.role} feedback={feedbackData.feedback} />
           ) : (
             <div className={styles.emptyFeedback}></div>
           )}
